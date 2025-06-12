@@ -5,7 +5,7 @@
 
 module soca_soca2cice_mod
 
-use atlas_module, only: atlas_geometry, atlas_indexkdtree, atlas_field
+use atlas_module, only: atlas_geometry, atlas_field
 use fckit_configuration_module, only: fckit_configuration
 use fckit_exception_module, only: fckit_exception
 use fckit_mpi_module, only: fckit_mpi_comm
@@ -52,7 +52,6 @@ type, public :: soca_soca2cice
    character(len=:), allocatable :: rst_filename
    character(len=:), allocatable :: rst_out_filename
    type(cice_state) :: cice
-   type(atlas_indexkdtree) :: kdtree
    type(soca_soca2cice_params) :: arctic, antarctic
 contains
   procedure :: setup => soca_soca2cice_setup
@@ -76,8 +75,6 @@ subroutine soca_soca2cice_setup(self, geom)
   class(soca_soca2cice), intent(inout) :: self
   type(soca_geom), target, intent(in)  :: geom !< geometry
 
-  type(atlas_geometry) :: ageometry
-
   ! Communicator
   self%f_comm = geom%f_comm
   self%myrank = geom%f_comm%rank()
@@ -93,12 +90,6 @@ subroutine soca_soca2cice_setup(self, geom)
 
   ! read cice fields from restart
   call self%cice%read(geom)
-
-  ! Initialize kd-tree
-  ageometry = atlas_geometry("UnitSphere")
-  self%kdtree = atlas_indexkdtree(ageometry)
-  call self%kdtree%reserve(self%cice%agg%n_src)
-  call self%kdtree%build(self%cice%agg%n_src, self%cice%agg%lon, self%cice%agg%lat)
 
 end subroutine soca_soca2cice_setup
 
@@ -184,17 +175,17 @@ end subroutine check_ice_bounds
 !> add seaice to the background
 !!
 subroutine shuffle_ice(self, geom, xm)
+  use fckit_log_module,   only: fckit_log
   class(soca_soca2cice), intent(inout) :: self
   type(soca_geom), target, intent(in)  :: geom
   type(soca_state),      intent(inout) :: xm
 
   real(kind=kind_real) :: local_aice, seaice_edge
-  integer :: i, j, k, n, ii, jj, atlas_idx
-  integer :: minidx(1), nn_max
-  integer, allocatable :: idx(:)
-  real(kind=kind_real), allocatable :: testmin(:)
-  type(cice_state) :: cice_in
+  integer :: i, j, k, ii, jj, atlas_idx, halo
+  integer :: minidx(2)
+  real(kind=kind_real), allocatable :: testmin(:,:)
 
+  type(cice_state) :: cice_in
   type(atlas_field) :: socn, aice
   real(kind=kind_real), pointer :: data_socn(:,:), data_aice(:,:)
 
@@ -203,13 +194,25 @@ subroutine shuffle_ice(self, geom, xm)
   call socn%data(data_socn)
   call aice%data(data_aice)
 
-  ! Make sure the search tree is smaller than the data size
-  nn_max = min(self%cice%agg%n_src, self%shuffle_n)
-  allocate(idx(nn_max), testmin(nn_max))
+  ! set the size of the shuffle stencil
+  ! by default, the size is set to the halo size
+  halo = self%cice%halo
+  ! if yaml file has a value for shuffle_n, use it if it's reasonable
+  if (self%shuffle_n > 0) then
+    if (self%shuffle_n > halo) then
+      call fckit_log%warning("soca2cice: shuffle_n is larger than the halo size, resetting to halo size")
+    else
+      halo = self%shuffle_n
+    end if
+  end if
+
+  allocate(testmin(2*halo + 1, 2*halo + 1))
 
   call cice_in%copydata(self%cice)
   do j = geom%jsc, geom%jec
      do i = geom%isc, geom%iec
+        if (geom%mask2d(i,j) == 0) cycle        ! skip land points
+
         atlas_idx = geom%atlas_ij2idx(i,j)
         local_aice = data_aice(1, atlas_idx)    ! ice fraction analysis
 
@@ -222,7 +225,7 @@ subroutine shuffle_ice(self, geom, xm)
           seaice_edge = self%antarctic%seaice_edge
         endif
         if (self%cice%aice(i,j).gt.seaice_edge) cycle     ! skip if the background has more ice than the threshold
-        if (local_aice.le.0.0_kind_real) then
+        if (local_aice.le.0.0_kind_real) then             ! set state to zero if the analysis is zero
            self%cice%aicen(i,j,:) = 0_kind_real
            self%cice%vicen(i,j,:) = 0_kind_real
            self%cice%vsnon(i,j,:) = 0_kind_real
@@ -233,17 +236,16 @@ subroutine shuffle_ice(self, geom, xm)
            self%cice%sice(i,j,:,:) = 0_kind_real
            self%cice%qsno(i,j,:,:) = 0_kind_real
            self%cice%tsfcn(i,j,:) = icepack_liquidus_temperature(data_socn(1, atlas_idx))
+           cycle
         endif
-        if (self%cice%agg%n_src == 0) cycle               ! skip if there are no points on this task with ice in the background
-        ! find neighbors. TODO (G): add constraint for thickness and snow depth as well
-        call self%kdtree%closestPoints(geom%lon(i,j), geom%lat(i,j), nn_max, idx)
-        do k = 1, nn_max
-           testmin(k) = abs(cice_in%aice(self%cice%agg%ij(1, idx(k)), self%cice%agg%ij(2, idx(k))) - local_aice)
+        do ii = i - halo, i + halo
+          do jj = j - halo, j + halo
+            testmin(ii-i+halo+1, jj-j+halo+1) = abs(cice_in%aice(ii,jj) - local_aice)
+          enddo
         end do
-        minidx = minloc(testmin) ! I know, I rock.
-        ii = self%cice%agg%ij(1, idx(minidx(1)))
-        jj = self%cice%agg%ij(2, idx(minidx(1)))
-
+        minidx = minloc(testmin)
+        ii = minidx(1) + i - halo - 1
+        jj = minidx(2) + j - halo - 1
         ! update local no ice state with closest non-0 ice state
         self%cice%aice(i, j) = cice_in%aice(ii, jj)
         self%cice%aicen(i, j,:) = cice_in%aicen(ii, jj, :)
@@ -412,6 +414,19 @@ subroutine cleanup_ice(self, geom, xm)
             self%cice%tsfcn(i,j,k) = Tf
           endif
         enddo
+        ! remove ice over land
+        if (geom%mask2d(i,j) == 0) then
+          self%cice%aicen(i,j,:) = 0_kind_real
+          self%cice%vicen(i,j,:) = 0_kind_real
+          self%cice%vsnon(i,j,:) = 0_kind_real
+          self%cice%apnd(i,j,:) = 0_kind_real
+          self%cice%hpnd(i,j,:) = 0_kind_real
+          self%cice%ipnd(i,j,:) = 0_kind_real
+          self%cice%qice(i,j,:,:) = 0_kind_real
+          self%cice%sice(i,j,:,:) = 0_kind_real
+          self%cice%qsno(i,j,:,:) = 0_kind_real
+          self%cice%tsfcn(i,j,:) = 0_kind_real
+        endif
         ! re-compute aggregates = analysis that is effectively inserted in the restart
         data_aice(1, idx) = sum(self%cice%aicen(i,j,:))
         data_hice(1, idx) = sum(self%cice%vicen(i,j,:))
@@ -448,7 +463,7 @@ subroutine prior_dist_rescale(self, geom, xm)
   real(kind=kind_real) :: alpha, local_hice, local_hsno, seaice_edge, rescale_min_hice, rescale_min_hsno
   integer :: c, i, j, idx
 
-  type(atlas_field) :: aice, hice, hsno, socn
+  type(atlas_field) :: aice, hice, hsno
   real(kind=kind_real), pointer :: data_aice(:,:), data_hice(:,:), data_hsno(:,:)
 
   ! get fields from atlas
@@ -461,6 +476,8 @@ subroutine prior_dist_rescale(self, geom, xm)
 
   do j = geom%jsc, geom%jec
     do i = geom%isc, geom%iec
+      if (geom%mask2d(i,j) == 0) cycle   ! skip land points
+
       idx = geom%atlas_ij2idx(i,j)
 
         if (geom%lat(i,j)>0.0_kind_real) then
