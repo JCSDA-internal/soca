@@ -1,5 +1,5 @@
-CostJb   : Nonlinear Jb = 0.0000000000000000e+00
 CostJo   : Nonlinear Jo(ADT) = 2.1585990691658122e+02, nobs = 99, Jo/n = 2.1804031001674873e+00, err = 1.0000000149011613e-01
+CostJb   : Nonlinear Jb = 0.0000000000000000e+00
 CostFunction: Nonlinear J = 2.1585990691658122e+02
 RPCGMinimizer: reduction in residual norm = 1.3845470503210854e-02
 CostFunction::addIncrement: Analysis:
@@ -20,9 +20,6 @@ net_downwelling_shortwave_radiation   min=-225.0977630615234375   max=0.00000000
        friction_velocity_over_water   min=0.0043958698226386   max=0.0196578730801191   mean=0.0086443089692577
         ocean_mixed_layer_thickness   min=2.2854716757984130   max=4593.1533423819937525   mean=192.4109073940401515
                     sea_water_depth   min=2.2854716757984130   max=5658.3057467114012979   mean=1200.5229536158342398
-
-
-
-CostJb   : Nonlinear Jb = 5.9159117735608344
 CostJo   : Nonlinear Jo(ADT) = 106.1176172783298455, nobs = 99, Jo/n = 1.0718951240235337, err = 0.1000000014901161
+CostJb   : Nonlinear Jb = 5.9159117735608344
 CostFunction: Nonlinear J = 112.0335290518906817
