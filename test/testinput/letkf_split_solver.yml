@@ -40,7 +40,7 @@ observations:
       name: SeaSurfaceTemp
       distribution:
         name: Halo
-        halo size: 500.0e3
+        halo size: 3500.0e3
       obsdataout:
         engine:
           type: H5File
@@ -67,7 +67,7 @@ observations:
       name: ADT
       distribution:
         name: Halo
-        halo size: 500.0e3
+        halo size: 3500.0e3
       obsdataout:
         engine:
           type: H5File
