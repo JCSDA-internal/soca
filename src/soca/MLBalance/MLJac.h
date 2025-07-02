@@ -60,7 +60,7 @@ namespace soca {
       const int nnodes = xb["sea_water_potential_temperature"].shape(0);
       for (atlas::idx_t jnode = 0; jnode < nnodes; ++jnode) {
         if ((ghost(jnode)) | (mask(jnode, 0) == 0) |
-            ( abs(lonlat(jnode, 1)) <= 40.0 )) continue;
+            (abs(lonlat(jnode, 1)) <= 40.0)) continue;
         pattern[0] = tair(jnode, 0);
         pattern[1] = tsfc(jnode, 0);
         pattern[2] = sst(jnode, 0);
