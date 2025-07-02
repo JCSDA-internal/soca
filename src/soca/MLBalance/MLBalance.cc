@@ -72,6 +72,8 @@ void MLBalance::setupJac(const oops::FieldSet3D & xb,
                          const eckit::Configuration & config) {
   // Create a map of configurations
   eckit::LocalConfiguration mlConf = params_.mlbalances.value();
+
+  //eckit::LocalConfiguration maskConf = params_.maskVariable.value();
   MLJac mlJac(mlConf, xb, jac_, innerGeometryData_, comm);
 }
 
