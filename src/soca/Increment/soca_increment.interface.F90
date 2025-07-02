@@ -50,7 +50,6 @@ subroutine soca_increment_create_c(c_key_self, c_key_geom, c_vars, c_afieldsest)
   vars = oops_variables(c_vars)
   afieldset = atlas_fieldset(c_afieldsest)
   call self%create(geom, vars, afieldset)
-  call self%sync_to_atlas()
 
 end subroutine soca_increment_create_c
 
@@ -80,7 +79,6 @@ subroutine soca_increment_dirac_c(c_key_self,c_conf) bind(c,name='soca_increment
 
   call soca_increment_registry%get(c_key_self,self)
   call self%dirac(fckit_configuration(c_conf))
-  call self%sync_to_atlas()
 
 end subroutine soca_increment_dirac_c
 
@@ -94,29 +92,8 @@ subroutine soca_increment_random_c(c_key_self) bind(c,name='soca_increment_rando
 
   call soca_increment_registry%get(c_key_self,self)
   call self%random()
-  call self%sync_to_atlas()
 
 end subroutine soca_increment_random_c
-
-
-! ------------------------------------------------------------------------------
-!> C++ interface for soca_increment_mod::soca_increment version of
-!! soca_fields_mod::soca_fields::copy()
-subroutine soca_increment_copy_c(c_key_self,c_key_rhs) bind(c,name='soca_increment_copy_f90')
-  integer(c_int), intent(in) :: c_key_self
-  integer(c_int), intent(in) :: c_key_rhs
-
-  type(soca_increment), pointer :: self
-  type(soca_increment), pointer :: rhs
-
-  call soca_increment_registry%get(c_key_self,self)
-  call soca_increment_registry%get(c_key_rhs,rhs)
-  call rhs%sync_from_atlas()
-
-  call self%copy(rhs)
-  call self%sync_to_atlas()
-
-end subroutine soca_increment_copy_c
 
 
 ! ------------------------------------------------------------------------------
@@ -133,7 +110,6 @@ subroutine soca_increment_read_file_c(c_key_fld, c_conf, c_dt) bind(c,name='soca
   call soca_increment_registry%get(c_key_fld,fld)
   call c_f_datetime(c_dt, fdate)
   call fld%read(fckit_configuration(c_conf), fdate)
-  call fld%sync_to_atlas()
 
 end subroutine soca_increment_read_file_c
 
@@ -151,7 +127,6 @@ subroutine soca_increment_write_file_c(c_key_fld, c_conf, c_dt) bind(c,name='soc
 
   call soca_increment_registry%get(c_key_fld,fld)
   call c_f_datetime(c_dt, fdate)
-  call fld%sync_from_atlas()
   call fld%write_rst(fckit_configuration(c_conf), fdate)
 
 end subroutine soca_increment_write_file_c
@@ -180,7 +155,6 @@ f_vars = oops_variables(c_vars)
 ! Call implementation
 ! -------------------
 call f_self%update_fields(f_vars)
-call f_self%sync_to_atlas()
 
 end subroutine soca_increment_update_fields_c
 
@@ -200,7 +174,6 @@ subroutine soca_increment_horiz_scales_c(c_key_self, c_conf) &
 
   call soca_increment_registry%get(c_key_self, f_self)
   call f_self%horiz_scales(fckit_configuration(c_conf))
-  call f_self%sync_to_atlas()
 
 end subroutine soca_increment_horiz_scales_c
 
@@ -220,7 +193,6 @@ subroutine soca_increment_vert_scales_c(c_key_self, c_vert) bind(c,name='soca_in
   call soca_increment_registry%get(c_key_self, f_self)
   vert = c_vert
   call f_self%vert_scales(c_vert)
-  call f_self%sync_to_atlas()
 
 end subroutine soca_increment_vert_scales_c
 

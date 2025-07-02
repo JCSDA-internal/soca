@@ -33,9 +33,6 @@ BkgErrFilt::BkgErrFilt(
 {
   util::Timer timer("soca::BkgErrFilt", "BkgErrFilt");
 
-  // TODO(travis) this block is not working with dual resolution.
-  // outerGeometryData is the low resolution grid, but xb and fg are on the
-  // high resolution grid. I don't think I have what I need to to interpolate.
   ASSERT(outerGeometryData.fieldSet()[0].shape(0) == xb.fieldSet()[0].shape(0));
 
   const double MIN_THICKNESS = 1.0e-3;
@@ -50,10 +47,13 @@ BkgErrFilt::BkgErrFilt(
   auto v_mult2D = atlas::array::make_view<double, 2>(mult2D_);
   const auto v_hocn = atlas::array::make_view<double, 2>(xb["sea_water_cell_thickness"]);
   const auto v_mask = atlas::array::make_view<double, 2>(mask_);
+  const auto & v_ghost = atlas::array::make_view<int, 1>(
+    innerGeometryData_.functionSpace().ghost());
 
   v_mult3D.assign(0.0);
   v_mult2D.assign(0.0);
   for (size_t i = 0; i < innerGeometryData_.functionSpace().size(); i++) {
+    if (v_ghost(i)) continue;
     if (v_mask(i, 0) == 0.0) continue;
 
     // mask out if total depth is less than oceanDepthMin
@@ -74,6 +74,8 @@ BkgErrFilt::BkgErrFilt(
       depth += v_hocn(i, z) / 2.0;  // add the other half of the layer for next loop iteration
     }
   }
+  mult2D_.set_dirty();
+  mult3D_.set_dirty();
 }
 
 // ----------------------------------------------------------------------------------------
@@ -112,6 +114,7 @@ void BkgErrFilt::multiply(oops::FieldSet3D & fset) const {
         }
       }
     }
+    field.set_dirty();
   }
 }
 

@@ -63,6 +63,8 @@ void LinearModel2GeoVaLs::multiply(const Increment &dxin,
         v_fOut(i, lvl) = v_fIn(i, lvl);
       }
     }
+
+    fOut.set_dirty(fIn.dirty());
   }
 }
 
@@ -98,6 +100,8 @@ void LinearModel2GeoVaLs::multiplyAD(const Increment &dxin,
         v_fOut(i, lvl) += v_fIn(i, lvl);
       }
     }
+
+    fOut.set_dirty(fIn.dirty());
   }
 }
 

@@ -28,22 +28,13 @@ namespace soca {
                                const oops::Variables &,
                                const atlas::field::FieldSetImpl *);
     void soca_state_delete_f90(F90flds &);
-    void soca_state_copy_f90(const F90flds &, const F90flds &);
     void soca_state_read_file_f90(const F90flds &,
                                   const eckit::Configuration * const &,
                                   util::DateTime * const *);
     void soca_state_write_file_f90(const F90flds &,
                                    const eckit::Configuration * const &,
                                    const util::DateTime * const *);
-    void soca_state_rotate2grid_f90(const F90flds &,
-                                    const oops::Variables &,
-                                    const oops::Variables &);
-    void soca_state_rotate2north_f90(const F90flds &,
-                                     const oops::Variables &,
-                                     const oops::Variables &);
     void soca_state_tohgrid_f90(const F90flds &);
-    void soca_state_logtrans_f90(const F90flds &, const oops::Variables &);
-    void soca_state_expontrans_f90(const F90flds &, const oops::Variables &);
     void soca_state_analytic_f90(const F90flds &,
                                  const eckit::Configuration * const &,
                                  util::DateTime * const *);

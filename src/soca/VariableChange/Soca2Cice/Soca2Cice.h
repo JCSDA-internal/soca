@@ -51,6 +51,11 @@ class Soca2Cice: public VariableChangeBase {
     oops::Parameter<RescaleParameters> rescale{"rescale prior",
       "Option to rescale sea ice in the ice pack zone (where ice concentration"
       " > seaice edge)", {}, this};
+    oops::Parameter<bool> adjustSST{"update SST",
+      "Option to update sea surface temperature", true, this};
+    oops::Parameter<double> sstDiffMax{"max positive SST update",
+      "Maximum update to sea surface temperature (K)", 1.0, this,
+      {oops::minConstraint(0.0)}};
   };
 
   // ---------------------------------------------------------------------------
@@ -85,8 +90,8 @@ class Soca2Cice: public VariableChangeBase {
     oops::RequiredParameter<RedistributionParameters> antarctic{"antarctic", this};
     oops::Parameter<float> icepackTstep{"icepack time step",
             "icepack time step used for thickness categories rebinning", 300, this};
-    oops::Parameter<int> shuffleStencilSize{"shuffle stencil size",
-            "stencil size used in the shuffle search", 9, this, {oops::minConstraint(9)}};
+    oops::OptionalParameter<int> shuffleStencilSize{"shuffle stencil depth",
+            "stencil depth used in the shuffle search", this, {oops::minConstraint(1)}};
   };
 
   const std::string classname() {return "soca::Soca2Cice";}

@@ -53,6 +53,9 @@ private
 ! oops!
 real(kind=kind_real), parameter :: INVALID_HALO = -999_kind_real
 
+!> counter for geometries, used to call fms_io
+integer, save, private :: global_soca_geom_counter = 0
+
 ! ------------------------------------------------------------------------------
 !> Geometry data structure
 type, public :: soca_geom
@@ -187,12 +190,14 @@ subroutine soca_geom_init(self, f_conf, f_comm, gen)
   ! use MOM6 to setup domain decomposition
   call mpp_init(localcomm=f_comm%communicator())
   call fms_init()
-  call fms_io_init()
+  if (global_soca_geom_counter .eq. 0) then
+    call fms_io_init()
+  endif
+  global_soca_geom_counter = global_soca_geom_counter + 1
   call Get_MOM_Input(param_file, dirs)
   call MOM_domains_init(self%Domain, param_file)
   call get_param(param_file, "soca_mom6", "NK", self%nzo, fail_if_missing=.true.)
   call close_param_file(param_file)
-  call fms_io_exit()
 
   ! Allocate geometry arrays
   call soca_geom_allocate(self)
@@ -234,7 +239,6 @@ subroutine soca_geom_init(self, f_conf, f_comm, gen)
     ! Read in the precomputed grid from the soca gridspec file instead
     ! NOTE that we will rerad the gridspec file later for some of the variables
     ! once the altas FunctionSpace has been created.
-    call fms_io_init()
     if (.not. f_conf%get("geom_grid_file", str)) str = "soca_gridspec.nc"
     r = register_restart_field(geom_restart, str, "lonh",    self%lonh,      self%Domain%mpp_domain)
     r = register_restart_field(geom_restart, str, "lath",    self%lath,      self%Domain%mpp_domain)
@@ -256,7 +260,6 @@ subroutine soca_geom_init(self, f_conf, f_comm, gen)
     r = register_restart_field(geom_restart, str, "mask2dv", self%mask2dv,   self%Domain%mpp_domain)
     call restore_state(geom_restart, directory='')
     call free_restart_type(geom_restart)
-    call fms_io_exit()
   endif
 
   ! Fill halos
@@ -287,7 +290,10 @@ end subroutine soca_geom_init
 !! \related soca_geom_mod::soca_geom
 subroutine soca_geom_end(self)
   class(soca_geom), intent(out)  :: self
-
+  global_soca_geom_counter = global_soca_geom_counter - 1
+  if (global_soca_geom_counter .eq. 0) then
+    call fms_io_exit()
+  endif
   if (allocated(self%lonh))          deallocate(self%lonh)
   if (allocated(self%lath))          deallocate(self%lath)
   if (allocated(self%lonq))          deallocate(self%lonq)
@@ -323,9 +329,9 @@ subroutine soca_geom_init_fieldset(self, f_conf, gen)
   logical,                  intent(in)  :: gen !< if true, we are doing a full init
 
   integer :: i, j, n, jz
-  type(atlas_field) :: fArea, fInterpMask, fVertCoord, fGmask, fOwned, fMaskH, fMaskU, fMaskV
+  type(atlas_field) :: fArea, fInterpMask, fVertCoord, fGmask, fOwned, fMaskH, fMaskU, fMaskV, fCos, fSin
   real(kind=kind_real), pointer :: vArea(:,:), vInterpMask(:,:), vVertCoord(:,:), &
-                                   vMaskH(:,:), vMaskU(:,:), vMaskV(:,:)
+                                   vMaskH(:,:), vMaskU(:,:), vMaskV(:,:), vCos(:,:), vSin(:,:)
   integer, pointer :: vGmask(:,:), vOwned(:,:)
 
   ! variables needed for reading in atlas fields from gridspec file
@@ -364,6 +370,14 @@ subroutine soca_geom_init_fieldset(self, f_conf, gen)
   call self%fieldset%add(fGmask)
   call fGmask%data(vGmask)
 
+  fCos = self%functionspace%create_field(name='cos_rot', kind=atlas_real(kind_real), levels=1)
+  call self%fieldset%add(fCos)
+  call fCos%data(vCos)
+
+  fSin = self%functionspace%create_field(name='sin_rot', kind=atlas_real(kind_real), levels=1)
+  call self%fieldset%add(fSin)
+  call fSin%data(vSin)
+
   ! TODO temporary, this needs to be cleaned up
   ! It's here so that answers don't change when moving the gpnorm calculations from fortran
   ! to c++
@@ -390,6 +404,8 @@ subroutine soca_geom_init_fieldset(self, f_conf, gen)
       vMaskH(1, n) = self%mask2d(i,j)
       vMaskU(1, n) = self%mask2du(i,j)
       vMaskV(1, n) = self%mask2dv(i,j)
+      vCos(1, n) = self%cos_rot(i,j)
+      vSin(1, n) = self%sin_rot(i,j)
     end do
   end do
   do jz=1,self%nzo
@@ -401,6 +417,8 @@ subroutine soca_geom_init_fieldset(self, f_conf, gen)
   call fInterpMask%halo_exchange()
   call fArea%halo_exchange()
   call fVertCoord%halo_exchange()
+  call fCos%halo_exchange()
+  call fSin%halo_exchange()
 
   ! done, cleanup
   call fArea%final()
@@ -411,6 +429,8 @@ subroutine soca_geom_init_fieldset(self, f_conf, gen)
   call fMaskH%final()
   call fMaskU%final()
   call fMaskV%final()
+  call fCos%final()
+  call fSin%final()
 
   ! -----------------------------------------------------------------------------------------------
   if (gen) then
@@ -424,6 +444,7 @@ subroutine soca_geom_init_fieldset(self, f_conf, gen)
         aFieldData(1, self%atlas_ij2idx(i,j)) = fieldData(i, j)
       end do
     end do
+    call aField%halo_exchange()
     call aField%final()
   else
     ! otherwise, read in files from the gridspec file and place directly into atlas fieldset
@@ -432,13 +453,11 @@ subroutine soca_geom_init_fieldset(self, f_conf, gen)
     allocate(fieldDataVars(self%isd:self%ied, self%jsd:self%jed, size(atlasVars)))
 
     ! read in from gridspec file
-    call fms_io_init()
     do v = 1, size(atlasVars)
       r = register_restart_field(geom_restart, str, atlasVars(v), fieldDataVars(:,:,v), self%Domain%mpp_domain)
     end do
     call restore_state(geom_restart, directory='')
     call free_restart_type(geom_restart)
-    call fms_io_exit()
 
     ! copy from fortran array to atlas field
     do v = 1, size(atlasVars)
@@ -608,7 +627,6 @@ subroutine soca_geom_write(self, f_conf)
   character(len=256) :: geom_output_pe
 
   ! Save global domain
-  call fms_io_init()
   if (.not. f_conf%get("geom_grid_file", str)) str = "soca_gridspec.nc"
   r = register_restart_field(geom_restart, str, "lonh",    self%lonh,      self%Domain%mpp_domain)
   r = register_restart_field(geom_restart, str, "lath",    self%lath,      self%Domain%mpp_domain)
@@ -650,7 +668,6 @@ subroutine soca_geom_write(self, f_conf)
 
   call save_restart(geom_restart, directory='')
   call free_restart_type(geom_restart)
-  call fms_io_exit()
 
   ! Set output option for local geometry
   if ( .not. f_conf%get("save_local_domain", save_local) ) save_local = .false.

@@ -1,9 +1,9 @@
-CostJb   : Nonlinear Jb = 0.0000000000000000e+00
 CostJo   : Nonlinear Jo(SeaSurfaceTemp) = 1.6255627282758176e+03, nobs = 174, Jo/n = 9.3423145303207900e+00, err = 3.6280357515271239e-01
 CostJo   : Nonlinear Jo(SeaSurfaceSalinity) = 4.8735638123078431e+01, nobs = 50, Jo/n = 9.7471276246156857e-01, err = 1.0000000000000000e+00
 CostJo   : Nonlinear Jo(ADT) = 1.5693156902629079e+02, nobs = 94, Jo/n = 1.6694847768754340e+00, err = 1.0000000149011612e-01
 CostJo   : Nonlinear Jo(InsituTemperature) = 3.5389376539453463e+02, nobs = 206, Jo/n = 1.7179308999734690e+00, err = 8.9914415723945484e-01
 CostJo   : Nonlinear Jo(InsituSalinity) = 3.4906662729111383e+02, nobs = 218, Jo/n = 1.6012230609684122e+00, err = 6.0819699545777528e-01
+CostJb   : Nonlinear Jb = 0.0000000000000000e+00
 CostFunction: Nonlinear J = 2.5341903281108353e+03
 RPCGMinimizer: reduction in residual norm = 3.2962682767696233e-01
 CostFunction::addIncrement: Analysis: 
@@ -16,17 +16,10 @@ CostFunction::addIncrement: Analysis:
    vocn   min=-0.9653985145333270   max=0.9240846399511112   mean=0.0001975848102140
     mld   min=2.2805545996611403   max=4593.1693891607183104   mean=191.0555656854947131
 layer_depth   min=2.2805545996611403   max=5658.3062783710120129   mean=1200.5220907214948056
-
-
-
-
-
-
-
-CostJb   : Nonlinear Jb = 28.9887911055684242
 CostJo   : Nonlinear Jo(SeaSurfaceTemp) = 490.2170703216413017, nobs = 174, Jo/n = 2.8173394846071340, err = 0.3628035751527124
 CostJo   : Nonlinear Jo(SeaSurfaceSalinity) = 46.9330495529855583, nobs = 50, Jo/n = 0.9386609910597111, err = 1.0000000000000000
 CostJo   : Nonlinear Jo(ADT) = 82.2554700491828896, nobs = 94, Jo/n = 0.8750581920125839, err = 0.1000000014901161
 CostJo   : Nonlinear Jo(InsituTemperature) = 364.1365038607749511, nobs = 206, Jo/n = 1.7676529313629852, err = 0.8991441572394548
 CostJo   : Nonlinear Jo(InsituSalinity) = 58.4283558070863904, nobs = 218, Jo/n = 0.2680199807664513, err = 0.6081969954577753
+CostJb   : Nonlinear Jb = 28.9887911055684242
 CostFunction: Nonlinear J = 1070.9592406972394656

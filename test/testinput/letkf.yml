@@ -32,7 +32,7 @@ observations:
       name: SeaSurfaceTemp
       distribution:
         name: Halo
-        halo size: 5000.0e3
+        halo size: 3500.0e3
       obsdataout:
         engine:
           type: H5File
@@ -64,7 +64,7 @@ observations:
       name: ADT
       distribution:
         name: Halo
-        halo size: 500.0e3
+        halo size: 3500.0e3
       obsdataout:
         engine:
           type: H5File
@@ -100,7 +100,7 @@ driver:
   save prior variance: true
 
 local ensemble DA:
-  solver: LETKF
+  solver: Deterministic LETKF
   inflation:
     rtps: 0.5
     rtpp: 0.6

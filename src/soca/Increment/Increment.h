@@ -63,6 +63,7 @@ namespace soca {
       Increment(const Geometry &, const oops::Variables &,
                 const util::DateTime &);
       Increment(const Geometry &, const Increment &, const bool = false);
+      Increment(const oops::Variables &, const Increment &);
       Increment(const Increment &, const bool);
       Increment(const Increment &);
       virtual ~Increment();
@@ -77,6 +78,7 @@ namespace soca {
       Increment & operator-=(const Increment &);
       Increment & operator*=(const double &);
       void axpy(const double &, const Increment &, const bool check = true);
+      void sqrt();
       double dot_product_with(const Increment &) const;
       void schur_product_with(const Increment &);
       void random();

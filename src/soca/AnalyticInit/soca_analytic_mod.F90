@@ -6,6 +6,7 @@
 !> Analytic state/geoval initialization module used for testing only
 module soca_analytic_mod
 
+use atlas_module, only : atlas_field
 use kinds, only : kind_real
 use ufo_geovals_mod, only : ufo_geovals
 use ufo_sampled_locations_mod, only : ufo_sampled_locations
@@ -57,23 +58,30 @@ end subroutine
 !!
 !! \see soca_analytic_val
 subroutine soca_analytic_state(state)
-    class(soca_state), intent(inout) :: state
+  class(soca_state), intent(inout) :: state
 
-    integer :: i, j, f, k
-    real(kind=kind_real) :: val
+  integer :: i, j, f, k, idx
 
-    do f = 1, size(state%fields)
-        do i = state%geom%isd, state%geom%ied
-            do j = state%geom%jsd, state%geom%jed
-                do k = 1, state%fields(f)%nz
-                    val = soca_analytic_val(&
-                        state%fields(f)%name, state%fields(f)%lat(i,j), &
-                        state%fields(f)%lon(i,j), k*1.0_kind_real)
-                    state%fields(f)%val(i,j,k) = val
-                end do
-            end do
+  type(atlas_field) :: field
+  real(kind=kind_real), pointer :: fdata(:,:)
+
+  do f=1, size(state%fields)
+    field = state%afieldset%field(state%fields(f)%name)
+    call field%data(fdata)
+
+    do j = state%geom%jsc, state%geom%jec
+      do i = state%geom%isc, state%geom%iec
+        idx = state%geom%atlas_ij2idx(i,j)
+        do k = 1, field%shape(1)
+          fdata(k,idx) = soca_analytic_val(&
+            state%fields(f)%name, state%fields(f)%lat(i,j), &
+            state%fields(f)%lon(i,j), k*1.0_kind_real)
         end do
+      end do
     end do
+    call field%set_dirty()
+    call field%final()
+  end do
 end subroutine
 
 

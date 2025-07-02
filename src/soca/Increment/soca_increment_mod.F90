@@ -71,30 +71,55 @@ subroutine soca_increment_random(self)
   integer, parameter :: rseed = 1 ! constant for reproducability of tests
     ! NOTE: random seeds are not quite working the way expected,
     !  it is only set the first time normal_distribution() is called with a seed
-  integer :: jz, i
+  integer :: i, j, k, n, idx
 
   type(soca_field), pointer :: field
+  type(atlas_field) :: afield
+  real(kind=kind_real), pointer :: fdata(:,:)
+  real(kind=kind_real), allocatable :: tmp3d(:,:,:)
 
-  ! set random values
-  do i = 1, size(self%fields)
-    field => self%fields(i)
-    ! TODO remove this once increment / state are fully separated
+
+  do n = 1, self%afieldset%size()
+    afield = self%afieldset%field(n)
+    field => self%fields(n) ! TODO remove this dependency
+    call afield%data(fdata)
+
     ! NOTE: can't randomize "hocn", testIncrementInterpAD fails
-    if (field%name == "sea_water_cell_thickness") cycle
-    call normal_distribution(field%val,  0.0_kind_real, 1.0_kind_real, rseed)
-  end do
+    if (afield%name() == "sea_water_cell_thickness") then
+      call afield%final()
+      cycle
+    end if
 
-  ! mask out land, set to zero
-  do i=1,size(self%fields)
-    field => self%fields(i)
-    if (.not. associated(field%mask) ) cycle
-    do jz=1,field%nz
-      field%val(:,:,jz) = field%val(:,:,jz) * field%mask(:,:)
+    ! allocate and fill with random values
+    ! NOTE this is done in a weird way to keep answers from changing when it was refactored
+    allocate(tmp3d(self%geom%isd:self%geom%ied, self%geom%jsd:self%geom%jed, afield%shape(1)))
+    call normal_distribution(tmp3d,  0.0_kind_real, 1.0_kind_real, rseed)
+    do j=self%geom%jsc,self%geom%jec
+      do i=self%geom%isc,self%geom%iec
+        idx = self%geom%atlas_ij2idx(i,j)
+        do k=1,afield%shape(1)
+          fdata(k,idx) = tmp3d(i,j,k)
+        end do
+      end do
     end do
+    deallocate(tmp3d)
+
+    ! mask land
+    if (associated(field%mask)) then
+      do j=self%geom%jsc,self%geom%jec
+        do i=self%geom%isc,self%geom%iec
+          idx = self%geom%atlas_ij2idx(i,j)
+          do k=1,afield%shape(1)
+            fdata(k,idx) = fdata(k,idx) * field%mask(i,j)
+          end do
+        end do
+      end do
+    end if
+
+    call afield%set_dirty()
+    call afield%final()
   end do
 
-  ! update domains
-  call self%update_halos()
 end subroutine soca_increment_random
 
 
@@ -112,7 +137,21 @@ subroutine soca_increment_dirac(self, f_conf)
   integer :: ndir,n, jz
   integer,allocatable :: ixdir(:),iydir(:),izdir(:),ifdir(:)
 
-  type(soca_field), pointer :: field
+  type(atlas_field) :: field
+  real(kind=kind_real), pointer :: fdata(:,:)
+
+  ! Define field name mapping
+  character(len=:), allocatable :: field_names(:)
+  allocate(character(len=50)::field_names(9))
+  field_names(1) = "sea_water_potential_temperature"
+  field_names(2) = "sea_water_salinity"
+  field_names(3) = "sea_surface_height_above_geoid"
+  field_names(4) = "sea_ice_area_fraction"
+  field_names(5) = "sea_ice_thickness"
+  field_names(6) = "mass_concentration_of_chlorophyll_in_sea_water"
+  field_names(7) = "molar_concentration_of_biomass_in_sea_water_in_p_units"
+  field_names(8) = "eastward_sea_water_velocity"
+  field_names(9) = "northward_sea_water_velocity"
 
   ! Get Diracs size
   ndir = f_conf%get_size("ixdir")
@@ -137,43 +176,29 @@ subroutine soca_increment_dirac(self, f_conf)
   isc = self%geom%isc ; iec = self%geom%iec
   jsc = self%geom%jsc ; jec = self%geom%jec
 
-  ! Setup Diracs
-  call self%zeros()
-  do n=1,ndir
-      ! skip this index if not in the bounds of this PE
-      if (ixdir(n) > iec .or. ixdir(n) < isc) cycle
-      if (iydir(n) > jec .or. iydir(n) < jsc) cycle
+  ! set all fields to zero
+  do n=1,self%afieldset%size()
+    field = self%afieldset%field(n)
+    call field%data(fdata)
+    fdata = 0.0
+    call field%final()
+  end do
 
-    ! TODO this list is getting long, change it so that the field name
-    ! is directly used in the yaml?
-    field => null()
-    select case(ifdir(n))
-    case (1)
-      call self%get("sea_water_potential_temperature", field)
-    case (2)
-      call self%get("sea_water_salinity", field)
-    case (3)
-      call self%get("sea_surface_height_above_geoid", field)
-    case (4)
-      call self%get("sea_ice_area_fraction", field)
-    case (5)
-      call self%get("sea_ice_thickness", field)
-    case (6)
-      call self%get("mass_concentration_of_chlorophyll_in_sea_water", field)
-    case (7)
-      call self%get("molar_concentration_of_biomass_in_sea_water_in_p_units", field)
-    case (8)
-      call self%get("eastward_sea_water_velocity", field)
-    case (9)
-      call self%get("northward_sea_water_velocity", field)
-    case default
-      ! TODO print error that out of range
-    end select
-    if (associated(field)) then
-      jz = 1
-      if (field%nz > 1) jz = izdir(n)
-      field%val(ixdir(n),iydir(n),izdir(n)) = 1.0
-    end if
+  ! Setup Diracs
+  do n=1,ndir
+    ! skip this index if not in the bounds of this PE
+     if (ixdir(n) > iec .or. ixdir(n) < isc) cycle
+     if (iydir(n) > jec .or. iydir(n) < jsc) cycle
+
+    ! get field
+    if (ifdir(n) <= 0 .or. ifdir(n) > 9) cycle
+    field = self%afieldset%field(field_names(ifdir(n)))
+    call field%data(fdata)
+
+    ! set dirac
+    fdata(izdir(n), self%geom%atlas_ij2idx(ixdir(n),iydir(n))) = 1.0
+
+    call field%final()
   end do
 end subroutine soca_increment_dirac
 
@@ -186,26 +211,18 @@ subroutine soca_horiz_scales(self, f_conf)
   class(soca_increment),        intent(inout) :: self
   type(fckit_configuration), value, intent(in):: f_conf   !< Configuration
 
-  integer :: i, j, jz
+  integer :: n, i, j
   type(fckit_configuration) :: subconf
-  real(kind=kind_real) :: r_base, r_mult, r_min_grid, r_min, r_max
+  real(kind=kind_real) :: r_base, r_mult, r_min_grid, r_min, r_max, val
 
-  type(atlas_field) :: aField
-  real(kind=kind_real), pointer :: aFieldPtr(:,:)
-  real(kind=kind_real), allocatable :: rossby(:,:)
+  type(atlas_field) :: afield, area, rossby
+  real(kind=kind_real), pointer :: data_field(:,:), data_area(:,:), data_rossby(:,:)
 
-  ! get a copy of the rossby radius from atlas
-  allocate(rossby(self%geom%isd:self%geom%ied,self%geom%jsd:self%geom%jed))
-  rossby = 0.0
-  aField = self%geom%fieldset%field("rossby_radius")
-  call aField%data(aFieldPtr)
-  do j=self%geom%jsc,self%geom%jec
-    do i=self%geom%isc,self%geom%iec
-      rossby(i,j) = aFieldPtr(1, self%geom%atlas_ij2idx(i,j))
-    end do
-  end do
-  call aField%final()
-
+  ! get a copy of the input atlas fields needed
+  rossby = self%geom%fieldset%field("rossby_radius")
+  area = self%geom%fieldset%field("area")
+  call rossby%data(data_rossby)
+  call area%data(data_area)
 
   ! NOTE, this is duplicated code also present in soca_covariance_mod and possibly elsewhere.
   ! This does not belong in soca_increment_mod and should be moved out
@@ -215,29 +232,34 @@ subroutine soca_horiz_scales(self, f_conf)
   ! 2) minimum value of "min grid mult" * grid_size is imposed
   ! 3) min/max are imposed based on "min value" and "max value"
   ! 4) converted from a gaussian sigma to Gaspari-Cohn cutoff distance
-  do i=1,size(self%fields)
+  do n=1, self%afieldset%size()
+    afield = self%afieldset%field(n)
+    call afield%data(data_field)
+
     ! get parameters for correlation lengths
-    call f_conf%get_or_die(trim(self%fields(i)%name), subconf)
+    call f_conf%get_or_die(trim(afield%name()), subconf)
     if (.not. subconf%get("base value", r_base)) r_base = 0.0
     if (.not. subconf%get("rossby mult", r_mult)) r_mult = 0.0
     if (.not. subconf%get("min grid mult", r_min_grid)) r_min_grid = 1.0
     if (.not. subconf%get("min value", r_min)) r_min = 0.0
     if (.not. subconf%get("max value", r_max)) r_max = huge(r_max)
 
-    self%fields(i)%val(:,:,1) = r_base + r_mult*rossby(:,:)
-    if (r_min_grid .gt. 0.0) then
-      self%fields(i)%val(:,:,1) = max(self%fields(i)%val(:,:,1), sqrt(self%geom%cell_area)*r_min_grid)
-    end if
-    self%fields(i)%val(:,:,1) = min(r_max, self%fields(i)%val(:,:,1))
-    self%fields(i)%val(:,:,1) = max(r_min, self%fields(i)%val(:,:,1))
-    self%fields(i)%val(:,:,1) = 3.57_kind_real * self%fields(i)%val(:,:,1) ! convert from gaussian sigma to
-                                                                           ! Gaspari-Cohn half width
-
-    do jz=2,self%fields(i)%nz
-      self%fields(i)%val(:,:,jz) = self%fields(i)%val(:,:,1)
+    do i=1, afield%shape(2)
+      val = r_base + r_mult*data_rossby(1, i)
+      if (r_min_grid > 0.0) val = max(val, sqrt(data_area(1, i))*r_min_grid)
+      val = min(r_max, val)
+      val = max(r_min, val)
+      val = 3.57_kind_real * val ! convert from gaussian sigma to Gaspari-Cohn half width
+      do j=1, afield%shape(1)
+        data_field(j, i) = val
+      end do
     end do
 
+    call afield%set_dirty(rossby%dirty() .or. area%dirty())
+    call afield%final()
   end do
+  call rossby%final()
+  call area%final()
 end subroutine soca_horiz_scales
 
 
@@ -249,14 +271,29 @@ subroutine soca_vert_scales(self, vert)
   class(soca_increment), intent(inout) :: self
   real(kind=kind_real),  intent(in)    :: vert
 
-  integer :: i, jz
+  type(atlas_field) :: field, mask
+  real(kind=kind_real), pointer :: data_field(:,:), data_mask(:,:)
+
+  integer :: n, i, k
+
+  ! get a copy of the input atlas fields needed
+  mask = self%geom%fieldset%field("mask_h")
+  call mask%data(data_mask)
 
   ! compute scales
-  do i=1,size(self%fields)
-    do jz=1,self%fields(i)%nz
-      self%fields(i)%val(:,:,jz) = 3.57_kind_real*self%geom%mask2d(:,:)*vert
+  do n=1,self%afieldset%size()
+    field=self%afieldset%field(n)
+    call field%data(data_field)
+    do i=1,field%shape(2)
+      do k=1,field%shape(1)
+        data_field(k,i) = 3.57_kind_real * data_mask(1,i) * vert
+      end do
     end do
+
+    call field%final()
   end do
+
+  call mask%final()
 end subroutine soca_vert_scales
 ! ------------------------------------------------------------------------------
 
