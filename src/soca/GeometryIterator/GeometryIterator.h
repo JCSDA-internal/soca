@@ -57,6 +57,7 @@ class GeometryIterator:   public util::Printable,
   const Geometry & geom_;
   size_t iIndex_;
   size_t kIndex_;
+  size_t klev_;
 };
 
 }  // namespace soca

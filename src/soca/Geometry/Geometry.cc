@@ -150,23 +150,17 @@ namespace soca {
   // -----------------------------------------------------------------------------
 
   GeometryIterator Geometry::begin() const {
-    ASSERT(IteratorDimension() == 2);  // Modification will be needed for 3D.
-                                       // We don't use 3D right now
-
     // find the first non ghost point
     const auto & ghost = atlas::array::make_view<int, 1>(functionSpace_.ghost());
     size_t idx = 0;
     while (idx < ghost.size() && ghost(idx)) idx++;
-    return GeometryIterator(*this, idx, -1 );
+    return GeometryIterator(*this, idx, 0);
   }
 
   // -----------------------------------------------------------------------------
 
   GeometryIterator Geometry::end() const {
-    ASSERT(IteratorDimension() == 2);  // Modification will be needed for 3D.
-                                       // We don't use 3D right now
-
-    return GeometryIterator(*this, functionSpace_.size(), -1);
+    return GeometryIterator(*this, functionSpace_.size(), 0);
   }
 
   // -----------------------------------------------------------------------------
