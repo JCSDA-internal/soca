@@ -325,7 +325,6 @@ namespace soca {
       } else if (geom_.IteratorDimension() == 3) {
         if (view.shape(1) > iter.k()) {
           // 3D case, only add if this variable has this level
-          // (e.g. don't add surface variables for below-surface iterators))
           values.push_back(view(iter.i(), iter.k()));
         }
       }

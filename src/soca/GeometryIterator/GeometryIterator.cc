@@ -32,10 +32,6 @@ GeometryIterator::GeometryIterator(const Geometry& geom,
 
 // -----------------------------------------------------------------------------
 
-GeometryIterator::~GeometryIterator() {}
-
-// -----------------------------------------------------------------------------
-
 bool GeometryIterator::operator==(const GeometryIterator & other) const {
   return (iIndex_ == other.iIndex_ && kIndex_ == other.kIndex_);
 }
