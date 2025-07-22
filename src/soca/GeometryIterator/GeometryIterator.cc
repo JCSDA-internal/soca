@@ -18,19 +18,17 @@ namespace soca {
 // -----------------------------------------------------------------------------
 
 GeometryIterator::GeometryIterator(const GeometryIterator& iter)
-  : geom_(iter.geom_), iIndex_(iter.iIndex_), kIndex_(iter.kIndex_) {
+  : geom_(iter.geom_), iIndex_(iter.iIndex_), kIndex_(iter.kIndex_),
+    klev_(geom_.fields()["vert_coord"].shape(1)) {
 }
 
 // -----------------------------------------------------------------------------
 
 GeometryIterator::GeometryIterator(const Geometry& geom,
                                    const size_t & iindex, const size_t & kindex)
-  : geom_(geom), iIndex_(iindex), kIndex_(kindex) {
+  : geom_(geom), iIndex_(iindex), kIndex_(kindex),
+    klev_(geom.fields()["vert_coord"].shape(1)) {
 }
-
-// -----------------------------------------------------------------------------
-
-GeometryIterator::~GeometryIterator() {}
 
 // -----------------------------------------------------------------------------
 
@@ -47,12 +45,13 @@ bool GeometryIterator::operator!=(const GeometryIterator & other) const {
 // -----------------------------------------------------------------------------
 
 eckit::geometry::Point3 GeometryIterator::operator*() const {
-  ASSERT(geom_.IteratorDimension() == 2);  // Modification will be needed for 3D.
-                                           // We don't use 3D right now.
   ASSERT(iIndex_ < geom_.functionSpace().size());
+  ASSERT(kIndex_ < klev_);
   const auto & lonlat = geom_.functionSpace().lonlat();
   const auto & vLonLat = atlas::array::make_view<double, 2>(lonlat);
-  return eckit::geometry::Point3(vLonLat(iIndex_, 0), vLonLat(iIndex_, 1), -99999);
+  const auto & vertcoord = atlas::array::make_view<double, 2>(geom_.fields()["vert_coord"]);
+  return eckit::geometry::Point3(vLonLat(iIndex_, 0), vLonLat(iIndex_, 1),
+                                 vertcoord(iIndex_, kIndex_));
 }
 
 // -----------------------------------------------------------------------------
@@ -66,16 +65,20 @@ double GeometryIterator::getFieldValue(const std::string &fieldName) const {
 // -----------------------------------------------------------------------------
 
 GeometryIterator& GeometryIterator::operator++() {
-  ASSERT(geom_.IteratorDimension() == 2);  // Modification will be needed for 3D.
-                                           // We don't use 3D right now.
   const auto & fs = geom_.functionSpace();
   if (iIndex_ >= fs.size()) {
     throw eckit::Exception("Can't go past end on geometry iterator");
   }
-
+  // if needed, iterate over the vertical index
+  if (geom_.IteratorDimension() == 3) {
+    if (kIndex_ < klev_ - 1) {
+      kIndex_++;
+      return *this;
+    }
+    kIndex_ = 0;
+  }
   const auto & ghost = atlas::array::make_view<int, 1>(fs.ghost());
   do { iIndex_++; } while (iIndex_ < fs.size() && ghost(iIndex_));
-
   ASSERT(iIndex_ <= fs.size());
   return *this;
 }

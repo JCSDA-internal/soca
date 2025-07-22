@@ -32,7 +32,7 @@ observation localizations reference:
     gridpoints:
       lons: [-165.0, -175.0, -175.0]
       lats: [ 0.0, -40.0, 0.0]
-      depths: [-99999, -99999, -99999]
+      depths: [1, 1, 1]
     #   depths: [0.0, 34.2859952, 0.0]
     # local nobs: [28, 0, 17]
     local nobs: [66, 0, 49]
