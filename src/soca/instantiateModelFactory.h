@@ -12,17 +12,19 @@
 #include "oops/interface/LinearModelInterface.h"
 #include "oops/interface/ModelInterface.h"
 
-#include "mpasjedi/Model/Model.h"
-#include "mpasjedi/Tlm/Tlm.h"
+#include "soca/LinearModel/OceanIceEmulator/LinearModelOceanIceEmulator.h"
+#include "soca/Model/OceanIceEmulator/ModelOceanIceEmulator.h"
 
 namespace soca {
 
 template <typename MODEL>
 void instantiateModelFactory() {
-  static oops::ModelMaker<MODEL, oops::ModelInterface<MODEL, Model> > makerModelMpas_("MPAS");
+  static oops::ModelMaker<MODEL, oops::ModelInterface<MODEL, ModelOceanIceEmulator> >
+                    makerModelOIE_("ModelOceanIceEmulator");
 
-  static oops::LinearModelMaker<MODEL, oops::LinearModelInterface<MODEL, Tlm> >
-                                                                        makerTLMPAS_("MPASTLM");
+  static oops::LinearModelMaker<MODEL,
+                                oops::LinearModelInterface<MODEL, LinearModelOceanIceEmulator> >
+                     makerTLMOIE_("LinearModelOceanIceEmulator");
 }
 
 }  // namespace soca

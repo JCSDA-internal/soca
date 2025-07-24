@@ -9,9 +9,11 @@
 #include "oops/runs/Run.h"
 #include "test/interface/LinearModel.h"
 #include "saber/oops/instantiateCovarFactory.h"
+#include "soca/instantiateModelFactory.h"
 
 int main(int argc,  char ** argv) {
   oops::Run run(argc, argv);
+  soca::instantiateModelFactory<soca::Traits>();
   saber::instantiateCovarFactory<soca::Traits>();
   test::LinearModel<soca::Traits> tests;
   return run.execute(tests);

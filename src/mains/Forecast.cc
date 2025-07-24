@@ -6,15 +6,15 @@
  */
 
 
-#include "oops/generic/instantiateModelFactory.h"
 #include "oops/runs/Forecast.h"
 #include "oops/runs/Run.h"
 
+#include "soca/instantiateModelFactory.h"
 #include "soca/Traits.h"
 
 int main(int argc,  char ** argv) {
   oops::Run run(argc, argv);
-  oops::instantiateModelFactory<soca::Traits>();
+  soca::instantiateModelFactory<soca::Traits>();
   oops::Forecast<soca::Traits> fc;
   return run.execute(fc);
 }

@@ -16,11 +16,9 @@
 #include <boost/scoped_ptr.hpp>
 
 #include "oops/base/Variables.h"
-#include "oops/interface/ModelBase.h"
 #include "oops/util/Duration.h"
 #include "oops/util/ObjectCounter.h"
 #include "oops/util/Printable.h"
-
 
 // Forward declarations
 namespace eckit {
@@ -41,7 +39,7 @@ namespace soca {
    *  SOCA nonlinear interface model definition and configuration parameters.
    */
 
-  class ModelOceanIceEmulator:public oops::interface::ModelBase<Traits>,
+  class ModelOceanIceEmulator : public util::Printable,
               private util::ObjectCounter<ModelOceanIceEmulator>
   {
    public:
@@ -64,7 +62,7 @@ namespace soca {
     const oops::Variables & variables() const {return vars_;}
 
    private:
-    void print(std::ostream &) const;
+    void print(std::ostream &) const override;
     int keyConfig_;
     util::Duration tstep_;
     const Geometry & geom_;
