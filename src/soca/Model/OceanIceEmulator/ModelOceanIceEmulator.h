@@ -30,7 +30,6 @@ namespace soca {
   class Geometry;
   class ModelBias;
   class State;
-  struct Traits;
 }
 
 // -----------------------------------------------------------------------------

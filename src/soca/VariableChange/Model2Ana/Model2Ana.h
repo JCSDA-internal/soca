@@ -14,7 +14,6 @@
 #include "eckit/config/Configuration.h"
 #include "oops/base/Variables.h"
 #include "soca/Geometry/Geometry.h"
-#include "soca/Traits.h"
 
 #include "soca/VariableChange/Base/VariableChangeBase.h"
 

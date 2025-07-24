@@ -26,7 +26,6 @@
 #include "soca/LinearModel/OceanIceEmulator/ModelTrajectory.h"
 #include "soca/ModelBias/ModelBias.h"
 #include "soca/State/State.h"
-#include "soca/Traits.h"
 
 // Forward declarations
 namespace eckit {
@@ -39,7 +38,6 @@ namespace soca {
   class ModelTrajectory;
   class State;
   class Increment;
-  struct Traits;
 }
 
 // -----------------------------------------------------------------------------

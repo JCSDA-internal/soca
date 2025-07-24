@@ -16,8 +16,6 @@
 #include "oops/util/parameters/Parameters.h"
 #include "oops/util/parameters/RequiredParameter.h"
 
-#include "soca/Traits.h"
-
 #include "soca/VariableChange/Base/VariableChangeBase.h"
 
 namespace soca {
