@@ -105,6 +105,7 @@ namespace soca {
       /// Data
    private:
       F90flds keyFlds_;
+      const size_t nlevs_;
   };
   // -----------------------------------------------------------------------------
 

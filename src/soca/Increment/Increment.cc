@@ -42,7 +42,7 @@ namespace soca {
   // -----------------------------------------------------------------------------
   Increment::Increment(const Geometry & geom, const oops::Variables & vars,
                        const util::DateTime & vt)
-    : Fields(geom, vars, vt)
+    : Fields(geom, vars, vt), nlevs_(geom.fields()["vert_coord"].shape(1))
   {
     // For now, creation of the fields and their accompanying metadata is done on
     // the Fortran side. This will be moved to the C++ side at a later date.
@@ -297,7 +297,7 @@ namespace soca {
     if (geom_.IteratorDimension() == 2) {
       size_t idx = 0;
       for (const auto & var : vars_.variables()) {
-        varlens[idx++] = fieldSet_.field(var).shape(1);
+        varlens[idx++] = nlevs_;
       }
       totalLen = std::accumulate(varlens.begin(), varlens.end(), 0);
     } else if (geom_.IteratorDimension() == 3) {
@@ -321,6 +321,9 @@ namespace soca {
         // 2D case, iterate over levels
         for (size_t lvl = 0; lvl < view.shape(1); lvl++) {
           values.push_back(view(iter.i(), lvl));
+        }
+        for (size_t lvl = view.shape(1); lvl < nlevs_; lvl++) {
+          values.push_back(0.0);
         }
       } else if (geom_.IteratorDimension() == 3) {
         if (view.shape(1) > iter.k()) {
@@ -346,6 +349,7 @@ namespace soca {
         for (size_t lvl = 0; lvl < view.shape(1); lvl++) {
           view(iter.i(), lvl) = vals[idx++];
         }
+        idx += (nlevs_ - view.shape(1));
       } else if (geom_.IteratorDimension() == 3) {
         // 3D case, only set if this variable has this level
         if (view.shape(1) > iter.k()) {
