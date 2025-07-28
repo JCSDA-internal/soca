@@ -62,6 +62,7 @@ set( soca_test_input
   testinput/geometry_iterator_2d.yml
   testinput/geometry_iterator_3d.yml
   testinput/geometry.yml
+  testinput/getkf.yml
   testinput/getvalues.yml
   testinput/gridgen.yml
   testinput/hofx_3d.yml
@@ -132,6 +133,7 @@ set( soca_test_ref
   testref/forecast_identity.test
   testref/forecast_pseudo.test
   testref/gen_hybrid_linear_model_coeffs.test
+  testref/getkf.test
   testref/gridgen.test
   testref/hofx_3d.test
   testref/hofx_4d_pseudo.test
@@ -780,6 +782,10 @@ soca_add_test( NAME letkf_split_solver
                TEST_DEPENDS test_soca_gridgen
                             test_soca_letkf_split_observer )
 
+soca_add_test( NAME getkf
+               EXE  soca_letkf.x
+              #  NOTRAPFPE
+               TEST_DEPENDS test_soca_gridgen )
 
 # other executables that depends on increments from 3dvar_diffusion run
 #---------------------------------------------------------------------------------------------------
