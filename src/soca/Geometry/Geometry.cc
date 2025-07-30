@@ -115,7 +115,6 @@ namespace soca {
     // Set ATLAS function space in Fortran, and either generate some of the atlas fields
     // if "gen" is set, otherwise those fields will be read in from the gridspec file
     soca_geo_init_atlas_f90(keyGeom_, functionSpace_.get(), fields_.get(), &conf, gen);
-    fields_.metadata().set("level for 2d variables", "top");
 
     // fill in parts of the fieldset from the C++ side here
     if (gen) {

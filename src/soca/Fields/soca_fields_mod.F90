@@ -1049,6 +1049,7 @@ subroutine soca_fields_update_fields(self, vars)
       if (metadata%masked) then
         call ameta%set('mask', 'interp_mask')
       end if
+      call ameta%set('nearest 3d level', 'top')
       call ameta%final()
 
 
