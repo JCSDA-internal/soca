@@ -51,6 +51,7 @@ set( soca_test_input
   testinput/ensmeanandvariance.yml
   testinput/enspert.yml
   testinput/ensrecenter.yml
+  testinput/ensrecenter_par.yml
   testinput/forecast_identity.yml
   testinput/forecast_mom6_bgc.yml
   testinput/forecast_mom6_ens1.yml
@@ -129,6 +130,7 @@ set( soca_test_ref
   testref/ensmeanandvariance.test
   testref/enspert.test
   testref/ensrecenter.test
+  testref/ensrecenter_par.test
   testref/forecast_identity.test
   testref/forecast_pseudo.test
   testref/gen_hybrid_linear_model_coeffs.test
@@ -542,6 +544,10 @@ soca_add_test( NAME ensmeanandvariance
 
 soca_add_test( NAME ensrecenter
                EXE  soca_ensrecenter.x
+               TEST_DEPENDS test_soca_gridgen )
+
+soca_add_test( NAME ensrecenter_par
+               EXE  soca_ensrecenter_par.x
                TEST_DEPENDS test_soca_gridgen )
 
 soca_add_test( NAME hybridgain

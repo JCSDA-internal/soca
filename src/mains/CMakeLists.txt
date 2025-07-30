@@ -50,6 +50,11 @@ ecbuild_add_executable( TARGET  soca_ensrecenter.x
                         LIBS    soca
                       )
 
+ecbuild_add_executable( TARGET  soca_ensrecenter_par.x
+                        SOURCES ParallelEnsRecenter.cc
+                        LIBS    soca
+                      )
+
 ecbuild_add_executable( TARGET  soca_hybridgain.x
                         SOURCES HybridGain.cc
                         LIBS    soca
