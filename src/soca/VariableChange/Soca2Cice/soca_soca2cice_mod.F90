@@ -16,8 +16,8 @@ use icepack_itd, only: icepack_init_itd, cleanup_itd
 use icepack_warnings, only: icepack_warnings_flush, icepack_warnings_aborted
 use icepack_tracers, only: icepack_init_tracer_sizes, icepack_init_tracer_indices
 use icepack_parameters, only: icepack_init_parameters, icepack_recompute_constants
-use icepack_parameters, only: ktherm
-use icepack_therm_shared, only: icepack_liquidus_temperature, l_brine
+use icepack_parameters, only: tfrz_option, ktherm
+use icepack_therm_shared, only: icepack_sea_freezing_temperature, l_brine
 
 use soca_geom_mod, only: soca_geom
 use soca_state_mod, only: soca_state
@@ -52,6 +52,8 @@ type, public :: soca_soca2cice
    integer :: myrank
    integer :: ncat, ni, nj, ice_lev, sno_lev, shuffle_n
    real(kind=kind_real) :: dt
+   real(kind=kind_real) :: min_aice, min_vice
+   character(len=:), allocatable :: tfrz_option
    character(len=:), allocatable :: rst_filename
    character(len=:), allocatable :: rst_out_filename
    type(cice_state) :: cice
@@ -83,10 +85,9 @@ subroutine soca_soca2cice_setup(self, geom)
   self%myrank = geom%f_comm%rank()
 
   ! Initialize icepack's global variables ...
-  call icepack_init_parameters()
+  call icepack_init_parameters(ktherm_in = 2, tfrz_option_in = trim(self%tfrz_option))
   call icepack_recompute_constants()
   l_brine = .true.
-  ktherm = 2
   call icepack_init_tracer_sizes(ncat_in=self%ncat, nilyr_in=self%ice_lev, nslyr_in=self%sno_lev)
   ! initialize cice
   call self%cice%init(geom, self%rst_filename, self%rst_out_filename, self%ice_lev, self%sno_lev)
@@ -152,7 +153,7 @@ subroutine check_ice_bounds(self, geom, xm)
   call hsno%data(data_hsno)
 
   ! check seaice fraction bounds
-  where (data_aice<0_kind_real)
+  where (data_aice<self%min_aice)
      data_aice = 0_kind_real
   end where
   where (data_aice>1_kind_real)
@@ -257,7 +258,7 @@ subroutine shuffle_ice(self, geom, xm)
            self%cice%qice(i,j,:,:) = 0_kind_real
            self%cice%sice(i,j,:,:) = 0_kind_real
            self%cice%qsno(i,j,:,:) = 0_kind_real
-           Tf = icepack_liquidus_temperature(data_socn(1, atlas_idx))
+           Tf = icepack_sea_freezing_temperature(data_socn(1, atlas_idx))
            self%cice%tsfcn(i,j,:) = Tf
            ! adjust SST (when we have some data) if ice is removed and SST is freezing
            if (update_sst .and. (cice_in%aice(i,j) > 0.0) .and. (data_tocn(1,atlas_idx)<=Tf)) then
@@ -307,7 +308,7 @@ subroutine shuffle_ice(self, geom, xm)
         ! adjust SST when ice is added
         if (update_sst .and. (self%cice%aice(i, j) > 0.0) .and. (cice_in%aice(i,j) == 0.0)) then
            local_aice = self%cice%aice(i, j)
-           sst = local_aice * icepack_liquidus_temperature(data_socn(1, atlas_idx)) + &
+           sst = local_aice * icepack_sea_freezing_temperature(data_socn(1, atlas_idx)) + &
                  (1.0_kind_real - local_aice) * data_tocn(1, atlas_idx)
            data_tocn(1, atlas_idx) = sst
         endif
@@ -422,7 +423,7 @@ subroutine cleanup_ice(self, geom, xm)
 
         ! call icepack_cleanup_itd: rebins thickness categories if necessary,
         ! eliminates very small ice areas while conserving mass and energy
-        Tf = icepack_liquidus_temperature(data_socn(1, idx))
+        Tf = icepack_sea_freezing_temperature(data_socn(1, idx))
         call cleanup_itd(self%dt, h_bounds, self%cice%aicen(i,j,:), tracers, &
                          self%cice%vicen(i,j,:), self%cice%vsnon(i,j,:), &
                          ! ice and total water concentration are computed in the call using aicen
@@ -446,10 +447,10 @@ subroutine cleanup_ice(self, geom, xm)
         if (icepack_warnings_aborted()) then
            call abor1_ftn("Soca2Cice: icepack aborted during cleanup_itd")
         endif
-        ! remove ice if ice volume is less than 0.00001: empirical hack
+        ! remove ice if ice volume is less than min_vice: empirical hack
         ! https://github.com/NOAA-EMC/GDASApp/issues/1575
         do k = 1, self%ncat
-          if ((self%cice%aicen(i,j,k) > 0.0) .and. (self%cice%vicen(i,j,k) < 0.00001)) then
+          if ((self%cice%aicen(i,j,k) > 0.0) .and. (self%cice%vicen(i,j,k) < self%min_vice)) then
             count_thinice = count_thinice + 1
             self%cice%aicen(i,j,k) = 0_kind_real
             self%cice%vicen(i,j,k) = 0_kind_real

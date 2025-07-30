@@ -290,24 +290,43 @@ namespace soca {
   // -----------------------------------------------------------------------------
 
   oops::LocalIncrement Increment::getLocal(const GeometryIterator & iter) const {
-    ASSERT(geom_.IteratorDimension() == 2);  // Change will be needed for 3D.
-                                             // We don't use 3D right now.
     std::vector<int> varlens(vars_.size());
-
     // count space needed
-    size_t idx = 0;
-    for (const auto & var : vars_.variables()) {
-      varlens[idx++] = fieldSet_.field(var).shape(1);
+    size_t totalLen = 0;
+    // for 2D, we need to count the number of levels for each variable
+    if (geom_.IteratorDimension() == 2) {
+      size_t idx = 0;
+      for (const auto & var : vars_.variables()) {
+        varlens[idx++] = fieldSet_.field(var).shape(1);
+      }
+      totalLen = std::accumulate(varlens.begin(), varlens.end(), 0);
+    } else if (geom_.IteratorDimension() == 3) {
+      // for 3D, we need the number of variables that have this level
+      size_t idx = 0;
+      for (const auto & var : vars_.variables()) {
+        varlens[idx++] = 0;
+        if (fieldSet_.field(var).shape(1) > iter.k()) {
+          totalLen++;
+          varlens[idx] = 1;
+        }
+      }
     }
-    size_t totalLen = std::accumulate(varlens.begin(), varlens.end(), 0);
 
     // fill in vector
     std::vector<double> values;
     values.reserve(totalLen);
     for (const auto & var : vars_.variables()) {
       const auto & view = atlas::array::make_view<double, 2>(fieldSet_.field(var));
-      for (size_t lvl = 0; lvl < view.shape(1); lvl++) {
-        values.push_back(view(iter.i(), lvl));
+      if (geom_.IteratorDimension() == 2) {
+        // 2D case, iterate over levels
+        for (size_t lvl = 0; lvl < view.shape(1); lvl++) {
+          values.push_back(view(iter.i(), lvl));
+        }
+      } else if (geom_.IteratorDimension() == 3) {
+        if (view.shape(1) > iter.k()) {
+          // 3D case, only add if this variable has this level
+          values.push_back(view(iter.i(), iter.k()));
+        }
       }
     }
     ASSERT(values.size() == totalLen);
@@ -317,14 +336,21 @@ namespace soca {
   // -----------------------------------------------------------------------------
 
   void Increment::setLocal(const oops::LocalIncrement & values, const GeometryIterator & iter) {
-    ASSERT(geom_.IteratorDimension() == 2);  // changes need to be made here for 3D
     const std::vector<double> & vals = values.getVals();
     size_t idx = 0;
     for (const auto & var : vars_.variables()) {
       auto field = fieldSet_.field(var);
       auto view = atlas::array::make_view<double, 2>(field);
-      for (size_t lvl = 0; lvl < view.shape(1); lvl++) {
-        view(iter.i(), lvl) = vals[idx++];
+      if (geom_.IteratorDimension() == 2) {
+        // 2D case, iterate over levels
+        for (size_t lvl = 0; lvl < view.shape(1); lvl++) {
+          view(iter.i(), lvl) = vals[idx++];
+        }
+      } else if (geom_.IteratorDimension() == 3) {
+        // 3D case, only set if this variable has this level
+        if (view.shape(1) > iter.k()) {
+          view(iter.i(), iter.k()) = vals[idx++];
+        }
       }
       field.set_dirty();
     }

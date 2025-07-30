@@ -10,6 +10,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <iostream>
 
 #include "torch/torch.h"
 
@@ -27,15 +28,16 @@ namespace soca {
     MLJac(const eckit::Configuration & config,
           const oops::FieldSet3D & xb,
           atlas::FieldSet jacobian,
-          const oops::GeometryData & GeometryData,
+          const oops::GeometryData & geometryData,
           const eckit::mpi::Comm & comm) :
       iceEmulArctic_(getConf(config, "arctic"), comm),
       iceEmulAntarctic_(getConf(config, "antarctic"), comm)
     {
       oops::Log::trace() << "In MLJack" << std::endl;
       // Geometry info
-      const auto lonlat =
-        atlas::array::make_view<double, 2>(GeometryData.functionSpace().lonlat());
+      const auto lonlat = atlas::array::make_view<double, 2>(geometryData.functionSpace().lonlat());
+      const auto & mask = atlas::array::make_view<double, 2>(geometryData.getField("interp_mask"));
+      const auto & ghost = atlas::array::make_view<int, 1>(geometryData.functionSpace().ghost());
 
       // Pointers to the background
       auto cicen = atlas::array::make_view<double, 2>(xb["sea_ice_area_fraction"]);
@@ -57,6 +59,8 @@ namespace soca {
       torch::Tensor pattern = torch::zeros({iceEmulArctic_.getInputSize()});
       const int nnodes = xb["sea_water_potential_temperature"].shape(0);
       for (atlas::idx_t jnode = 0; jnode < nnodes; ++jnode) {
+        if ((ghost(jnode)) | (mask(jnode, 0) == 0) |
+            (abs(lonlat(jnode, 1)) <= 40.0)) continue;
         pattern[0] = tair(jnode, 0);
         pattern[1] = tsfc(jnode, 0);
         pattern[2] = sst(jnode, 0);

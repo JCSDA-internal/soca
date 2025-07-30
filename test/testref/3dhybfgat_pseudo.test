@@ -1,5 +1,5 @@
-CostJb   : Nonlinear Jb = 0.0000000000000000e+00
 CostJo   : Nonlinear Jo(ADT) = 2.2476814235841482e+02, nobs = 99, Jo/n = 2.2703852763476244e+00, err = 1.0000000149011613e-01
+CostJb   : Nonlinear Jb = 0.0000000000000000e+00
 CostFunction: Nonlinear J = 2.2476814235841482e+02
 RPCGMinimizer: reduction in residual norm = 1.3279821542958451e-02
 CostFunction::addIncrement: Analysis: 
@@ -14,9 +14,6 @@ sea_water_potential_temperature   min=-1.8651223187175390   max=31.8538874655882
        sea_water_cell_thickness   min=0.0009999999999977   max=1345.6400000000007822   mean=128.6278147393432505
     ocean_mixed_layer_thickness   min=2.2805545996611403   max=4593.1693891607183104   mean=191.0555656854947131
                 sea_water_depth   min=2.2805545996611403   max=5658.3062783710120129   mean=1200.5220907214948056
-
-
-
-CostJb   : Nonlinear Jb = 6.4429683342020123
 CostJo   : Nonlinear Jo(ADT) = 113.2961818352593468, nobs = 99, Jo/n = 1.1444058771238317, err = 0.1000000014901161
+CostJb   : Nonlinear Jb = 6.4429683342020123
 CostFunction: Nonlinear J = 119.7391501694613538

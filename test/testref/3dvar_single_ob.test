@@ -1,5 +1,5 @@
-CostJb   : Nonlinear Jb = 0.0000000000000000e+00
 CostJo   : Nonlinear Jo(SeaSurfaceTemp) = 2.3781317697932968e+09, nobs = 1, Jo/n = 2.3781317697932968e+09, err = 2.9000000722589903e-05
+CostJb   : Nonlinear Jb = 0.0000000000000000e+00
 CostFunction: Nonlinear J = 2.3781317697932968e+09
 RPCGMinimizer: reduction in residual norm = 2.0050958797774292e-16
 CostFunction::addIncrement: Analysis: 
@@ -18,9 +18,6 @@ CostFunction::addIncrement: Analysis:
      us   min=0.0043958698226386   max=0.0196578730801191   mean=0.0086443089692577
     mld   min=2.2854716757984130   max=4593.1533423819937525   mean=192.4109073940401515
 layer_depth   min=2.2854716757984130   max=5658.3057467114012979   mean=1200.5229536158392420
-
-
-
-CostJb   : Nonlinear Jb = 56.8285055591061621
 CostJo   : Nonlinear Jo(SeaSurfaceTemp) = 0.0000000018654785, nobs = 1, Jo/n = 0.0000000018654785, err = 0.0000290000007226
+CostJb   : Nonlinear Jb = 56.8285055591061621
 CostFunction: Nonlinear J = 56.8285055609716423

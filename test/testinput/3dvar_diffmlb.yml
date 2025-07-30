@@ -54,21 +54,24 @@ cost function:
           - sea_water_potential_temperature
           - sea_water_salinity
           horizontal:
-            filepath: data_generated/parameters_diffusion/hz_smaller
+            filepath: data_generated/parameters_diffusion_lowres/hz_smaller
           vertical:
             levels: 25
-            filepath: data_generated/parameters_diffusion/vt_5lvls
+            filepath: data_generated/parameters_diffusion_lowres/vt_5lvls
         - variables:
           - sea_ice_area_fraction
           - sea_ice_thickness
           - sea_ice_snow_thickness
           - sea_surface_height_above_geoid
           horizontal:
-            filepath: data_generated/parameters_diffusion/hz_smaller
+            filepath: data_generated/parameters_diffusion_lowres/hz_smaller
 
     saber outer blocks:
     - saber block name: MLBalance
-      geometry: *geom
+      geometry:
+        geom_grid_file: data_static/36x17x25/soca_gridspec.nc
+        mom6_input_nml: data_static/36x17x25/input.nml
+        fields metadata: data_static/fields_metadata.yml
       ML Balances:
         arctic:
           ffnn:

@@ -80,8 +80,12 @@ subroutine soca_soca2cice_setup_f90(c_key_self, c_conf, c_key_geom) &
   call f_conf%get_or_die("antarctic.rescale prior.min hsno", self%antarctic%rescale_min_hsno)
   call f_conf%get_or_die("antarctic.update SST", self%antarctic%update_sst)
   call f_conf%get_or_die("antarctic.max positive SST update", self%antarctic%max_update_sst)
-  ! icepack time step for rebinning
+  ! icepack parameters
   call f_conf%get_or_die("icepack time step", self%dt)
+  call f_conf%get_or_die("icepack tfrz_option", self%tfrz_option)
+  ! minimum allowable ice concentration and volume
+  call f_conf%get_or_die("min aice", self%min_aice)
+  call f_conf%get_or_die("min vice", self%min_vice)
   ! shuffle stencil size
   if (f_conf%has("shuffle stencil depth")) then
     call f_conf%get_or_die("shuffle stencil depth", self%shuffle_n)
