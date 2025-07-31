@@ -413,4 +413,19 @@ namespace soca {
 
   // -----------------------------------------------------------------------------
 
+  void Increment::updateFields(const Increment & other) {
+    ASSERT(geom_ == other.geom_);
+    ASSERT(other.variables() <= vars_);
+    for (const auto & otherField : other.fieldSet_) {
+      const auto otherView = atlas::array::make_view<double, 2>(otherField);
+      auto field = fieldSet_.field(otherField.name());
+      auto view = atlas::array::make_view<double, 2>(field);
+      for (int jnode = 0; jnode < view.shape(0); ++jnode) {
+        for (int jlevel = 0; jlevel < view.shape(1); ++jlevel) {
+          view(jnode, jlevel) = otherView(jnode, jlevel);
+        }
+      }
+      field.set_dirty(field.dirty() || otherField.dirty());
+    }
+  }
 }  // namespace soca

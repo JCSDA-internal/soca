@@ -546,6 +546,10 @@ soca_add_test( NAME ensrecenter
                EXE  soca_ensrecenter.x
                TEST_DEPENDS test_soca_gridgen )
 
+file(COPY ${CMAKE_CURRENT_BINARY_DIR}/data_static/72x35x25/restarts/iced.2018-04-15-00000.nc
+     DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/data_generated/ensrecenter_par/mem.1 )
+file(COPY ${CMAKE_CURRENT_BINARY_DIR}/data_static/72x35x25/restarts/iced.2018-04-15-00000.nc
+     DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/data_generated/ensrecenter_par/mem.2 )
 soca_add_test( NAME ensrecenter_par
                EXE  soca_ensrecenter_par.x
                TEST_DEPENDS test_soca_gridgen )

@@ -98,6 +98,11 @@ namespace soca {
       /// Update the fields in variable changes
       void updateFields(const oops::Variables &);
 
+      /// Update fields using all the fields in the \p other Increment.
+      /// The variables in the \p other Increment must be a subset of the
+      /// variables in this Increment.
+      void updateFields(const Increment & other);
+
       /// Other
       int & toFortran() {return keyFlds_;}
       const int & toFortran() const {return keyFlds_;}
