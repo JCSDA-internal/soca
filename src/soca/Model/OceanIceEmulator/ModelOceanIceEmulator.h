@@ -11,6 +11,7 @@
 #include <memory>
 #include <ostream>
 #include <string>
+#include <vector>
 
 #include <boost/noncopyable.hpp>
 #include <boost/scoped_ptr.hpp>
@@ -44,6 +45,7 @@ namespace soca {
   {
    public:
     static const std::string classname() {return "soca::ModelOceanIceEmulator";}
+    static std::vector<std::string> names() {return {"ModelOceanIceEmulator"};}
 
     ModelOceanIceEmulator(const Geometry &, const eckit::Configuration &);
     ~ModelOceanIceEmulator();

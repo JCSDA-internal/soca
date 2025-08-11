@@ -10,13 +10,11 @@
 #include "oops/runs/GenEnsPertB.h"
 #include "oops/runs/Run.h"
 
-#include "soca/instantiateModelFactory.h"
 #include "soca/Traits.h"
 
 int main(int argc,  char ** argv) {
   oops::Run run(argc, argv);
   saber::instantiateCovarFactory<soca::Traits>();
-  soca::instantiateModelFactory<soca::Traits>();
   oops::GenEnsPertB<soca::Traits> ensgen;
   return run.execute(ensgen);
 }

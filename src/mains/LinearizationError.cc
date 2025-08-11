@@ -9,12 +9,10 @@
 #include "oops/runs/Run.h"
 #include "oops/runs/LinearizationError.h"
 
-#include "soca/instantiateModelFactory.h"
 #include "soca/Traits.h"
 
 int main(int argc,  char ** argv) {
   oops::Run run(argc, argv);
-  soca::instantiateModelFactory<soca::Traits>();
   oops::LinearizationError<soca::Traits> linearizationError;
   return run.execute(linearizationError);
 }

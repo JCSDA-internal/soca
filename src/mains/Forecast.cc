@@ -9,12 +9,10 @@
 #include "oops/runs/Forecast.h"
 #include "oops/runs/Run.h"
 
-#include "soca/instantiateModelFactory.h"
 #include "soca/Traits.h"
 
 int main(int argc,  char ** argv) {
   oops::Run run(argc, argv);
-  soca::instantiateModelFactory<soca::Traits>();
   oops::Forecast<soca::Traits> fc;
   return run.execute(fc);
 }

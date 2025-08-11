@@ -12,6 +12,7 @@
 #include <memory>
 #include <ostream>
 #include <string>
+#include <vector>
 
 #include <boost/noncopyable.hpp>
 #include <boost/scoped_ptr.hpp>
@@ -54,6 +55,7 @@ class LinearModelOceanIceEmulator: public util::Printable,
 {
  public:
   static const std::string classname() {return "soca::LinearModelOceanIceEmulator";}
+  static std::vector<std::string> names() {return {"LinearModelOceanIceEmulator"};}
 
   LinearModelOceanIceEmulator(const Geometry &, const eckit::Configuration &);
   ~LinearModelOceanIceEmulator();

@@ -6,7 +6,6 @@
 # only the source code in this directory, all other files
 # are handled through the subdirectory's respective CMakeLists.txt
 list( APPEND soca_src_files
-  instantiateModelFactory.h
   Traits.h
   Fortran.h
 )
