@@ -105,6 +105,6 @@ analysis postprocessing:
     - sea_ice_snow_thickness
 
 test:
-  reference filename: testref/ensrecenter_par.test
-  test output filename: testoutput/ensrecenter_par.test
+  reference filename: testref/ensanpproc.test
+  test output filename: testoutput/ensanpproc.test
   float absolute tolerance: 1e-4

@@ -50,8 +50,8 @@ ecbuild_add_executable( TARGET  soca_ensrecenter.x
                         LIBS    soca
                       )
 
-ecbuild_add_executable( TARGET  soca_ensrecenter_par.x
-                        SOURCES ParallelEnsRecenter.cc
+ecbuild_add_executable( TARGET  soca_anpproc.x
+                        SOURCES AnalysisPostproc.cc
                         LIBS    soca
                       )
 

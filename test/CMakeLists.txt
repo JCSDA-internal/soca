@@ -44,6 +44,7 @@ set( soca_test_input
   testinput/dirac_soca_cor_nicas_scales.yml
   testinput/dirac_soca_cov.yml
   testinput/dirac_socahyb_cov.yml
+  testinput/ensanpproc.yml
   testinput/enshofx_1.yml
   testinput/enshofx_2.yml
   testinput/enshofx_3.yml
@@ -51,7 +52,6 @@ set( soca_test_input
   testinput/ensmeanandvariance.yml
   testinput/enspert.yml
   testinput/ensrecenter.yml
-  testinput/ensrecenter_par.yml
   testinput/forecast_identity.yml
   testinput/forecast_mom6_bgc.yml
   testinput/forecast_mom6_ens1.yml
@@ -126,11 +126,11 @@ set( soca_test_ref
   testref/dirac_soca_cor_nicas_scales.test
   testref/dirac_soca_cov.test
   testref/dirac_socahyb_cov.test
+  testref/ensanpproc.test
   testref/enshofx.test
   testref/ensmeanandvariance.test
   testref/enspert.test
   testref/ensrecenter.test
-  testref/ensrecenter_par.test
   testref/forecast_identity.test
   testref/forecast_pseudo.test
   testref/gen_hybrid_linear_model_coeffs.test
@@ -547,15 +547,15 @@ soca_add_test( NAME ensrecenter
                TEST_DEPENDS test_soca_gridgen )
 
 file(COPY ${CMAKE_CURRENT_BINARY_DIR}/data_static/72x35x25/restarts/iced.2018-04-15-00000.nc
-     DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/data_generated/ensrecenter_par/mem.1 )
+     DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/data_generated/ensanpproc/mem.1 )
 file(COPY ${CMAKE_CURRENT_BINARY_DIR}/data_static/72x35x25/restarts/iced.2018-04-15-00000.nc
-     DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/data_generated/ensrecenter_par/mem.2 )
+     DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/data_generated/ensanpproc/mem.2 )
 file(COPY ${CMAKE_CURRENT_BINARY_DIR}/data_static/72x35x25/restarts/iced.2018-04-15-00000.nc
-     DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/data_generated/ensrecenter_par/mem.3 )
+     DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/data_generated/ensanpproc/mem.3 )
 file(COPY ${CMAKE_CURRENT_BINARY_DIR}/data_static/72x35x25/restarts/iced.2018-04-15-00000.nc
-     DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/data_generated/ensrecenter_par/mem.4 )
-soca_add_test( NAME ensrecenter_par
-               EXE  soca_ensrecenter_par.x
+     DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/data_generated/ensanpproc/mem.4 )
+soca_add_test( NAME ensanpproc
+               EXE  soca_anpproc.x
                TEST_DEPENDS test_soca_gridgen )
 
 soca_add_test( NAME hybridgain

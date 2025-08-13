@@ -47,7 +47,7 @@ namespace soca {
 /// - saves final increments and optionally ensemble mean/variance statistics
 /// The states are processed in parallel, with each MPI task handling a subset of
 /// ensemble members.
-class ParallelEnsRecenter : public oops::Application {
+class AnalysisPostproc : public oops::Application {
   typedef oops::Geometry<soca::Traits>       Geometry_;
   typedef oops::Increment<soca::Traits>      Increment_;
   typedef oops::Increment4D<soca::Traits>    Increment4D_;
@@ -58,9 +58,9 @@ class ParallelEnsRecenter : public oops::Application {
  public:
   // -----------------------------------------------------------------------------
 
-  explicit ParallelEnsRecenter(const eckit::mpi::Comm & comm = oops::mpi::world())
+  explicit AnalysisPostproc(const eckit::mpi::Comm & comm = oops::mpi::world())
     : Application(comm) {}
-  static const std::string classname() {return "soca::ParallelEnsRecenter";}
+  static const std::string classname() {return "soca::AnalysisPostproc";}
 
   // -----------------------------------------------------------------------------
 
@@ -290,7 +290,7 @@ class ParallelEnsRecenter : public oops::Application {
   }
   // -----------------------------------------------------------------------------
   std::string appname() const {
-    return "soca::ParallelEnsRecenter";
+    return "soca::AnalysisPostproc";
   }
 };
 
