@@ -73,6 +73,9 @@ namespace soca {
       void ones();
       using Fields::zero;
       void zero(const util::DateTime &);
+      /// @brief  Set fields for specified variables to zero
+      /// @param  variables to set to zero
+      void zero(const oops::Variables &);
       Increment & operator =(const Increment &);
       Increment & operator+=(const Increment &);
       Increment & operator-=(const Increment &);

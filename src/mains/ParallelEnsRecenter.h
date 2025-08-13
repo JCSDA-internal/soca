@@ -33,15 +33,20 @@ namespace soca {
 
 // -----------------------------------------------------------------------------
 /// \brief Application to recenter an ensemble of SOCA backgrounds around a
-/// deterministic state. The application reads an ensemble of states and a
-/// deterministic trajectory, and computes:
-/// - ocean recentering increment for MOM6 IAU: deterministic state minus ensemble mean,
-///   with appended vertical geometry. All ensemble members see the same recentering
-///   increment.
+/// deterministic state with optional ensemble inflation. The application reads
+/// an ensemble of states and a deterministic trajectory, and computes:
+/// - ensemble perturbations: ensemble members minus ensemble mean
+/// - optional scalar or field-based inflation of ensemble perturbations
+/// - ocean recentering increments for MOM6 IAU: deterministic state minus ensemble
+///   mean plus inflation effects. Postprocessing includes appending vertical
+///   geometry needed by MOM6 IAU, optional zeroing of specified variables and
+///   optional precision adjustment. If there's no inflation, all ensemble members
+///   see the same recentering increment.
 /// - ensemble of recentered states for CICE restarts: ensemble member + recentering
-///   increment, postprocessed with Soca2Cice.
-/// The states are processed in parallel, with each MPI task handling a single
-/// ensemble member.
+///   increment, postprocessed with Soca2Cice variable change.
+/// - saves final increments and optionally ensemble mean/variance statistics
+/// The states are processed in parallel, with each MPI task handling a subset of
+/// ensemble members.
 class ParallelEnsRecenter : public oops::Application {
   typedef oops::Geometry<soca::Traits>       Geometry_;
   typedef oops::Increment<soca::Traits>      Increment_;
@@ -189,21 +194,10 @@ class ParallelEnsRecenter : public oops::Application {
 
     if (fullConfig.has("increment postprocessing")) {
       const eckit::LocalConfiguration incPostprocConfig(fullConfig, "increment postprocessing");
-      // Add vertical geometry for MOM6 IAU
-      const eckit::LocalConfiguration vertGeomConfig(incPostprocConfig, "vertical geometry");
-      const util::DateTime date(fullConfig.getString("date"));
-      const std::string layerVarName = incPostprocConfig.getString("layers variable");
-      oops::Variables layerVar({layerVarName});
-      Increment_ vertGeom(geometry, layerVar, date);
-      vertGeom.read(vertGeomConfig);
-      socaIncrVars += layerVar;
-      // Update the recentering increment with the vertical geometry
-      for (size_t jj = 0; jj < incs.size(); ++jj) {
-        // Note: these are soca::Increment specific methods
-        incs[jj].increment().updateFields(socaIncrVars);
-        incs[jj].increment().updateFields(vertGeom.increment());
-      }
-      oops::Log::info() << "Increments after inflation and recentering with vertical geometry: "
+      postprocessIncrements(incs, incPostprocConfig);
+      oops::Log::info() << "Increments after inflation and recentering and postprocessing: "
+                        << incs << std::endl;
+      oops::Log::test() << "Increments after inflation and recentering and postprocessing: "
                         << incs << std::endl;
     }
 
@@ -237,6 +231,63 @@ class ParallelEnsRecenter : public oops::Application {
   }
 
  private:
+  void postprocessIncrements(IncrementSet_ & incs,
+                             const eckit::Configuration & incPostprocConfig) const {
+    // Add vertical geometry for MOM6 IAU
+    if (incPostprocConfig.has("append vertical geometry")) {
+      const eckit::LocalConfiguration vertGeomConfig(
+        incPostprocConfig, "append vertical geometry");
+      const eckit::LocalConfiguration fileConfig(vertGeomConfig, "vertical geometry");
+      const std::string layerVarName = vertGeomConfig.getString("layers variable");
+      oops::Variables layerVar({layerVarName});
+      Increment_ vertGeom(incs.geometry(), layerVar, incs[0].validTime());
+      vertGeom.read(fileConfig);
+      oops::Variables vars = incs.variables();
+      vars += layerVar;
+      // Update the recentering increment with the vertical geometry
+      for (size_t jj = 0; jj < incs.size(); ++jj) {
+        // Note: these are soca::Increment specific methods
+        incs[jj].increment().updateFields(vars);
+        incs[jj].increment().updateFields(vertGeom.increment());
+      }
+    }
+    // Set some variables to zero if needed
+    if (incPostprocConfig.has("set increment variables to zero")) {
+      oops::Variables socaZeroIncrVar(incPostprocConfig, "set increment variables to zero");
+      if (!(socaZeroIncrVar <= incs.variables())) {
+        oops::Log::error() << "Variables to zero must be a subset of increment variables"
+                           << std::endl;
+        throw eckit::UserError("Invalid variables to zero", Here());
+      }
+      for (size_t jj = 0; jj < incs.size(); ++jj) {
+        // Note: this is soca::Increment specific method
+        incs[jj].increment().zero(socaZeroIncrVar);
+      }
+    }
+    // Cut to a custom precision if needed
+    if (incPostprocConfig.has("change precision")) {
+      const eckit::LocalConfiguration precConfig(incPostprocConfig, "change precision");
+      const oops::Variables precVars(precConfig, "variables");
+      if (!(precVars <= incs.variables())) {
+        oops::Log::error() << "Variables to change precision must be a subset of increment "
+                           << "variables" << std::endl;
+        throw eckit::UserError("Invalid variables to change precision", Here());
+      }
+      const double precision = precConfig.getDouble("precision");
+      for (size_t jj = 0; jj < incs.size(); ++jj) {
+        for (const auto & var : precVars) {
+          auto field = incs[jj].fieldSet().fieldSet()[var.name()];
+          auto view = atlas::array::make_view<double, 2>(field);
+          for (int jnode = 0; jnode < view.shape(0); ++jnode) {
+            for (int jlevel = 0; jlevel < view.shape(1); ++jlevel) {
+              view(jnode, jlevel) = std::round(view(jnode, jlevel) / precision) * precision;
+            }
+          }
+        }
+        incs[jj].synchronizeFields();
+      }
+    }
+  }
   // -----------------------------------------------------------------------------
   std::string appname() const {
     return "soca::ParallelEnsRecenter";

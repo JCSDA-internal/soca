@@ -253,6 +253,19 @@ namespace soca {
   }
 
   // -----------------------------------------------------------------------------
+
+  void Increment::zero(const oops::Variables & vars) {
+    ASSERT(vars <= vars_);
+    for (auto & field : fieldSet_) {
+      // Set data to zero if needed
+      if (vars.has(field.name())) {
+        auto view = atlas::array::make_view<double, 2>(field);
+        view.assign(0.0);
+      }
+    }
+  }
+
+  // -----------------------------------------------------------------------------
   void Increment::sqrt() {
     util::sqrtFieldSet(fieldSet_);
   }
