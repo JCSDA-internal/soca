@@ -15,9 +15,9 @@
 #include "atlas/field.h"
 
 #include "oops/base/Geometry.h"
+#include "oops/base/Increment4D.h"
 #include "oops/base/IncrementSet.h"
 #include "oops/base/Increment.h"
-#include "oops/base/InflationBase.h"
 #include "oops/base/StateSet.h"
 #include "oops/base/State.h"
 #include "oops/interface/VariableChange.h"
@@ -45,9 +45,8 @@ namespace soca {
 class ParallelEnsRecenter : public oops::Application {
   typedef oops::Geometry<soca::Traits>       Geometry_;
   typedef oops::Increment<soca::Traits>      Increment_;
+  typedef oops::Increment4D<soca::Traits>    Increment4D_;
   typedef oops::IncrementSet<soca::Traits>   IncrementSet_;
-  typedef oops::InflationBase<soca::Traits>  InflationBase_;
-  typedef oops::InflationFactory<soca::Traits> InflationFactory_;
   typedef oops::StateSet<soca::Traits>       StateSet_;
   typedef oops::VariableChange<soca::Traits> VariableChange_;
 
@@ -140,28 +139,53 @@ class ParallelEnsRecenter : public oops::Application {
     oops::Log::info() << " Ensemble perturbations: " << incs << std::endl;
     oops::Log::test() << " Ensemble perturbations: " << incs << std::endl;
 
+    // TODO(AS): add support for analysis increments. At the same time oops::Inflation classes
+    // may be used for analysis inflation.
+
+    // Inflate ensemble perturbations if needed
+    if (fullConfig.has("ensemble inflation")) {
+      IncrementSet_ origincs(incs);
+      const eckit::LocalConfiguration inflConfig(fullConfig, "ensemble inflation");
+      if (inflConfig.has("value")) {
+        const double inflation = inflConfig.getDouble("value");
+        incs *= inflation;
+        oops::Log::info() << "Ensemble perturbations after scalar inflation :"
+                          << incs << std::endl;
+      }
+      if (inflConfig.has("field")) {
+        Increment_ weight(geometry, socaIncrVars, incs[0].validTime());
+        const eckit::LocalConfiguration weightConf(inflConfig, "field");
+        weight.read(weightConf);
+        for (size_t jj = 0; jj < incs.size(); ++jj) {
+          incs[jj].schur_product_with(weight);
+        }
+        oops::Log::info() << "Ensemble perturbations after field inflation :"
+                          << incs << std::endl;
+      }
+      // Increments that need to be added to the ensemble backgrounds
+      incs -= origincs;
+      oops::Log::info() << " Increments after inflation: " << incs << std::endl;
+    } else {
+      // if there's no inflation and no analysis increments, all the increments to
+      // ensemble backgrounds are zero
+      // TODO(AS): change when there's support for analysis increments
+      incs.zero();
+    }
+
     // Read the state to recenter around
     const eckit::LocalConfiguration centerConfig(fullConfig, "recentering state");
     StateSet_ centerState(geometry, centerConfig);
 
     // Compute the recentering increment as the difference between
     // the ensemble mean and the deterministic
-    IncrementSet_ recenteringIncr(geometry, socaIncrVars,
-                                  centerState.times(), centerState.commTime());
+    Increment4D_ recenteringIncr(geometry, socaIncrVars,
+                                 centerState.times(), centerState.commTime());
     recenteringIncr.diff(centerState, ensMean);
     oops::Log::info() << "Recentering increment: " << recenteringIncr << std::endl;
     oops::Log::test() << "Recentering increment: " << recenteringIncr << std::endl;
-
-    // Inflate ensemble perturbations if needed
-    // TODO(AS): rethink/debug/test/fix
-    /*
-    if (fullConfig.has("inflation")) {
-      const eckit::LocalConfiguration inflConfig(fullConfig, "inflation");
-      std::unique_ptr<InflationBase_> infMethod(InflationFactory_::create(
-        inflConfig, geometry, ens, socaIncrVars));
-      infMethod->doInflation(incs);
-    }
-    */
+    incs += recenteringIncr;
+    oops::Log::info() << "Increments after inflation and recentering: " << incs << std::endl;
+    oops::Log::test() << "Increments after inflation and recentering: " << incs << std::endl;
 
     if (fullConfig.has("increment postprocessing")) {
       const eckit::LocalConfiguration incPostprocConfig(fullConfig, "increment postprocessing");
@@ -174,29 +198,26 @@ class ParallelEnsRecenter : public oops::Application {
       vertGeom.read(vertGeomConfig);
       socaIncrVars += layerVar;
       // Update the recentering increment with the vertical geometry
-      for (size_t jt = 0; jt < recenteringIncr.local_time_size(); ++jt) {
+      for (size_t jj = 0; jj < incs.size(); ++jj) {
         // Note: these are soca::Increment specific methods
-        recenteringIncr[jt].increment().updateFields(socaIncrVars);
-        recenteringIncr[jt].increment().updateFields(vertGeom.increment());
+        incs[jj].increment().updateFields(socaIncrVars);
+        incs[jj].increment().updateFields(vertGeom.increment());
       }
-      oops::Log::info() << "Recentering increment with vertical geometry: "
-                        << recenteringIncr << std::endl;
+      oops::Log::info() << "Increments after inflation and recentering with vertical geometry: "
+                        << incs << std::endl;
     }
 
+    // Save the increments used to initialize the ensemble forecast
     eckit::LocalConfiguration outputIncrConfig(fullConfig, "output increments");
-    for (size_t iens = 0; iens < incs.local_ens_size(); ++iens) {
-      const size_t ensMember = incs.local_ens()[iens];
+    incs.write(outputIncrConfig);
 
-      // Save the increments used to initialize the ensemble forecast
-      // TODO(AS): fix to use different incs once inflation is implemented
-      outputIncrConfig.set("member", ensMember);
-      recenteringIncr.write(outputIncrConfig);
-
-      // recenter ice if needed
-      if (fullConfig.has("analysis postprocessing")) {
+    // Postprocess analysis (for CICE restarts) if needed
+    if (fullConfig.has("analysis postprocessing")) {
+      for (size_t iens = 0; iens < incs.local_ens_size(); ++iens) {
+        const size_t ensMember = incs.local_ens()[iens];
         oops::Log::info() << "recentering ice state " << ensMember << ":" << ens[iens] << std::endl;
         for (size_t itime = 0; itime < ens.local_time_size(); ++itime) {
-          ens(itime, iens) += recenteringIncr[itime];
+          ens(itime, iens) += incs[itime, iens];
         }
         oops::Log::info() << "recentered ice state " << ensMember << ":" << ens[iens] << std::endl;
         // set up variable change

@@ -36,6 +36,9 @@ ensemble mean output:
   type: an
   date: *date_bkg
 
+ensemble inflation:
+  value: 1.5
+
 recentering state:
   read_from_file: 1
   date: *date_bkg
@@ -93,3 +96,4 @@ analysis postprocessing:
 test:
   reference filename: testref/ensrecenter_par.test
   test output filename: testoutput/ensrecenter_par.test
+  float absolute tolerance: 1e-4
