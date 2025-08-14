@@ -7,6 +7,11 @@
 
 #include "soca/Geometry/FmsInput.h"
 
+#include <unistd.h>  // for access()
+#include <fcntl.h>   // for open(), O_CREAT, O_WRONLY
+
+#include "oops/util/Logger.h"
+
 // -----------------------------------------------------------------------------
 namespace soca {
   // -----------------------------------------------------------------------------
@@ -56,6 +61,18 @@ namespace soca {
         char linkname[] = "input.nml";
         testlink = symlink(target, linkname);
         if ( testlink != 0 ) { comm_.abort(); }
+      }
+
+      // Create warnfile.000000.out if it doesn't exist
+      const char* warnfile = "warnfile.000000.out";
+      if (access(warnfile, F_OK) != 0) {
+        // File doesn't exist, create it
+        int fd = open(warnfile, O_CREAT | O_WRONLY, 0644);
+        if (fd >= 0) {
+          close(fd);
+        } else {
+          oops::Log::warning() << "Failed to create " << warnfile << std::endl;
+        }
       }
     }
     comm_.barrier();

@@ -27,6 +27,7 @@
 #include "oops/util/DateTime.h"
 #include "oops/util/Logger.h"
 
+#include "soca/Geometry/FmsInput.h"
 #include "soca/Traits.h"
 
 namespace soca {
@@ -65,6 +66,11 @@ class AnalysisPostproc : public oops::Application {
   // -----------------------------------------------------------------------------
 
   int execute(const eckit::Configuration & fullConfig) const {
+    // SOCA-specific: copy/create files used by FMS once, to avoid race condition
+    // in FMS MPP when creating parallel geometries. As hacky as it gets.
+    const eckit::LocalConfiguration geomConfig(fullConfig, "geometry");
+    soca::FmsInput fmsInput(this->getComm(), geomConfig);
+    fmsInput.updateNameList();
     // Get the MPI partition
     const size_t nmembers = fullConfig.getInt("nens");
     const size_t nlocalmembers = fullConfig.getInt("nens per MPI task", 1);
@@ -107,7 +113,6 @@ class AnalysisPostproc : public oops::Application {
                        << ", size = " << commEns.size() << std::endl;
 
     // Setup the  geometry of the ensemble members
-    const eckit::LocalConfiguration geomConfig(fullConfig, "geometry");
     const Geometry_ geometry(geomConfig, commState);
     // Read all states in parallel
     const eckit::LocalConfiguration statesConfig(fullConfig, "backgrounds");
