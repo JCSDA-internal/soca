@@ -7,8 +7,8 @@
 
 #include "soca/Geometry/FmsInput.h"
 
-#include <unistd.h>  // for access()
-#include <fcntl.h>   // for open(), O_CREAT, O_WRONLY
+#include <fstream>
+#include <iostream>
 
 #include "oops/util/Logger.h"
 
@@ -63,16 +63,16 @@ namespace soca {
         if ( testlink != 0 ) { comm_.abort(); }
       }
 
-      // Create warnfile.000000.out if it doesn't exist
-      const char* warnfile = "warnfile.000000.out";
-      if (access(warnfile, F_OK) != 0) {
+      // Create warnfile.000000.out if it doesn't exist (portable C++)
+      const std::string warnfile = "warnfile.000000.out";
+      std::ifstream check(warnfile);
+      if (!check.good()) {
         // File doesn't exist, create it
-        int fd = open(warnfile, O_CREAT | O_WRONLY, 0644);
-        if (fd >= 0) {
-          close(fd);
-        } else {
+        std::ofstream create(warnfile);
+        if (!create.good()) {
           oops::Log::warning() << "Failed to create " << warnfile << std::endl;
         }
+        // Files automatically closed when going out of scope
       }
     }
     comm_.barrier();
