@@ -557,18 +557,19 @@ subroutine prior_dist_rescale(self, geom, xm)
            self%cice%vsnon(i,j,c) = alpha*self%cice%vsnon(i,j,c)
         end do
 
-        ! adjust ice volume to match mean cell thickness
-        local_hice = sum(self%cice%vicen(i,j,:))/self%cice%aice(i,j)
-        if (local_hice.gt.rescale_min_hice) then
-           alpha = data_hice(1, idx)/local_hice
-           self%cice%vicen(i,j,:) = alpha*self%cice%vicen(i,j,:)
-        end if
-
-        ! adjust snow volume to match mean cell thickness
-        local_hsno = sum(self%cice%vsnon(i,j,:))/self%cice%aice(i,j)
-        if (local_hsno.gt.rescale_min_hsno) then
-           alpha = data_hsno(1, idx)/local_hsno
-           self%cice%vsnon(i,j,:) = alpha*self%cice%vsnon(i,j,:)
+        if (self%cice%aice(i,j).gt.0.0) then
+          ! adjust ice volume to match mean cell thickness
+          local_hice = sum(self%cice%vicen(i,j,:))/self%cice%aice(i,j)
+          if (local_hice.gt.rescale_min_hice) then
+             alpha = data_hice(1, idx)/local_hice
+             self%cice%vicen(i,j,:) = alpha*self%cice%vicen(i,j,:)
+          end if
+          ! adjust snow volume to match mean cell thickness
+          local_hsno = sum(self%cice%vsnon(i,j,:))/self%cice%aice(i,j)
+          if (local_hsno.gt.rescale_min_hsno) then
+             alpha = data_hsno(1, idx)/local_hsno
+             self%cice%vsnon(i,j,:) = alpha*self%cice%vsnon(i,j,:)
+          end if
         end if
     end do
   end do
