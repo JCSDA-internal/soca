@@ -73,6 +73,9 @@ namespace soca {
       void ones();
       using Fields::zero;
       void zero(const util::DateTime &);
+      /// @brief  Set fields for specified variables to zero
+      /// @param  variables to set to zero
+      void zero(const oops::Variables &);
       Increment & operator =(const Increment &);
       Increment & operator+=(const Increment &);
       Increment & operator-=(const Increment &);
@@ -97,6 +100,11 @@ namespace soca {
 
       /// Update the fields in variable changes
       void updateFields(const oops::Variables &);
+
+      /// Update fields using all the fields in the \p other Increment.
+      /// The variables in the \p other Increment must be a subset of the
+      /// variables in this Increment.
+      void updateFields(const Increment & other);
 
       /// Other
       int & toFortran() {return keyFlds_;}
