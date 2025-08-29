@@ -11,6 +11,9 @@
 #include "oops/util/abor1_cpp.h"
 #include "oops/util/Timer.h"
 
+#include "soca/Geometry/Geometry.h"
+#include "soca/State/State.h"
+
 namespace soca {
 
 // -----------------------------------------------------------------------------

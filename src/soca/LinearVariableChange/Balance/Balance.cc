@@ -16,7 +16,6 @@
 #include "soca/Geometry/Geometry.h"
 #include "soca/Increment/Increment.h"
 #include "soca/State/State.h"
-#include "soca/Traits.h"
 #include "soca/LinearVariableChange/Balance/Balance.h"
 #include "soca/LinearVariableChange/Balance/BalanceFortran.h"
 
