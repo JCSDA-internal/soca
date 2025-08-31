@@ -7,8 +7,6 @@
 
 #include <vector>
 
-#include "soca/Traits.h"
-
 #include "soca/Geometry/Geometry.h"
 #include "soca/Model/OceanIceEmulator/ModelOceanIceEmulator.h"
 #include "soca/ModelBias/ModelBias.h"
@@ -23,10 +21,6 @@
 using oops::Log;
 
 namespace soca {
-  // -----------------------------------------------------------------------------
-  static oops::interface::ModelMaker<soca::Traits, soca::ModelOceanIceEmulator>
-      makermodel_("ModelOceanIceEmulator");
-
   // -----------------------------------------------------------------------------
   ModelOceanIceEmulator::ModelOceanIceEmulator(const Geometry & resol,
                              const eckit::Configuration & model)

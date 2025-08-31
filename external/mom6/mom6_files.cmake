@@ -297,9 +297,6 @@ list(APPEND mom6_src_files
   MOM6/src/ocean_data_assim/MOM_oda_driver.F90
   MOM6/src/ocean_data_assim/MOM_oda_incupd.F90
 
-  MOM6/config_src/external/GFDL_ocean_BGC/FMS_coupler_util.F90
-  MOM6/config_src/external/GFDL_ocean_BGC/generic_tracer.F90
-  MOM6/config_src/external/GFDL_ocean_BGC/generic_tracer_utils.F90
   MOM6/config_src/external/GFDL_ocean_BGC/MOM_generic_tracer.F90
   MOM6/config_src/external/ODA_hooks/kdtree.f90
   MOM6/config_src/external/ODA_hooks/ocean_da_core.F90
@@ -329,7 +326,7 @@ list(APPEND mom6_src_files
 
   MOM6/config_src/drivers/unit_tests/test_numerical_testing_type.F90
 )
-  
+
 # list(APPEND mom6_nuopc_src_files
 #   MOM6/config_src/drivers/nuopc_cap/mom_cap.F90
 #   MOM6/config_src/drivers/nuopc_cap/time_utils.F90

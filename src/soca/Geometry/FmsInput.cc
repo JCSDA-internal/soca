@@ -7,6 +7,11 @@
 
 #include "soca/Geometry/FmsInput.h"
 
+#include <fstream>
+#include <iostream>
+
+#include "oops/util/Logger.h"
+
 // -----------------------------------------------------------------------------
 namespace soca {
   // -----------------------------------------------------------------------------
@@ -56,6 +61,18 @@ namespace soca {
         char linkname[] = "input.nml";
         testlink = symlink(target, linkname);
         if ( testlink != 0 ) { comm_.abort(); }
+      }
+
+      // Create warnfile.000000.out if it doesn't exist (portable C++)
+      const std::string warnfile = "warnfile.000000.out";
+      std::ifstream check(warnfile);
+      if (!check.good()) {
+        // File doesn't exist, create it
+        std::ofstream create(warnfile);
+        if (!create.good()) {
+          oops::Log::warning() << "Failed to create " << warnfile << std::endl;
+        }
+        // Files automatically closed when going out of scope
       }
     }
     comm_.barrier();

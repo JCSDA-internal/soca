@@ -12,11 +12,11 @@
 #include <memory>
 #include <ostream>
 #include <string>
+#include <vector>
 
 #include <boost/noncopyable.hpp>
 #include <boost/scoped_ptr.hpp>
 
-#include "oops/interface/LinearModelBase.h"
 #include "oops/util/Duration.h"
 #include "oops/util/ObjectCounter.h"
 #include "oops/util/Printable.h"
@@ -26,7 +26,6 @@
 #include "soca/LinearModel/OceanIceEmulator/ModelTrajectory.h"
 #include "soca/ModelBias/ModelBias.h"
 #include "soca/State/State.h"
-#include "soca/Traits.h"
 
 // Forward declarations
 namespace eckit {
@@ -39,7 +38,6 @@ namespace soca {
   class ModelTrajectory;
   class State;
   class Increment;
-  struct Traits;
 }
 
 // -----------------------------------------------------------------------------
@@ -52,31 +50,32 @@ namespace soca {
  *  OceanIceEmulator linear model definition and configuration parameters.
  */
 
-class LinearModelOceanIceEmulator: public oops::interface::LinearModelBase<Traits>,
+class LinearModelOceanIceEmulator: public util::Printable,
              private util::ObjectCounter<LinearModelOceanIceEmulator>
 {
  public:
   static const std::string classname() {return "soca::LinearModelOceanIceEmulator";}
+  static std::vector<std::string> names() {return {"LinearModelOceanIceEmulator"};}
 
   LinearModelOceanIceEmulator(const Geometry &, const eckit::Configuration &);
   ~LinearModelOceanIceEmulator();
 
   /// Prepare model integration
-  void initializeTL(Increment &) const override;
-  void initializeAD(Increment &) const override;
+  void initializeTL(Increment &) const;
+  void initializeAD(Increment &) const;
 
   /// Model integration
-  void stepTL(Increment &, const ModelBiasIncrement &) const override;
-  void stepAD(Increment &, ModelBiasIncrement &) const override;
-  void setTrajectory(const State &, State &, const ModelBias &) override;
+  void stepTL(Increment &, const ModelBiasIncrement &) const;
+  void stepAD(Increment &, ModelBiasIncrement &) const;
+  void setTrajectory(const State &, State &, const ModelBias &);
 
   /// Finish model integration
-  void finalizeTL(Increment &) const override;
-  void finalizeAD(Increment &) const override;
+  void finalizeTL(Increment &) const;
+  void finalizeAD(Increment &) const;
 
   /// Other utilities
-  const util::Duration & timeResolution() const override {return tstep_;}
-  const util::Duration & stepTrajectory() const override {return tstep_;}
+  const util::Duration & timeResolution() const {return tstep_;}
+  const util::Duration & stepTrajectory() const {return tstep_;}
   const Geometry & resolution() const {return geom_;}
 
  private:
