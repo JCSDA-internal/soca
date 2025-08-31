@@ -14,7 +14,9 @@
 #include "soca/Geometry/Geometry.h"
 #include "soca/GeometryIterator/GeometryIterator.h"
 #include "soca/Increment/Increment.h"
+#include "soca/LinearModel/OceanIceEmulator/LinearModelOceanIceEmulator.h"
 #include "soca/LinearVariableChange/LinearVariableChange.h"
+#include "soca/Model/OceanIceEmulator/ModelOceanIceEmulator.h"
 #include "soca/ModelBias/ModelBias.h"
 #include "soca/ModelBias/ModelBiasCovariance.h"
 #include "soca/ModelBias/ModelBiasIncrement.h"
@@ -39,6 +41,9 @@ struct Traits {
   typedef soca::State                State;
   typedef soca::Increment            Increment;
   typedef soca::ErrorCovariance      Covariance;  // Not actually used, just empty stubs
+
+  typedef soca::ModelOceanIceEmulator        Model;
+  typedef soca::LinearModelOceanIceEmulator  LinearModel;
 
   typedef soca::ModelBias            ModelAuxControl;
   typedef soca::ModelBiasIncrement   ModelAuxIncrement;
