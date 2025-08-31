@@ -10,7 +10,6 @@
  */
 
 
-#include "oops/generic/instantiateModelFactory.h"
 #include "oops/runs/Run.h"
 #include "oops/runs/Variational.h"
 #include "saber/oops/instantiateCovarFactory.h"
@@ -21,7 +20,6 @@
 
 int main(int argc,  char ** argv) {
   oops::Run run(argc, argv);
-  oops::instantiateModelFactory<soca::Traits>();
   ufo::instantiateObsErrorFactory();
   ufo::instantiateObsFilterFactory();
   saber::instantiateCovarFactory<soca::Traits>();
