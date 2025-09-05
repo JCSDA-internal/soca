@@ -338,15 +338,11 @@ end subroutine
 subroutine soca_fields_create(self, geom, vars, aFieldset)
   class(soca_fields),        intent(inout) :: self
   type(soca_geom),  pointer, intent(inout) :: geom !< geometry to associate with the fields
-  type(oops_variables),      intent(in) :: vars !< list of field names to create
-  type(atlas_fieldset),      intent(in) :: aFieldset
-
-  character(len=:), allocatable :: vars_str(:)
-  integer :: i
-  type(atlas_field) :: afield
-  real(kind=kind_real), pointer :: adata(:,:)
+  type(oops_variables),      intent(in)    :: vars !< list of field names to create
+  type(atlas_fieldset),      intent(inout) :: aFieldset
 
   self%afieldset = aFieldset
+  call aFieldset%final()
   self%geom => geom
 
   ! make sure current object has not already been allocated
@@ -355,6 +351,7 @@ subroutine soca_fields_create(self, geom, vars, aFieldset)
 
   ! initialize the variables
   call self%update_fields(vars)
+
 end subroutine soca_fields_create
 
 
@@ -369,6 +366,7 @@ subroutine soca_fields_delete(self)
   ! clear the fields and nullify pointers
   nullify(self%geom)
   deallocate(self%fields)
+  call self%afieldset%final()
 
 end subroutine
 
