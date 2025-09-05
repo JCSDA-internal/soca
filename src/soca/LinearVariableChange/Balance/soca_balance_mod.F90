@@ -221,7 +221,7 @@ subroutine soca_balance_setup(self, f_conf, traj, geom)
   call hocn%final()
   call mld%final()
   call layer_depth%final()
-  if (associated(data_cice)) call cice%final()
+  call cice%final()
 
 end subroutine soca_balance_setup
 
@@ -315,10 +315,9 @@ subroutine soca_balance_mult(self, dxa, dxm)
 
     end select
 
-    call fld_m%final()
-    call fld_a%final()
   end do
-
+  call fld_m%final()
+  call fld_a%final()
   call tocn_a%final()
   call socn_a%final()
 
@@ -390,13 +389,13 @@ subroutine soca_balance_multad(self, dxa, dxm)
       call fld_a%set_dirty()
     end select
 
-    call fld_a%final()
-    call fld_m%final()
   end do
 
+  call fld_a%final()
+  call fld_m%final()
   call socn_m%final()
   call ssh_m%final()
-  if ( associated(data_cice) ) call cice_m%final()
+  call cice_m%final()
 
 end subroutine soca_balance_multad
 
@@ -469,9 +468,10 @@ subroutine soca_balance_multinv(self, dxa, dxm)
       call fld_a%set_dirty()
 
     end select
-    call fld_m%final()
-    call fld_a%final()
+
   end do
+  call fld_m%final()
+  call fld_a%final()
   call tocn_m%final()
   call socn_m%final()
 
@@ -544,13 +544,14 @@ subroutine soca_balance_multinvad(self, dxa, dxm)
       call fld_m%set_dirty()
 
     end select
-    call fld_m%final()
-    call fld_a%final()
+
   end do
 
+  call fld_m%final()
+  call fld_a%final()
   call socn_a%final()
   call ssh_a%final()
-  if (associated(data_cice)) call cice_a%final()
+  call cice_a%final()
 
 end subroutine soca_balance_multinvad
 

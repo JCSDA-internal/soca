@@ -338,11 +338,10 @@ end subroutine
 subroutine soca_fields_create(self, geom, vars, aFieldset)
   class(soca_fields),        intent(inout) :: self
   type(soca_geom),  pointer, intent(inout) :: geom !< geometry to associate with the fields
-  type(oops_variables),      intent(in)    :: vars !< list of field names to create
-  type(atlas_fieldset),      intent(inout) :: aFieldset
+  type(oops_variables),      intent(in) :: vars !< list of field names to create
+  type(atlas_fieldset),      intent(in) :: aFieldset
 
   self%afieldset = aFieldset
-  call aFieldset%final()
   self%geom => geom
 
   ! make sure current object has not already been allocated
@@ -433,8 +432,8 @@ subroutine soca_fields_ones(self)
     call field%data(fdata)
     fdata(:,:) = 1.0_kind_real
     call field%set_dirty(.false.)
-    call field%final()
   end do
+  call field%final()
 
 end subroutine soca_fields_ones
 
@@ -523,7 +522,6 @@ subroutine soca_fields_read(self, f_conf, vdate)
         afield1  = self%afieldset%field(self%fields(f)%name)
         call afield1%data(adata1)
         adata1(:,:) = self%fields(f)%metadata%constant_value
-        call afield1%final()
       end if
     end do
 
@@ -628,8 +626,6 @@ subroutine soca_fields_read(self, f_conf, vdate)
         end do
       end do
       call afield1%set_dirty()
-      call afield1%final()
-      call afield2%final()
     end if
 
     ! Compute mixed layer depth TODO: Move somewhere else ...
@@ -652,10 +648,6 @@ subroutine soca_fields_read(self, f_conf, vdate)
         end do
       end do
       call afield1%set_dirty()
-      call afield1%final()
-      call afield2%final()
-      call afield3%final()
-      call afield4%final()
     end if
 
     ! Remap layers if needed
@@ -694,20 +686,20 @@ subroutine soca_fields_read(self, f_conf, vdate)
           end do
         end do
         call afield2%set_dirty()
-
-        ! cleanup
-        call afield2%final()
       end do
 
       ! cleanup
       call end_remapping(remapCS)
       deallocate(h_common_ij, hocn_ij, varocn_ij, varocn2_ij)
-      call afield1%final()
     end if
   end if
 
   ! cleanup
   if (allocated(h_common)) deallocate(h_common)
+  call afield1%final()
+  call afield2%final()
+  call afield3%final()
+  call afield4%final()
 end subroutine soca_fields_read
 
 
@@ -802,7 +794,6 @@ subroutine soca_fields_read_seaice(self, filename, seaice_categories_vars)
           end do
         end do
         call afield%set_dirty()
-        call afield%final()
       end if
     end do
   end if
@@ -842,10 +833,10 @@ subroutine soca_fields_read_seaice(self, filename, seaice_categories_vars)
           end do
         end do
         call afield%set_dirty()
-        call afield%final()
       end if
     end do
   end if
+  call afield%final()
 end subroutine soca_fields_read_seaice
 
 
@@ -867,7 +858,6 @@ subroutine soca_fields_write_rst(self, f_conf, vdate)
 
   character(len=3), allocatable :: domains(:)
   character(len=:), allocatable :: domain_filename
-  type(atlas_field) :: afield
 
   type(varwrapper), allocatable :: vars(:)
 
@@ -990,13 +980,13 @@ subroutine soca_fields_tohpoints(self)
     deallocate(fdata)
 
     call afield%set_dirty()
-    call afield%final()
 
     ! Update grid location to h-points
     self%fields(n)%metadata%grid = 'h'
     self%fields(n)%lon => self%geom%lon
     self%fields(n)%lat => self%geom%lat
  end do
+ call afield%final()
 
 end subroutine soca_fields_tohpoints
 
@@ -1047,12 +1037,10 @@ subroutine soca_fields_update_fields(self, vars)
       if (metadata%masked) then
         call ameta%set('mask', 'interp_mask')
       end if
-      call ameta%final()
-
-
-      call afield%final()
     end if
   end do
+  call ameta%final()
+  call afield%final()
 end subroutine soca_fields_update_fields
 
 ! ------------------------------------------------------------------------------

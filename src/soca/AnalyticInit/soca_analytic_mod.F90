@@ -80,8 +80,8 @@ subroutine soca_analytic_state(state)
       end do
     end do
     call field%set_dirty()
-    call field%final()
   end do
+  call field%final()
 end subroutine
 
 
