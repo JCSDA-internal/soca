@@ -49,7 +49,7 @@ template<typename MODEL>
 ObsLocRossby<MODEL>::ObsLocRossby(const eckit::Configuration & config,
                                   ioda::ObsSpace & obsspace):
     ufo::ObsHorLocGC99<MODEL>::ObsHorLocGC99(config, obsspace),
-    options_(), cacheVector_(obsspace), cachePoint_(0,0) {
+    options_(), cacheVector_(obsspace), cachePoint_(0, 0) {
     options_.validateAndDeserialize(config);
 }
 
@@ -59,7 +59,6 @@ template<typename MODEL>
 void ObsLocRossby<MODEL>::computeLocalization(
     const GeometryIterator_ & i,
     ioda::ObsVector & locvector) const {
-  util::Timer timer("ObsLocRossby", "computeLocalization");
   eckit::geometry::Point3 refPoint = *i;
   eckit::geometry::Point2 refPoint2(refPoint[0], refPoint[1]);
   if (refPoint2 == cachePoint_) {
