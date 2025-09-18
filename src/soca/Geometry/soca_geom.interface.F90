@@ -50,12 +50,19 @@ subroutine soca_geo_setup_c(c_key_self, c_conf, c_comm, c_gen) bind(c,name='soca
   logical(c_bool),    intent(in) :: c_gen
 
   type(soca_geom), pointer :: self
+  type(fckit_configuration) :: f_conf
+  type(fckit_mpi_comm) :: f_comm
 
   call soca_geom_registry%init()
   call soca_geom_registry%add(c_key_self)
   call soca_geom_registry%get(c_key_self,self)
 
-  call self%init(fckit_configuration(c_conf), fckit_mpi_comm(c_comm), logical(c_gen) )
+  f_conf = fckit_configuration(c_conf)
+  f_comm = fckit_mpi_comm(c_comm)
+  call self%init(f_conf, f_comm, logical(c_gen) )
+  call f_conf%final()
+  call f_comm%final()
+
 end subroutine soca_geo_setup_c
 
 
@@ -71,13 +78,16 @@ subroutine soca_geo_init_atlas_c(c_key_self, c_functionspace, c_fieldset, c_conf
 
   logical :: gen
   type(soca_geom),pointer :: self
+  type(fckit_configuration) :: f_conf
 
   call soca_geom_registry%get(c_key_self,self)
   self%functionspace = atlas_functionspace_NodeColumns(c_functionspace)
 
   ! fill in the geometry fieldset
   self%fieldset = atlas_fieldset(c_fieldset)
-  call self%init_fieldset(fckit_configuration(c_conf), logical(c_gen))
+  f_conf = fckit_configuration(c_conf)
+  call self%init_fieldset(f_conf, logical(c_gen))
+  call f_conf%final()
 
 end subroutine soca_geo_init_atlas_c
 
@@ -248,10 +258,13 @@ subroutine soca_geo_write_c(c_key_self, c_conf) bind(c, name='soca_geo_write_f90
   type(c_ptr),    intent(in)    :: c_conf
 
   type(soca_geom), pointer :: self
+  type(fckit_configuration) :: f_conf
 
   call soca_geom_registry%get(c_key_self, self)
 
-  call self%write(fckit_configuration(c_conf))
+  f_conf = fckit_configuration(c_conf)
+  call self%write(f_conf)
+  call f_conf%final()
 
 end subroutine
 ! ------------------------------------------------------------------------------

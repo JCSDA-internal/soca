@@ -294,6 +294,7 @@ subroutine soca_geom_end(self)
   if (global_soca_geom_counter .eq. 0) then
     call fms_io_exit()
   endif
+  nullify(self%Domain)
   if (allocated(self%lonh))          deallocate(self%lonh)
   if (allocated(self%lath))          deallocate(self%lath)
   if (allocated(self%lonq))          deallocate(self%lonq)
@@ -304,16 +305,19 @@ subroutine soca_geom_end(self)
   if (allocated(self%latu))          deallocate(self%latu)
   if (allocated(self%lonv))          deallocate(self%lonv)
   if (allocated(self%latv))          deallocate(self%latv)
-  if (allocated(self%sin_rot))       deallocate(self%sin_rot)
-  if (allocated(self%cos_rot))       deallocate(self%cos_rot)
   if (allocated(self%mask2d))        deallocate(self%mask2d)
   if (allocated(self%mask2du))       deallocate(self%mask2du)
   if (allocated(self%mask2dv))       deallocate(self%mask2dv)
+  if (allocated(self%sin_rot))       deallocate(self%sin_rot)
+  if (allocated(self%cos_rot))       deallocate(self%cos_rot)
   if (allocated(self%dx))            deallocate(self%dx)
   if (allocated(self%dy))            deallocate(self%dy)
   if (allocated(self%cell_area))     deallocate(self%cell_area)
-  nullify(self%Domain)
+  call self%fields_metadata%end()
+  call self%f_comm%final()
   call self%functionspace%final()
+  if (allocated(self%atlas_ij2idx))  deallocate(self%atlas_ij2idx)
+  call self%fieldset%final()
 
 end subroutine soca_geom_end
 
@@ -420,18 +424,6 @@ subroutine soca_geom_init_fieldset(self, f_conf, gen)
   call fCos%halo_exchange()
   call fSin%halo_exchange()
 
-  ! done, cleanup
-  call fArea%final()
-  call fInterpMask%final()
-  call fVertCoord%final()
-  call fGmask%final()
-  call fOwned%final()
-  call fMaskH%final()
-  call fMaskU%final()
-  call fMaskV%final()
-  call fCos%final()
-  call fSin%final()
-
   ! -----------------------------------------------------------------------------------------------
   if (gen) then
     ! some fields are still being generated the fortran side (someday this will be moved to c++)
@@ -445,7 +437,6 @@ subroutine soca_geom_init_fieldset(self, f_conf, gen)
       end do
     end do
     call aField%halo_exchange()
-    call aField%final()
   else
     ! otherwise, read in files from the gridspec file and place directly into atlas fieldset
     atlasVars = [character(len=20) :: "rossby_radius", "distance_from_coast"]
@@ -471,8 +462,20 @@ subroutine soca_geom_init_fieldset(self, f_conf, gen)
       end do
       call aField%halo_exchange()
     end do
-    call aField%final()
   endif
+
+  ! done, cleanup
+  call fArea%final()
+  call fInterpMask%final()
+  call fVertCoord%final()
+  call fGmask%final()
+  call fOwned%final()
+  call fMaskH%final()
+  call fMaskU%final()
+  call fMaskV%final()
+  call fCos%final()
+  call fSin%final()
+  call aField%final()
 end subroutine soca_geom_init_fieldset
 
 
@@ -598,6 +601,7 @@ subroutine soca_geom_distance_from_coast(self, dist)
 
   ! cleanup
   call kd%final()
+  call ageometry%final()
 
 end subroutine
 
@@ -660,7 +664,6 @@ subroutine soca_geom_write(self, f_conf)
         fieldData(i,j,v ) = aFieldData(1, self%atlas_ij2idx(i,j))
       end do
     end do
-    call aField%final()
 
     ! register with FMS
     r = register_restart_field(geom_restart, str, trim(atlasVars(v)), fieldData(:,:, v), self%Domain%mpp_domain)
@@ -681,6 +684,7 @@ subroutine soca_geom_write(self, f_conf)
     call write2pe(reshape(self%lat(self%isc:self%iec,self%jsc:self%jec),(/ns/)),'lat',geom_output_pe,.true.)
   end if
 
+  call aField%final()
 end subroutine soca_geom_write
 
 

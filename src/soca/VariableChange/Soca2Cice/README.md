@@ -32,7 +32,7 @@ Sea ice in CICE is represented using multiple thickness categories (`ncat`), whi
 - Operates in the ice pack (where concentration > `seaice_edge`) 
 - Rescales the background ice distribution to match the analyzed aggregated values
 - Preserves the shape of the distribution across categories
-- Separately adjusts ice volume and snow volume when they exceed minimum thresholds
+- Separately adjusts ice thickness and snow thickness to match the analysis when they exceed minimum thresholds
 
 ### 4. Ice State Cleanup (`cleanup_ice`)
 - Calls icepack's `cleanup_itd` to rebin thickness categories if necessary
@@ -49,8 +49,8 @@ SOCA2CICE offers separate configurations for Arctic and Antarctic regions:
 - `shuffle`: Enable/disable shuffling in marginal ice zone (default: true)
 - `rescale prior`: Options for rescaling in the ice pack
   - `rescale` : Enable/disable rescaling in the ice pack (default: false)
-  - `min hice`: Minimum ice thickness to trigger adjusting ice volume during rescaling (default: 0.5m)
-  - `min hsno`: Minimum snow thickness to trigger adjusting snow volume during rescaling (default: 0.1m)
+  - `min hice`: Minimum ice thickness to trigger adjusting ice thickness to the analysis ice thickness during rescaling (default: 0.5m)
+  - `min hsno`: Minimum snow thickness to trigger adjusting snow thickness to the analysis snow thickness during rescaling (default: 0.1m)
 - `update SST`: Adjust sea surface temperature when adding/removing ice (default: true)
 - `max positive SST update`: Maximum allowed SST increase when removing ice (default: 1.0K)
 
