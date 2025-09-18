@@ -7,6 +7,9 @@
 
 #include "oops/util/Timer.h"
 
+#include "soca/Geometry/Geometry.h"
+#include "soca/Increment/Increment.h"
+#include "soca/State/State.h"
 #include "soca/VariableChange/Soca2Cice/Soca2Cice.h"
 #include "soca/VariableChange/Soca2Cice/Soca2CiceFortran.h"
 

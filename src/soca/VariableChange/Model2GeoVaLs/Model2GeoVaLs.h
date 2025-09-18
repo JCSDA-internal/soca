@@ -10,8 +10,6 @@
 #include <memory>
 #include <string>
 
-#include "soca/Traits.h"
-
 #include "soca/VariableChange/Base/VariableChangeBase.h"
 
 namespace soca {

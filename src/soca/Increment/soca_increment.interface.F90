@@ -50,6 +50,7 @@ subroutine soca_increment_create_c(c_key_self, c_key_geom, c_vars, c_afieldsest)
   vars = oops_variables(c_vars)
   afieldset = atlas_fieldset(c_afieldsest)
   call self%create(geom, vars, afieldset)
+  call afieldset%final()
 
 end subroutine soca_increment_create_c
 

@@ -11,7 +11,6 @@
 
 #include "soca/Traits.h"
 
-#include "oops/generic/instantiateModelFactory.h"
 #include "oops/runs/HofX4D.h"
 #include "oops/runs/Run.h"
 #include "ufo/instantiateObsErrorFactory.h"
@@ -20,7 +19,6 @@
 
 int main(int argc,  char ** argv) {
   oops::Run run(argc, argv);
-  oops::instantiateModelFactory<soca::Traits>();
   ufo::instantiateObsErrorFactory();
   ufo::instantiateObsFilterFactory();
   oops::HofX4D<soca::Traits, ufo::ObsTraits> hofx;

@@ -53,6 +53,9 @@ contains
 
   !> \copybrief soca_fields_metadata_get \see soca_fields_metadata_get
   procedure :: get    => soca_fields_metadata_get
+
+  !> Destructor
+  procedure :: end    => soca_fields_metadata_end
 end type
 
 
@@ -162,7 +165,9 @@ subroutine soca_fields_metadata_create(self, filename)
       metadata_tmp(i)%constant_value = r
       metadata_tmp(i)%io_file = "CONSTANT"
     end if
+    call conf_list(i)%final()
   end do
+  deallocate(conf_list)
 
   ! break out any templated category fields
   ! 1. determine final array size
@@ -204,6 +209,7 @@ subroutine soca_fields_metadata_create(self, filename)
       end if
     end do
   end do
+  call conf%final()
 
 end subroutine
 
@@ -244,5 +250,27 @@ function soca_fields_metadata_get(self, name) result(field)
   call abor1_ftn("Unable to find field metadata for: " // name)
 
 end function
+
+! ------------------------------------------------------------------------------
+!> Destructor
+!!
+subroutine soca_fields_metadata_end(self)
+  class(soca_fields_metadata), intent(inout) :: self
+  integer :: i
+
+  if (allocated(self%metadata)) then
+    do i = 1, size(self%metadata)
+      if (allocated(self%metadata(i)%name)) deallocate(self%metadata(i)%name)
+      if (allocated(self%metadata(i)%name_surface)) deallocate(self%metadata(i)%name_surface)
+      if (allocated(self%metadata(i)%levels)) deallocate(self%metadata(i)%levels)
+      if (allocated(self%metadata(i)%io_file)) deallocate(self%metadata(i)%io_file)
+      if (allocated(self%metadata(i)%io_name)) deallocate(self%metadata(i)%io_name)
+      if (allocated(self%metadata(i)%io_sup_name)) deallocate(self%metadata(i)%io_sup_name)
+      if (allocated(self%metadata(i)%property)) deallocate(self%metadata(i)%property)
+    end do
+    if (allocated(self%metadata)) deallocate(self%metadata)
+  endif
+
+end subroutine soca_fields_metadata_end
 
 end module

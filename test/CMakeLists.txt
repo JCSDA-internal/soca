@@ -44,6 +44,7 @@ set( soca_test_input
   testinput/dirac_soca_cor_nicas_scales.yml
   testinput/dirac_soca_cov.yml
   testinput/dirac_socahyb_cov.yml
+  testinput/ensanpproc.yml
   testinput/enshofx_1.yml
   testinput/enshofx_2.yml
   testinput/enshofx_3.yml
@@ -125,6 +126,7 @@ set( soca_test_ref
   testref/dirac_soca_cor_nicas_scales.test
   testref/dirac_soca_cov.test
   testref/dirac_socahyb_cov.test
+  testref/ensanpproc.test
   testref/enshofx.test
   testref/ensmeanandvariance.test
   testref/enspert.test
@@ -542,6 +544,18 @@ soca_add_test( NAME ensmeanandvariance
 
 soca_add_test( NAME ensrecenter
                EXE  soca_ensrecenter.x
+               TEST_DEPENDS test_soca_gridgen )
+
+file(COPY ${CMAKE_CURRENT_BINARY_DIR}/data_static/72x35x25/restarts/iced.2018-04-15-00000.nc
+     DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/data_generated/ensanpproc/mem.1 )
+file(COPY ${CMAKE_CURRENT_BINARY_DIR}/data_static/72x35x25/restarts/iced.2018-04-15-00000.nc
+     DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/data_generated/ensanpproc/mem.2 )
+file(COPY ${CMAKE_CURRENT_BINARY_DIR}/data_static/72x35x25/restarts/iced.2018-04-15-00000.nc
+     DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/data_generated/ensanpproc/mem.3 )
+file(COPY ${CMAKE_CURRENT_BINARY_DIR}/data_static/72x35x25/restarts/iced.2018-04-15-00000.nc
+     DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/data_generated/ensanpproc/mem.4 )
+soca_add_test( NAME ensanpproc
+               EXE  soca_anpproc.x
                TEST_DEPENDS test_soca_gridgen )
 
 soca_add_test( NAME hybridgain

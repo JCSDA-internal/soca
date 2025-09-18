@@ -86,7 +86,6 @@ subroutine soca_increment_random(self)
 
     ! NOTE: can't randomize "hocn", testIncrementInterpAD fails
     if (afield%name() == "sea_water_cell_thickness") then
-      call afield%final()
       cycle
     end if
 
@@ -117,9 +116,8 @@ subroutine soca_increment_random(self)
     end if
 
     call afield%set_dirty()
-    call afield%final()
   end do
-
+  call afield%final()
 end subroutine soca_increment_random
 
 
@@ -181,7 +179,6 @@ subroutine soca_increment_dirac(self, f_conf)
     field = self%afieldset%field(n)
     call field%data(fdata)
     fdata = 0.0
-    call field%final()
   end do
 
   ! Setup Diracs
@@ -198,8 +195,8 @@ subroutine soca_increment_dirac(self, f_conf)
     ! set dirac
     fdata(izdir(n), self%geom%atlas_ij2idx(ixdir(n),iydir(n))) = 1.0
 
-    call field%final()
   end do
+  call field%final()
 end subroutine soca_increment_dirac
 
 
@@ -256,8 +253,8 @@ subroutine soca_horiz_scales(self, f_conf)
     end do
 
     call afield%set_dirty(rossby%dirty() .or. area%dirty())
-    call afield%final()
   end do
+  call afield%final()
   call rossby%final()
   call area%final()
 end subroutine soca_horiz_scales
@@ -290,9 +287,8 @@ subroutine soca_vert_scales(self, vert)
       end do
     end do
 
-    call field%final()
   end do
-
+  call field%final()
   call mask%final()
 end subroutine soca_vert_scales
 ! ------------------------------------------------------------------------------

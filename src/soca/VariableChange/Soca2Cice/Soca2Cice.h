@@ -16,8 +16,6 @@
 #include "oops/util/parameters/Parameters.h"
 #include "oops/util/parameters/RequiredParameter.h"
 
-#include "soca/Traits.h"
-
 #include "soca/VariableChange/Base/VariableChangeBase.h"
 
 namespace soca {
@@ -92,6 +90,12 @@ class Soca2Cice: public VariableChangeBase {
             "icepack time step used for thickness categories rebinning", 300, this};
     oops::OptionalParameter<int> shuffleStencilSize{"shuffle stencil depth",
             "stencil depth used in the shuffle search", this, {oops::minConstraint(1)}};
+    oops::Parameter<std::string> tFrzOption{"icepack tfrz_option",
+            "icepack option to compute freezing temperature", "mushy", this};
+    oops::Parameter<double> minAice{"min aice",
+            "minimum allowable ice concentration", 0.0, this, {oops::minConstraint(0.0)}};
+    oops::Parameter<double> minVice{"min vice",
+            "minimum allowable ice volume", 0.00001, this, {oops::minConstraint(0.0)}};
   };
 
   const std::string classname() {return "soca::Soca2Cice";}

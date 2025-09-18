@@ -6,7 +6,7 @@
 !> C++ interfaces for soca_state_mod::soca_state
 module soca_state_mod_c
 
-use atlas_module, only: atlas_fieldset, atlas_field, atlas_real, atlas_metadata
+use atlas_module, only: atlas_fieldset
 use datetime_mod, only: datetime, c_f_datetime
 use fckit_configuration_module, only: fckit_configuration
 use iso_c_binding
@@ -55,6 +55,7 @@ subroutine soca_state_create_c(c_key_self, c_key_geom, c_vars, c_afieldsest) &
     vars = oops_variables(c_vars)
     afieldset = atlas_fieldset(c_afieldsest)
     call self%create(geom, vars, afieldset)
+    call afieldset%final()
 
 end subroutine soca_state_create_c
 
