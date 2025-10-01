@@ -21,3 +21,5 @@ To generate doxygen documentation for the Fortran parts of the code, use the `-D
 in the `soca/docs/html` path of the build directory.
 
 See the [JEDI Documentation](https://jointcenterforsatellitedataassimilation-jedi-docs.readthedocs-hosted.com/en/latest/) for additional details on how to setup, build, and test JEDI projects.
+
+Revert this change
