@@ -84,7 +84,6 @@ subroutine soca_model2geovals_changevar_f90(c_key_geom, c_key_xin, c_key_xout) &
         end do
       end do
       call field_out%set_dirty(field2%dirty());
-      call field2%final()
 
     case ('distance_from_coast')
       field2 = geom%fieldset%field("distance_from_coast")
@@ -93,7 +92,6 @@ subroutine soca_model2geovals_changevar_f90(c_key_geom, c_key_xin, c_key_xout) &
         data_out(1, ii) = data2(1, ii)
       end do
       call field_out%set_dirty(field2%dirty())
-      call field2%final()
 
     case ('sea_area_fraction')
       do jj=geom%jsc,geom%jec
@@ -115,7 +113,6 @@ subroutine soca_model2geovals_changevar_f90(c_key_geom, c_key_xin, c_key_xout) &
               data2(1, idx)
         end do
       end do
-      call field2%final()
       call field_out%set_dirty()
 
     ! special derived state variables
@@ -129,7 +126,6 @@ subroutine soca_model2geovals_changevar_f90(c_key_geom, c_key_xin, c_key_xout) &
         end do
       end do
       call field_out%set_dirty()
-      call field2%final()
 
     case ('sea_floor_depth_below_sea_surface')
       field2 = xin%afieldset%field("sea_water_cell_thickness")
@@ -141,7 +137,6 @@ subroutine soca_model2geovals_changevar_f90(c_key_geom, c_key_xin, c_key_xout) &
         end do
       end do
       call field_out%set_dirty(field2%dirty())
-      call field2%final()
 
     ! identity operators
     case default
@@ -168,11 +163,10 @@ subroutine soca_model2geovals_changevar_f90(c_key_geom, c_key_xin, c_key_xout) &
                         // field_out%name() )
       end if
       call field_out%set_dirty(field2%dirty())
-      call field2%final()
     end select
-
-    call field_out%final()
   end do
+  call field_out%final()
+  call field2%final()
 end subroutine
 
 !-------------------------------------------------------------------------------
