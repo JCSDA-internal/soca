@@ -50,9 +50,6 @@ namespace soca {
     const eckit::Configuration & config_;
 
    public:
-    // Constructor
-    BaseEmul(const eckit::Configuration, const eckit::mpi::Comm);
-
     // Getters
     int getInputSize() const { return inputSize_; }
     int getOutputSize() const { return outputSize_; }

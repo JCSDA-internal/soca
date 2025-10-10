@@ -41,8 +41,8 @@ jobs:
         uses: JCSDA-internal/jedi-ci@develop
         with:
           container_version: 'latest'
-          unittest_tag: 'vader'
-          unittest_dependencies: gsw ioda oasim oops saber ufo vader ufo-data ioda-data
+          unittest_tag: 'soca'
+          unittest_dependencies: gsw ioda ioda-data oasim oops saber ufo ufo-data vader jedi-model-data
           test_script: run_tests.sh
           target_repo_dir: target_repository
           bundle_branch: develop
