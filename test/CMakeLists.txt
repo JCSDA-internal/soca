@@ -74,6 +74,7 @@ set( soca_test_input
   testinput/letkf_split_observer.yml
   testinput/letkf_split_solver.yml
   testinput/letkf.yml
+  testinput/letkf3d.yml
   testinput/linearization_error.yml
   testinput/linearmodel_oceaniceemulator.yml
   testinput/makeobs.yml
@@ -144,6 +145,7 @@ set( soca_test_ref
   testref/letkf_split_observer.test
   testref/letkf_split_solver.test
   testref/letkf.test
+  testref/letkf3d.test
   testref/linearization_error.test
   testref/makeobs.test
   testref/oceanSmoother.test
@@ -781,6 +783,11 @@ soca_add_test( NAME 4dvar_oceaniceemulator
 #---------------------------------------------------------------------------------------------------
 
 soca_add_test( NAME letkf
+               EXE  soca_letkf.x
+              #  NOTRAPFPE
+               TEST_DEPENDS test_soca_gridgen )
+
+soca_add_test( NAME letkf3d
                EXE  soca_letkf.x
               #  NOTRAPFPE
                TEST_DEPENDS test_soca_gridgen )
