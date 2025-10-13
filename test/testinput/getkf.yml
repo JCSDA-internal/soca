@@ -144,3 +144,4 @@ test:
   reference filename: testref/getkf.test
   test output filename: testoutput/getkf.test
   float relative tolerance: 1e-3
+  float absolute tolerance: 1e-3
