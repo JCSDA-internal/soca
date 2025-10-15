@@ -28,7 +28,7 @@ class ObsLocRossby: public ufo::ObsHorLocGC99<MODEL> {
   typedef typename ufo::ObsHorLocalization<MODEL>::LocalObs LocalObs_;
 
  public:
-  ObsLocRossby(const eckit::Configuration &, const ioda::ObsSpace &);
+  ObsLocRossby(const eckit::Configuration &, ioda::ObsSpace &);
 
   /// Compute Rossby radius based localization and update localization values
   /// in \p locvector. Missing values indicate that observation is outside of
@@ -39,15 +39,17 @@ class ObsLocRossby: public ufo::ObsHorLocGC99<MODEL> {
 
  private:
   ObsLocRossbyParameters options_;
+  mutable ioda::ObsVector cacheVector_;
+  mutable eckit::geometry::Point2 cachePoint_;
 };
 
 // -----------------------------------------------------------------------------
 
 template<typename MODEL>
 ObsLocRossby<MODEL>::ObsLocRossby(const eckit::Configuration & config,
-                                  const ioda::ObsSpace & obsspace):
+                                  ioda::ObsSpace & obsspace):
     ufo::ObsHorLocGC99<MODEL>::ObsHorLocGC99(config, obsspace),
-    options_() {
+    options_(), cacheVector_(obsspace), cachePoint_(-999, -999) {
     options_.validateAndDeserialize(config);
 }
 
@@ -57,6 +59,12 @@ template<typename MODEL>
 void ObsLocRossby<MODEL>::computeLocalization(
     const GeometryIterator_ & i,
     ioda::ObsVector & locvector) const {
+  const eckit::geometry::Point3 refPoint = *i;
+  const eckit::geometry::Point2 refPoint2(refPoint[0], refPoint[1]);
+  if (refPoint2 == cachePoint_) {
+    locvector = cacheVector_;
+    return;
+  }
 
   // calculate the length scale at this location
   double lengthscale = options_.base;
@@ -74,6 +82,8 @@ void ObsLocRossby<MODEL>::computeLocalization(
   const LocalObs_ & localobs =
   ufo::ObsHorLocGC99<MODEL>::getLocalObs(i, lengthscale);
   ufo::ObsHorLocGC99<MODEL>::localizeLocalObs(i, locvector, localobs);
+  cacheVector_ = locvector;
+  cachePoint_ = refPoint2;
 }
 
 // -----------------------------------------------------------------------------
