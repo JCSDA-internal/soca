@@ -43,7 +43,7 @@ namespace soca {
       ErrorCovariance(const Geometry &, const oops::Variables &,
                       const eckit::Configuration &,
                       const State &, const State &) {
-        throw eckit::NotImplemented("You should not be using SocaError, use SABER!");}
+        throw eckit::NotImplemented("You should not be using SocaError, use SABER!", Here());}
       ~ErrorCovariance() {}
 
       void linearize(const State &, const Geometry &) {}
