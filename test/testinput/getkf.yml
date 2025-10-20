@@ -103,7 +103,7 @@ local ensemble DA:
   solver: Deterministic GETKF
   vertical localization:
     fraction of retained variance: 0.6
-    lengthscale: 10
+    lengthscale: 5
     lengthscale units: levels
   inflation:
     rtps: 0.5
