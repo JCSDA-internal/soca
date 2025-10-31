@@ -1,8 +1,8 @@
 Input increment: 
   Valid time: 2018-04-15T00:00:00Z
-sea_water_potential_temperature   min=-0.1726397003258150   max=0.1645350694511602   mean=0.0017123316993994
-             sea_water_salinity   min=-0.0003286202897516   max=0.0068500841353133   mean=0.0000100636204074
- sea_surface_height_above_geoid   min=-0.0003733900571020   max=0.0007826177675213   mean=0.0000299393228223
+sea_water_potential_temperature   min=-0.1727296377085164   max=0.1646203299821593   mean=0.0017132178419170
+             sea_water_salinity   min=-0.0003287974054117   max=0.0068536385706201   mean=0.0000100688250848
+ sea_surface_height_above_geoid   min=-0.0003735820858722   max=0.0007830233126751   mean=0.0000299548851859
 Trajectory state: 
   Valid time: 2018-04-15T00:00:00Z
  sea_surface_height_above_geoid   min=-1.9244847628277935   max=0.9272826517867588   mean=-0.2767903423591662
@@ -13,6 +13,6 @@ sea_water_potential_temperature   min=-1.8883899372702533   max=31.7004645720658
     ocean_mixed_layer_thickness   min=2.2854716757984130   max=4593.1533423819937525   mean=192.4109073940401515
 Output increment: 
   Valid time: 2018-04-15T00:00:00Z
-sea_water_potential_temperature   min=-0.1726397003258150   max=0.1645350694511602   mean=0.0017123316993994
-             sea_water_salinity   min=-0.0003286202897516   max=0.0068500841353133   mean=        -nan
- sea_surface_height_above_geoid   min=-0.0051104792104075   max=0.0041695058645130   mean=0.0002683695842715
+sea_water_potential_temperature   min=-0.1727296377085164   max=0.1646203299821593   mean=0.0017132178419170
+             sea_water_salinity   min=-0.0003287974054117   max=0.0068536385706201   mean=        -nan
+ sea_surface_height_above_geoid   min=-0.0051131297565104   max=0.0041716453333345   mean=0.0002685087148570
