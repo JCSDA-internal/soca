@@ -21,21 +21,18 @@ observations:
   obs localizations:
   - localization method: Horizontal Box car
     lengthscale: 3000e3
-  ## NOTE: vertical localization is disabled until the 3d geometry iterator is revived
-  # - localization method: Vertical localization
-  #   vertical lengthscale: 100
-  #   ioda vertical coordinate: depth
-  #   ioda vertical coordinate group: MetaData
-  #   localization function: Box Car
+  - localization method: Vertical localization
+    vertical lengthscale: 5
+    assign constant vertical coordinate to obs: true
+    constant vertical coordinate value: 2
+    localization function: Gaspari Cohn
 
 observation localizations reference:
     gridpoints:
       lons: [-165.0, -175.0, -175.0]
       lats: [ 0.0, -40.0, 0.0]
       depths: [1, 1, 1]
-    #   depths: [0.0, 34.2859952, 0.0]
-    # local nobs: [28, 0, 17]
     local nobs: [66, 0, 49]
-    rms: [1.0, 1.0, 1.0]
+    rms: [0.783573, 0.783573, 0.783573]
     print iterator: false
 

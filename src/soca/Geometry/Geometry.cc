@@ -6,6 +6,7 @@
  */
 
 #include <algorithm>
+#include <numeric>
 
 #include "atlas/functionspace.h"
 #include "atlas/mesh/actions/BuildHalo.h"
@@ -170,6 +171,19 @@ namespace soca {
     soca_geo_get_num_levels_f90(toFortran(), vars, lvls.size(), lvls.data());
     return lvls;
   }
+
+  // -----------------------------------------------------------------------------
+  std::vector<double> Geometry::verticalCoord(std::string & vertcoord) const {
+    if (vertcoord != "levels") {
+      throw eckit::NotImplemented("Vertical coordinate not supported. Only 'levels' "
+        "vertical coordinate currently supported.");
+    }
+    const size_t nlevs = fields_["vert_coord"].shape(1);
+    std::vector<double> coords(nlevs);
+    std::iota(coords.begin(), coords.end(), 1.0);
+    return coords;
+  }
+
   // -----------------------------------------------------------------------------
   void Geometry::print(std::ostream & os) const {
     // TODO(Travis): Implement this correctly.
