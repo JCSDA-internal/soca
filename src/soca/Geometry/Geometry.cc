@@ -176,7 +176,7 @@ namespace soca {
   std::vector<double> Geometry::verticalCoord(std::string & vertcoord) const {
     if (vertcoord != "levels") {
       throw eckit::NotImplemented("Vertical coordinate not supported. Only 'levels' "
-        "vertical coordinate currently supported.");
+        "vertical coordinate currently supported.", Here());
     }
     const size_t nlevs = fields_["vert_coord"].shape(1);
     std::vector<double> coords(nlevs);
