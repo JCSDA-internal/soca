@@ -113,6 +113,9 @@ namespace soca {
       /// Data
    private:
       F90flds keyFlds_;
+      const size_t nlevs_;
+      const std::vector<int> varlens_;
+      const int totalLen_;
   };
   // -----------------------------------------------------------------------------
 
