@@ -93,6 +93,7 @@ set( soca_test_input
   testinput/setcorscales.yml
   testinput/sqrtvertloc.yml
   testinput/state.yml
+  testinput/state_cice6.yml
   testinput/varchange_ana2model.yml
   testinput/varchange_balance_TSSSH.yml
   testinput/varchange_balance.yml
@@ -386,6 +387,10 @@ soca_add_test( NAME geometry_iterator_3d
                TEST_DEPENDS test_soca_gridgen )
 
 soca_add_test( NAME state
+               SRC  TestState.cc
+               TEST_DEPENDS test_soca_gridgen )
+
+soca_add_test( NAME state_cice6
                SRC  TestState.cc
                TEST_DEPENDS test_soca_gridgen )
 
