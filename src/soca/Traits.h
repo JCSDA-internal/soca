@@ -23,7 +23,7 @@
 #include "soca/ModelData/ModelData.h"
 #include "soca/State/State.h"
 #include "soca/VariableChange/VariableChange.h"
-#include "ufo/obslocalization/ObsLocWrapper.h"
+#include "ufo/obslocalization/ObsLocalization.h"
 
 namespace soca {
 
@@ -54,7 +54,7 @@ struct Traits {
   typedef soca::VariableChange       VariableChange;
   typedef soca::ModelData            ModelData;
 
-  typedef ufo::ObsLocWrapper<GeometryIterator>   ObsLocalization;
+  typedef ufo::ObsLocalization<GeometryIterator>   ObsLocalization;
 };
 
 }  // namespace soca
