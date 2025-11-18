@@ -478,8 +478,10 @@ subroutine soca_fields_read(self, f_conf, vdate)
   type(atlas_field) :: afield1, afield2, afield3, afield4
   real(kind=kind_real), pointer :: adata1(:,:), adata2(:,:), adata3(:,:), adata4(:,:)
   real(kind=kind_real), allocatable :: h_common_ij(:), hocn_ij(:), varocn_ij(:), varocn2_ij(:)
+  logical :: compute_icethickness, compute_snowthickness
 
   character(len=3), dimension(5) :: domains
+  type(soca_field_metadata) :: field_meta
   domains = [character(len=3) :: "ocn", "sfc", "ice", "wav", "bio"]
 
   if ( f_conf%has("read_from_file") ) call f_conf%get_or_die("read_from_file", iread)
@@ -525,6 +527,21 @@ subroutine soca_fields_read(self, f_conf, vdate)
       end if
     end do
 
+    ! determine whether we'll need to compute ice thickness or snow thickness
+    compute_icethickness = .false.
+    compute_snowthickness = .false.
+    if(f_conf%get("ice_filename", str)) then
+      filename = trim(basename) // trim(str)
+      field_meta = self%geom%fields_metadata%get("sea_ice_thickness")
+      if ((.not. field_exist(filename, field_meta%io_name))) then
+        compute_icethickness = .true.
+      endif
+      field_meta = self%geom%fields_metadata%get("sea_ice_snow_thickness")
+      if ((.not. field_exist(filename, field_meta%io_name))) then
+        compute_snowthickness = .true.
+      endif
+    endif
+
     ! for each separate domain, check if a filename is provided
     do d=1, size(domains)
       if(f_conf%get(domains(d)//"_filename", str)) then
@@ -560,9 +577,23 @@ subroutine soca_fields_read(self, f_conf, vdate)
             allocate(vars(n)%data(&
               self%geom%isd:self%geom%ied, self%geom%jsd:self%geom%jed, vars(n)%field%nz))
             if (vars(n)%field%nz == 1) then
-              idr = register_restart_field(restart, filename, &
-                vars(n)%field%metadata%io_name, vars(n)%data(:,:,1), &
-                domain=self%geom%Domain%mpp_domain)
+              ! special handling when ice thickness is requested but only ice volume and
+              ! ice concentration are available
+              if ((self%fields(f)%metadata%name == "sea_ice_thickness") .and. compute_icethickness) then
+                field_meta = self%geom%fields_metadata%get("sea_ice_volume")
+                idr = register_restart_field(restart, filename, &
+                  field_meta%io_name, vars(n)%data(:,:,1), &
+                  domain=self%geom%Domain%mpp_domain)
+              elseif ((self%fields(f)%metadata%name == "sea_ice_snow_thickness") .and. compute_snowthickness) then
+                field_meta = self%geom%fields_metadata%get("sea_ice_snow_volume")
+                idr = register_restart_field(restart, filename, &
+                  field_meta%io_name, vars(n)%data(:,:,1), &
+                  domain=self%geom%Domain%mpp_domain)
+              else
+                idr = register_restart_field(restart, filename, &
+                  vars(n)%field%metadata%io_name, vars(n)%data(:,:,1), &
+                  domain=self%geom%Domain%mpp_domain)
+              endif
             else
               idr = register_restart_field(restart, filename, &
                 vars(n)%field%metadata%io_name, vars(n)%data(:,:,:), &
@@ -607,6 +638,43 @@ subroutine soca_fields_read(self, f_conf, vdate)
       call f_conf%get_or_die("ice_filename", str)
       filename = trim(basename) // trim(str)
       call self%read_seaice(filename, seaice_categories_vars)
+    end if
+
+    ! compute ice thickness if needed
+    if (compute_icethickness .and. self%afieldset%has("sea_ice_thickness")) then
+      afield1 = self%afieldset%field("sea_ice_thickness")
+      afield2 = self%afieldset%field("sea_ice_area_fraction")
+      call afield1%data(adata1)
+      call afield2%data(adata2)
+      do j=self%geom%jsc, self%geom%jec
+        do i=self%geom%isc, self%geom%iec
+          idx = self%geom%atlas_ij2idx(i,j)
+          if (adata2(1,idx) > 0.0) then
+            adata1(1,idx) = adata1(1,idx) / adata2(1,idx)
+          else
+            adata1(1,idx) = 0.0_kind_real
+          end if
+        end do
+      end do
+      call afield1%set_dirty()
+    end if
+    ! compute snow thickness if needed
+    if (compute_snowthickness .and. self%afieldset%has("sea_ice_snow_thickness")) then
+      afield1 = self%afieldset%field("sea_ice_snow_thickness")
+      afield2 = self%afieldset%field("sea_ice_area_fraction")
+      call afield1%data(adata1)
+      call afield2%data(adata2)
+      do j=self%geom%jsc, self%geom%jec
+        do i=self%geom%isc, self%geom%iec
+          idx = self%geom%atlas_ij2idx(i,j)
+          if (adata2(1,idx) > 0.0) then
+            adata1(1,idx) = adata1(1,idx) / adata2(1,idx)
+          else
+            adata1(1,idx) = 0.0_kind_real
+          end if
+        end do
+      end do
+      call afield1%set_dirty()
     end if
 
     ! initialize mid-layer depth from layer thickness
