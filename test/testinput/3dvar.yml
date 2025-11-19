@@ -137,7 +137,7 @@ cost function:
       obs operator:
         name: CoolSkin
       obs error:
-        covariance model: diagonal
+        covariance model: diagonal ufo
 
     - obs space:
         name: SeaSurfaceTemp
@@ -154,7 +154,7 @@ cost function:
         name: Identity
         observation alias file: testinput/obsop_name_map.yml
       obs error:
-        covariance model: diagonal
+        covariance model: diagonal ufo
       obs filters:
       - *land_mask
       - filter: Thinning
@@ -176,7 +176,7 @@ cost function:
         name: Identity
         observation alias file: testinput/obsop_name_map.yml
       obs error:
-        covariance model: diagonal
+        covariance model: diagonal ufo
       obs filters:
       - filter: Domain Check
         where:
@@ -201,7 +201,7 @@ cost function:
       obs operator:
         name: ADT
       obs error:
-        covariance model: diagonal
+        covariance model: diagonal ufo
       obs filters:
       - *land_mask
       - filter: Bounds Check
@@ -232,7 +232,7 @@ cost function:
       obs operator:
         name: InsituTemperature
       obs error:
-        covariance model: diagonal
+        covariance model: diagonal ufo
       obs filters:
       - *land_mask
       - filter: Background Check
@@ -256,7 +256,7 @@ cost function:
         observation vertical coordinate: depth
         interpolation method: linear
       obs error:
-        covariance model: diagonal
+        covariance model: diagonal ufo
       obs filters:
       - *land_mask
 
@@ -275,7 +275,7 @@ cost function:
         name: Identity
         observation alias file: testinput/obsop_name_map.yml
       obs error:
-        covariance model: diagonal
+        covariance model: diagonal ufo
       obs filters:
       - *land_mask
 

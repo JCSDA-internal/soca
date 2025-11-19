@@ -161,7 +161,7 @@ cost function:
       obs operator:
         name: ADT
       obs error:
-        covariance model: diagonal
+        covariance model: diagonal ufo
 
 variational:
   minimizer:
