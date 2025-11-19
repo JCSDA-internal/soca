@@ -14,8 +14,8 @@ CostFunction::addIncrement: Analysis:
        ocean_mixed_layer_thickness   min=2.2854716757984130   max=4593.1533423819937525   mean=192.4109073940401515
                    sea_water_depth   min=2.2854716757984130   max=5658.3057467114012979   mean=1200.5229536158342398
              sea_ice_area_fraction   min=-0.1868286443926636   max=1.4632259836610739   mean=0.1361982187163660
-                 sea_ice_thickness   min=0.0000000000000000   max=4.7236270904541016   mean=0.1716958025029246
-            sea_ice_snow_thickness   min=0.0000000000000000   max=0.5992779135704041   mean=0.0227548243560781
+                    sea_ice_volume   min=0.0000000000000000   max=4.7236270904541016   mean=0.1716958025029246
+               sea_ice_snow_volume   min=0.0000000000000000   max=0.5992779135704041   mean=0.0227548243560781
    sea_ice_category1_area_fraction   min=0.0000000000000000   max=0.9999036788940430   mean=0.0265098247369378
    sea_ice_category2_area_fraction   min=0.0000000000000000   max=0.9934535026550293   mean=0.0336125617522730
    sea_ice_category3_area_fraction   min=0.0000000000000000   max=0.9980189204216003   mean=0.0487515810399299

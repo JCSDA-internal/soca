@@ -17,8 +17,8 @@ _soca_vars_state: &soca_vars_state
 
   # aggregated ice variables
   - sea_ice_area_fraction
-  - sea_ice_thickness
-  - sea_ice_snow_thickness
+  - sea_ice_volume
+  - sea_ice_snow_volume
 
   # ice category variables
   - sea_ice_category1_area_fraction
