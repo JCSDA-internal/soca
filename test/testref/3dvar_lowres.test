@@ -17,19 +17,19 @@ CostFunction::addIncrement: Analysis:
     sea_water_potential_temperature   min=-1.8872641353052719   max=31.7004645720658580   mean=6.0191995656619506
      sea_surface_height_above_geoid   min=-1.9244814393855472   max=0.9273328651926802   mean=-0.2767602931161636
            sea_water_cell_thickness   min=0.0009999999999977   max=1345.6400000000003274   mean=128.6280642064969300
-net_downwelling_shortwave_radiation   min=-225.0971748176492326   max=0.0058649913186789   mean=-71.7383454595445329
-     upward_latent_heat_flux_in_air   min=-38.1374752008561799   max=256.5934480093341108   mean=42.0096978907444054
-   upward_sensible_heat_flux_in_air   min=-58.9492937087335633   max=201.3742980516566661   mean=6.0753290794051384
- net_downwelling_longwave_radiation   min=-0.0000011438680588   max=88.0360883312032456   mean=31.3955342497944336
-       friction_velocity_over_water   min=0.0043981517572827   max=0.0196623543813809   mean=0.0086847478004369
+net_downwelling_shortwave_radiation   min=-225.0971745084318343   max=0.0058680617977711   mean=-71.7383449485931379
+     upward_latent_heat_flux_in_air   min=-38.1374752413912361   max=256.5934458013621224   mean=42.0096977114811310
+   upward_sensible_heat_flux_in_air   min=-58.9492937080398889   max=201.3742980516337013   mean=6.0753290765806591
+ net_downwelling_longwave_radiation   min=-0.0000011444597557   max=88.0360883318784033   mean=31.3955342525416263
+       friction_velocity_over_water   min=0.0043981522924087   max=0.0196623553979694   mean=0.0086847582209045
         ocean_mixed_layer_thickness   min=2.2854716757984130   max=4593.1533423819937525   mean=192.4109073940401515
                     sea_water_depth   min=2.2854716757984130   max=5658.3057467114012979   mean=1200.5229536158342398
-CostJo   : Nonlinear Jo(CoolSkin) = 15951.5862460860662395, nobs = 199, Jo/n = 80.1587248547038485, err = 0.3641999199702058
-CostJo   : Nonlinear Jo(SeaSurfaceTemp) = 1563.5195925815278315, nobs = 174, Jo/n = 8.9857447849513097, err = 0.3628035751527124
-CostJo   : Nonlinear Jo(SeaSurfaceSalinity) = 5.5600754234571363, nobs = 29, Jo/n = 0.1917267387399013, err = 1.0000000000000000
-CostJo   : Nonlinear Jo(ADT) = 0.0101959084650645, nobs = 94, Jo/n = 0.0001084671113305, err = 27.7234827618323827
-CostJo   : Nonlinear Jo(InsituTemperature) = 347.7265345815684441, nobs = 206, Jo/n = 1.6879928863182934, err = 0.8991441572394548
-CostJo   : Nonlinear Jo(InsituSalinity) = 344.0232250810553296, nobs = 218, Jo/n = 1.5780881884452080, err = 0.6081969954577753
-CostJo   : Nonlinear Jo(SeaIceFraction) = 596.7494026645050553, nobs = 89, Jo/n = 6.7050494681405066, err = 0.1000000014901161
-CostJb   : Nonlinear Jb = 0.0404656480273084
-CostFunction: Nonlinear J = 18809.2157379746713559
+CostJo   : Nonlinear Jo(CoolSkin) = 15951.3914052360396454, nobs = 199, Jo/n = 80.1577457549549734, err = 0.3641999199702058
+CostJo   : Nonlinear Jo(SeaSurfaceTemp) = 1563.4942499622857213, nobs = 174, Jo/n = 8.9855991377142850, err = 0.3628035751527124
+CostJo   : Nonlinear Jo(SeaSurfaceSalinity) = 5.5600750830281527, nobs = 29, Jo/n = 0.1917267270009708, err = 1.0000000000000000
+CostJo   : Nonlinear Jo(ADT) = 0.0101958572706805, nobs = 94, Jo/n = 0.0001084665667094, err = 27.7274842538867787
+CostJo   : Nonlinear Jo(InsituTemperature) = 347.7244132153076634, nobs = 206, Jo/n = 1.6879825884238235, err = 0.8991441572394548
+CostJo   : Nonlinear Jo(InsituSalinity) = 344.0217265365836852, nobs = 218, Jo/n = 1.5780813143879986, err = 0.6081969954577753
+CostJo   : Nonlinear Jo(SeaIceFraction) = 596.7488520764163695, nobs = 89, Jo/n = 6.7050432817574874, err = 0.1000000014901161
+CostJb   : Nonlinear Jb = 0.0405075523985125
+CostFunction: Nonlinear J = 18808.9914255193289137

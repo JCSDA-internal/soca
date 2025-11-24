@@ -10,6 +10,8 @@
 
 #include <string>
 
+#include "oops/generic/UnstructuredInterpolator.h"
+
 #include "soca/Covariance/ErrorCovariance.h"
 #include "soca/Geometry/Geometry.h"
 #include "soca/GeometryIterator/GeometryIterator.h"
@@ -37,11 +39,12 @@ struct Traits {
   static std::string name() {return "SOCA";}
   static std::string nameCovar() {return "SocaError";}
 
-  typedef soca::Geometry             Geometry;
-  typedef soca::GeometryIterator     GeometryIterator;
-  typedef soca::State                State;
-  typedef soca::Increment            Increment;
-  typedef soca::ErrorCovariance      Covariance;  // Not actually used, just empty stubs
+  typedef soca::Geometry                  Geometry;
+  typedef soca::GeometryIterator          GeometryIterator;
+  typedef soca::State                     State;
+  typedef soca::Increment                 Increment;
+  typedef oops::UnstructuredInterpolator  LocalInterpolator;
+  typedef soca::ErrorCovariance           Covariance;  // Not actually used, just empty stubs
 
   typedef soca::ModelOceanIceEmulator        Model;
   typedef soca::LinearModelOceanIceEmulator  LinearModel;
