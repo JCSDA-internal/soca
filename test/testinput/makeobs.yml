@@ -49,7 +49,7 @@ observations:
     obs operator:
       name: InsituTemperature
     obs error:
-      covariance model: diagonal ufo
+      covariance model: diagonal
 
 make obs: true
 

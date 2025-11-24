@@ -124,7 +124,7 @@ cost function:
         name: Identity
         observation alias file: testinput/obsop_name_map.yml
       obs error:
-        covariance model: diagonal ufo
+        covariance model: diagonal
 
     - obs space:
         name: SeaIceFraction
@@ -141,7 +141,7 @@ cost function:
         name: Identity
         observation alias file: testinput/obsop_name_map.yml
       obs error:
-        covariance model: diagonal ufo
+        covariance model: diagonal
       obs filters:
       - *land_mask
 

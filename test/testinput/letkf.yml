@@ -46,7 +46,7 @@ observations:
       name: Identity
       observation alias file: testinput/obsop_name_map.yml
     obs error:
-      covariance model: diagonal ufo
+      covariance model: diagonal
     obs localizations:
     - localization method: Rossby
       base value: 100.0e3
@@ -77,7 +77,7 @@ observations:
     obs operator:
       name: ADT
     obs error:
-      covariance model: diagonal ufo
+      covariance model: diagonal
     obs localizations:
     - localization method: Rossby
       base value: 100.0e3
