@@ -63,6 +63,7 @@ set( soca_test_input
   testinput/geometry_iterator_2d.yml
   testinput/geometry_iterator_3d.yml
   testinput/geometry.yml
+  testinput/getkf.yml
   testinput/getvalues.yml
   testinput/gridgen.yml
   testinput/hofx_3d.yml
@@ -73,6 +74,7 @@ set( soca_test_input
   testinput/letkf_split_observer.yml
   testinput/letkf_split_solver.yml
   testinput/letkf.yml
+  testinput/letkf3d.yml
   testinput/linearization_error.yml
   testinput/linearmodel_oceaniceemulator.yml
   testinput/makeobs.yml
@@ -134,6 +136,7 @@ set( soca_test_ref
   testref/forecast_identity.test
   testref/forecast_pseudo.test
   testref/gen_hybrid_linear_model_coeffs.test
+  testref/getkf.test
   testref/gridgen.test
   testref/hofx_3d.test
   testref/hofx_4d_pseudo.test
@@ -142,6 +145,7 @@ set( soca_test_ref
   testref/letkf_split_observer.test
   testref/letkf_split_solver.test
   testref/letkf.test
+  testref/letkf3d.test
   testref/linearization_error.test
   testref/makeobs.test
   testref/oceanSmoother.test
@@ -783,6 +787,11 @@ soca_add_test( NAME letkf
               #  NOTRAPFPE
                TEST_DEPENDS test_soca_gridgen )
 
+soca_add_test( NAME letkf3d
+               EXE  soca_letkf.x
+              #  NOTRAPFPE
+               TEST_DEPENDS test_soca_gridgen )
+
 soca_add_test( NAME letkf_split_observer
                EXE  soca_letkf.x
               #  NOTRAPFPE
@@ -794,6 +803,10 @@ soca_add_test( NAME letkf_split_solver
                TEST_DEPENDS test_soca_gridgen
                             test_soca_letkf_split_observer )
 
+soca_add_test( NAME getkf
+               EXE  soca_letkf.x
+              #  NOTRAPFPE
+               TEST_DEPENDS test_soca_gridgen )
 
 # other executables that depends on increments from 3dvar_diffusion run
 #---------------------------------------------------------------------------------------------------

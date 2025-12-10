@@ -62,7 +62,7 @@ namespace soca {
       GeometryIterator end() const;
       int IteratorDimension() const {return iteratorDimensions_;}
       std::vector<size_t> variableSizes(const oops::Variables & vars) const;
-      std::vector<double> verticalCoord(std::string &) const {return {};}
+      std::vector<double> verticalCoord(std::string &) const;
 
       int& toFortran() {return keyGeom_;}
       const int& toFortran() const {return keyGeom_;}

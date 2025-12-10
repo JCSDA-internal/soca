@@ -8,13 +8,14 @@
 #include "soca/Traits.h"
 
 #include "oops/runs/Run.h"
+#include "soca/GeometryIterator/GeometryIterator.h"
 #include "test/interface/ObsLocalization.h"
 #include "ufo/instantiateObsLocFactory.h"
 #include "ufo/ObsTraits.h"
 
 int main(int argc,  char ** argv) {
   oops::Run run(argc, argv);
-  ufo::instantiateObsLocFactory<soca::Traits>();
+  ufo::instantiateObsLocFactory<soca::GeometryIterator>();
   test::ObsLocalization<soca::Traits, ufo::ObsTraits> tests;
   return run.execute(tests);
 }
