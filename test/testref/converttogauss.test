@@ -1,0 +1,4 @@
+StructuredGridWriter::<SOCA>
+Grid Resolution: 12
+Variables: 4 variables: sea_surface_height_above_geoid, sea_water_potential_temperature, sea_water_salinity, sea_ice_area_fraction
+Output on Levels: All Model Levels

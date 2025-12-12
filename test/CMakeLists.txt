@@ -35,6 +35,7 @@ set( soca_test_input
   testinput/convertstate_changevar.yml
   testinput/convertstate_soca2cice.yml
   testinput/convertstate.yml
+  testinput/converttogauss.yml
   testinput/diffstates.yml
   testinput/dirac_diffusion.yml
   testinput/dirac_diffusion_lowres.yml
@@ -120,6 +121,7 @@ set( soca_test_ref
   testref/convertstate_changevar.test
   testref/convertstate_soca2cice.test
   testref/convertstate.test
+  testref/converttogauss.test
   testref/diffstates.test
   testref/dirac_diffusion.test
   testref/dirac_parametric_ocean_stddev.test
@@ -534,6 +536,11 @@ soca_add_test( NAME enspert
 soca_add_test( NAME convertstate
                EXE  soca_convertstate.x
               #  NOTRAPFPE
+               TEST_DEPENDS test_soca_gridgen )
+
+# Convert to Gaussian grid
+soca_add_test( NAME converttogauss
+               EXE  soca_converttostructuredgrid.x
                TEST_DEPENDS test_soca_gridgen )
 
 # Apply a nonlinear change of variable to an ensemble of states
