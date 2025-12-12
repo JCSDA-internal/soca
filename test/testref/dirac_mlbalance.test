@@ -1,0 +1,30 @@
+Input Dirac increment:
+  Valid time: 2018-04-15T00:00:00Z
+          sea_ice_area_fraction   min=0.0000000000000000   max=1.0000000000000000   mean=0.0042604990870359
+              sea_ice_thickness   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
+         sea_ice_snow_thickness   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
+   snow_ice_surface_temperature   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
+                air_temperature   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
+              bulk_ice_salinity   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
+             sea_water_salinity   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
+sea_water_potential_temperature   min=0.0000000000000000   max=1.0000000000000000   mean=0.0001704199634814
+ sea_surface_height_above_geoid   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
+       sea_water_cell_thickness   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
+    ocean_mixed_layer_thickness   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
+                sea_water_depth   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
+Adjoint test for block MLBalance passed
+Adjoint test for block ID passed
+Covariance(SABER) * Increment:
+  Valid time: 2018-04-15T00:00:00Z
+          sea_ice_area_fraction   min=0.0000000000000000   max=1.0000000000000000   mean=0.0042294852858864
+              sea_ice_thickness   min=0.0000000000000000   max=0.1475876122713089   mean=0.0000927320322632
+         sea_ice_snow_thickness   min=-0.4333063662052155   max=0.0000000000000000   mean=-0.0002722544249072
+   snow_ice_surface_temperature   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
+                air_temperature   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
+              bulk_ice_salinity   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
+             sea_water_salinity   min=-0.0178170818835497   max=0.0000000000000000   mean=-0.0000004477921118
+sea_water_potential_temperature   min=0.0000000000000000   max=1.0000000000000000   mean=0.0001556002273673
+ sea_surface_height_above_geoid   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
+       sea_water_cell_thickness   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
+    ocean_mixed_layer_thickness   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
+                sea_water_depth   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000

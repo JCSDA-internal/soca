@@ -6,6 +6,7 @@
  */
 
 #include <algorithm>
+#include <numeric>
 
 #include "atlas/functionspace.h"
 #include "atlas/mesh/actions/BuildHalo.h"
@@ -14,6 +15,9 @@
 #include "atlas/output/Gmsh.h"
 
 #include "eckit/config/Configuration.h"
+
+#include "oops/util/Timer.h"
+#include "oops/util/FieldSetHelpers.h"
 
 #include "soca/Geometry/Geometry.h"
 #include "soca/Utils/readNcAndInterp.h"
@@ -24,9 +28,11 @@ namespace soca {
   // -----------------------------------------------------------------------------
   Geometry::Geometry(const eckit::Configuration & conf,
                      const eckit::mpi::Comm & comm, const bool gen)
-    : comm_(comm), iteratorDimensions_(conf.getInt("iterator dimension", 2)),
-      fmsinput_(comm, conf) {
-
+    : comm_(comm),
+      fieldsMetadata_(std::make_shared<FieldsMetadata>(conf.getString("fields metadata"))),
+      fmsinput_(comm, conf),
+      iteratorDimensions_(conf.getInt("iterator dimension", 2))
+  {
     fmsinput_.updateNameList();
 
     // Create the grid decomposition from MOM6.
@@ -123,11 +129,16 @@ namespace soca {
     if (gen) {
       soca_geo_write_f90(keyGeom_, &conf);
     }
+
+    // create a uid for the geometry for later comparison
+    uid_ = util::getGridUid(functionSpace_);
   }
 
   // -----------------------------------------------------------------------------
   Geometry::Geometry(const Geometry & other)
-    : comm_(other.comm_), fmsinput_(other.fmsinput_),
+    : comm_(other.comm_),
+      fieldsMetadata_(other.fieldsMetadata_),
+      fmsinput_(other.fmsinput_),
       iteratorDimensions_(other.iteratorDimensions_) {
     throw eckit::Exception("Geometry copy constructor is not implemented");
   }
@@ -140,23 +151,17 @@ namespace soca {
   // -----------------------------------------------------------------------------
 
   GeometryIterator Geometry::begin() const {
-    ASSERT(IteratorDimension() == 2);  // Modification will be needed for 3D.
-                                       // We don't use 3D right now
-
     // find the first non ghost point
     const auto & ghost = atlas::array::make_view<int, 1>(functionSpace_.ghost());
     size_t idx = 0;
     while (idx < ghost.size() && ghost(idx)) idx++;
-    return GeometryIterator(*this, idx, -1 );
+    return GeometryIterator(*this, idx, 0);
   }
 
   // -----------------------------------------------------------------------------
 
   GeometryIterator Geometry::end() const {
-    ASSERT(IteratorDimension() == 2);  // Modification will be needed for 3D.
-                                       // We don't use 3D right now
-
-    return GeometryIterator(*this, functionSpace_.size(), -1);
+    return GeometryIterator(*this, functionSpace_.size(), 0);
   }
 
   // -----------------------------------------------------------------------------
@@ -166,12 +171,32 @@ namespace soca {
     soca_geo_get_num_levels_f90(toFortran(), vars, lvls.size(), lvls.data());
     return lvls;
   }
+
+  // -----------------------------------------------------------------------------
+  std::vector<double> Geometry::verticalCoord(std::string & vertcoord) const {
+    if (vertcoord != "levels") {
+      throw eckit::NotImplemented("Vertical coordinate not supported. Only 'levels' "
+        "vertical coordinate currently supported.", Here());
+    }
+    const size_t nlevs = fields_["vert_coord"].shape(1);
+    std::vector<double> coords(nlevs);
+    std::iota(coords.begin(), coords.end(), 1.0);
+    return coords;
+  }
+
   // -----------------------------------------------------------------------------
   void Geometry::print(std::ostream & os) const {
     // TODO(Travis): Implement this correctly.
   }
-  // -----------------------------------------------------------------------------
 
   // -----------------------------------------------------------------------------
+  bool operator==(const Geometry& lhs, const Geometry& rhs) {
+    return lhs.uid_ == rhs.uid_;
+  }
+
+  // -----------------------------------------------------------------------------
+  bool operator!=(const Geometry& lhs, const Geometry& rhs) {
+    return !(lhs == rhs);
+  }
 
 }  // namespace soca

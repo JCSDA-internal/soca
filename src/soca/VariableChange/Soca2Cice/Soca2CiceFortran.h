@@ -11,7 +11,7 @@
 namespace soca {
   extern "C" {
     void soca_soca2cice_setup_f90(F90varchange &,
-                                  const eckit::Configuration * const *,
+                                  const eckit::Configuration &,
                                   const F90geom &);
     void soca_soca2cice_changevar_f90(const F90varchange &,
                                       const F90geom &,

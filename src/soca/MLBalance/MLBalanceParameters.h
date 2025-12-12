@@ -21,7 +21,12 @@ class MLBalanceParameters : public saber::SaberBlockParametersBase {
  public:
   oops::RequiredParameter<eckit::LocalConfiguration> mlbalances{"ML Balances", this};
   oops::Variables mandatoryActiveVars() const override {
-    return oops::Variables({"tocn", "socn", "ssh", "cicen", "hicen", "hsnon"});}
+    return oops::Variables({"sea_water_potential_temperature",
+                             "sea_water_salinity",
+                             "sea_surface_height_above_geoid",
+                             "sea_ice_area_fraction",
+                             "sea_ice_thickness",
+                             "sea_ice_snow_thickness"});}
 };
 
 // --------------------------------------------------------------------------------------

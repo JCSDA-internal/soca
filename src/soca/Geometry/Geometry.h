@@ -22,6 +22,7 @@
 #include "eckit/config/LocalConfiguration.h"
 #include "eckit/mpi/Comm.h"
 
+#include "soca/Fields/FieldsMetadata.h"
 #include "soca/Fortran.h"
 #include "soca/Geometry/FmsInput.h"
 #include "soca/Geometry/GeometryFortran.h"
@@ -61,7 +62,7 @@ namespace soca {
       GeometryIterator end() const;
       int IteratorDimension() const {return iteratorDimensions_;}
       std::vector<size_t> variableSizes(const oops::Variables & vars) const;
-      std::vector<double> verticalCoord(std::string &) const {return {};}
+      std::vector<double> verticalCoord(std::string &) const;
 
       int& toFortran() {return keyGeom_;}
       const int& toFortran() const {return keyGeom_;}
@@ -71,6 +72,12 @@ namespace soca {
       atlas::FunctionSpace & functionSpace() {return functionSpace_;}
       const atlas::FieldSet & fields() const {return fields_;}
       atlas::FieldSet & fields() {return fields_;}
+
+      const FieldMetadata & fieldMetadata(const std::string & name) const {
+        return (*fieldsMetadata_)[name];}
+
+      friend bool operator==(const Geometry& lhs, const Geometry& rhs);
+      friend bool operator!=(const Geometry& lhs, const Geometry& rhs);
 
    private:
       Geometry(const Geometry &);
@@ -82,8 +89,10 @@ namespace soca {
       const eckit::mpi::Comm & comm_;
       FmsInput fmsinput_;
       atlas::functionspace::NodeColumns functionSpace_;
+      std::shared_ptr<FieldsMetadata> fieldsMetadata_;
       atlas::FieldSet fields_;
       int iteratorDimensions_;
+      std::string uid_;
   };
   // -----------------------------------------------------------------------------
 

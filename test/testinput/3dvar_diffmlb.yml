@@ -10,7 +10,14 @@ cost function:
   time window:
     begin: 2018-04-14T00:00:00Z
     length: P2D
-  analysis variables: [cicen, hicen, hsnon, socn, tocn, ssh]
+  analysis variables:
+    - sea_ice_area_fraction
+    - sea_ice_thickness
+    - sea_ice_snow_thickness
+    - sea_water_salinity
+    - sea_water_potential_temperature
+    - sea_surface_height_above_geoid
+
   geometry: &geom
     geom_grid_file: data_generated/gridgen/soca_gridspec.72x35x25.nc
     mom6_input_nml: data_static/72x35x25/input.nml
@@ -23,46 +30,61 @@ cost function:
     ice_filename: cice.res.nc
     sfc_filename: sfc.res.nc
     date: &bkg_date 2018-04-15T00:00:00Z
-    state variables: [cicen, hicen, hsnon, tsfc, tair, sice, socn, tocn, ssh, hocn, mld, layer_depth]
+    state variables:
+    - sea_ice_area_fraction
+    - sea_ice_thickness
+    - sea_ice_snow_thickness
+    - snow_ice_surface_temperature
+    - air_temperature
+    - bulk_ice_salinity
+    - sea_water_salinity
+    - sea_water_potential_temperature
+    - sea_surface_height_above_geoid
+    - sea_water_cell_thickness
+    - ocean_mixed_layer_thickness
+    - sea_water_depth
 
   background error:
     covariance model: SABER
     saber central block:
-      saber block name: EXPLICIT_DIFFUSION
-      active variables: [tocn, socn, ssh, cicen, hicen, hsnon]
-      geometry: *geom
-      group mapping:
-      - name: group1
-        variables: [tocn, socn]
-      - name: group2
-        variables: [ssh, cicen, hicen, hsnon]
+      saber block name: diffusion
       read:
         groups:
-        - name: group1
+        - variables:
+          - sea_water_potential_temperature
+          - sea_water_salinity
           horizontal:
-            filename: data_generated/parameters_diffusion_hz/hz_smaller.nc
+            filepath: data_generated/parameters_diffusion_lowres/hz_smaller
           vertical:
-            filename: data_generated/parameters_diffusion_vt/vt_5lvls.nc
-        - name: group2
+            levels: 25
+            filepath: data_generated/parameters_diffusion_lowres/vt_5lvls
+        - variables:
+          - sea_ice_area_fraction
+          - sea_ice_thickness
+          - sea_ice_snow_thickness
+          - sea_surface_height_above_geoid
           horizontal:
-            filename: data_generated/parameters_diffusion_hz/hz_smaller.nc
+            filepath: data_generated/parameters_diffusion_lowres/hz_smaller
 
     saber outer blocks:
     - saber block name: MLBalance
-      geometry: *geom
+      geometry:
+        geom_grid_file: data_static/36x17x25/soca_gridspec.nc
+        mom6_input_nml: data_static/36x17x25/input.nml
+        fields metadata: data_static/fields_metadata.yml
       ML Balances:
         arctic:
           ffnn:
             inputSize: 7
             outputSize: 1
             hiddenSize: 2
-            load model: data_static/mlbalance/arctic.pt
+            load model: data_generated/train_mlbalance/mlbalance.pt
         antarctic:
           ffnn:
             inputSize: 7
             outputSize: 1
             hiddenSize: 2
-            load model: data_static/mlbalance/antarctic.pt
+            load model: data_generated/train_mlbalance/mlbalance.pt
 
     date: *bkg_date
 
@@ -96,8 +118,6 @@ variational:
     ninner: 5
     gradient norm reduction: 1e-15
     test: on
-    diagnostics:
-      departures: ombg
     online diagnostics:
       write increment: true
       increment:
@@ -113,8 +133,6 @@ output:
   type: an
 
 final:
-  diagnostics:
-    departures: oman
   increment:
     output:
       state component:
@@ -127,4 +145,4 @@ final:
 test:
   reference filename: testref/3dvar_diffmlb.test
   test output filename: testoutput/3dvar_diffmlb.test
-  float relative tolerance: 1e-5
+  float relative tolerance: 1e0  # related to the the num. of epochs in the training

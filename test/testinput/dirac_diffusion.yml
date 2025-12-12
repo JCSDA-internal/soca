@@ -9,34 +9,37 @@ background:
   date: &date 2018-04-15T00:00:00Z
   ocn_filename: MOM.res.nc
   ice_filename: cice.res.nc
-  state variables: &soca_vars [cicen, hicen, socn, tocn, ssh, hocn, mld, layer_depth]
+  state variables:
+  - sea_ice_area_fraction
+  - sea_ice_thickness
+  - sea_water_salinity
+  - sea_water_potential_temperature
+  - sea_surface_height_above_geoid
+  - sea_water_cell_thickness
+  - ocean_mixed_layer_thickness
+  - sea_water_depth
 
 background error:
   covariance model: SABER
   adjoint test: true
   saber central block:
-    saber block name: EXPLICIT_DIFFUSION
-    active variables: [tocn, socn, ssh]
-    geometry: *geom
-    group mapping:
-    - name: group1
-      variables: [tocn, socn]
-    - name: group2
-      variables: [ssh]
+    saber block name: diffusion
     read:
       groups:
-      - name: group1
+      - variables:
+        - sea_water_potential_temperature
+        - sea_water_salinity
         multivariate strategy: univariate # or duplicated, if dealing with localization instead
                                           # the default is "univariate"
         horizontal:
-          filename: data_generated/parameters_diffusion/hz_large.nc
+          filepath: data_generated/parameters_diffusion/hz_large
         vertical:
-          filename: data_generated/parameters_diffusion/vt_5lvls.nc
+          levels: 25
+          filepath: data_generated/parameters_diffusion/vt_5lvls
+      - variables: [sea_surface_height_above_geoid]
+        horizontal:
+          filepath: data_generated/parameters_diffusion/hz_smaller
 
-      - name: group2
-        horizontal:       
-          filename: data_generated/parameters_diffusion/hz_smaller.nc
-     
 dirac:
   ixdir: [1, 17, 51, 31, 51, 63, 81, 14, 16, 43]
   iydir: [8, 21, 16, 33, 29, 26, 16, 41,  5, 43]
@@ -52,3 +55,4 @@ output dirac:
 test:
   reference filename: testref/dirac_diffusion.test
   test output filename: testoutput/dirac_diffusion.test
+  float relative tolerance: 2e-5

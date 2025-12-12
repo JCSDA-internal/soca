@@ -9,7 +9,19 @@ background:
   date: &date 2018-04-15T00:00:00Z
   ocn_filename: MOM.res.nc
   ice_filename: cice.res.nc
-  state variables: &soca_vars [cicen, hicen, hsnon, tsfc, tair, sice, socn, tocn, ssh, hocn, mld, layer_depth]
+  state variables:
+  - sea_ice_area_fraction
+  - sea_ice_thickness
+  - sea_ice_snow_thickness
+  - snow_ice_surface_temperature
+  - air_temperature
+  - bulk_ice_salinity
+  - sea_water_salinity
+  - sea_water_potential_temperature
+  - sea_surface_height_above_geoid
+  - sea_water_cell_thickness
+  - ocean_mixed_layer_thickness
+  - sea_water_depth
 
 background error:
   covariance model: SABER
@@ -25,19 +37,19 @@ background error:
           inputSize: 7
           outputSize: 1
           hiddenSize: 2
-          load model: data_static/mlbalance/arctic.pt
+          load model: data_generated/train_mlbalance/mlbalance.pt
       antarctic:
         ffnn:
           inputSize: 7
           outputSize: 1
           hiddenSize: 2
-          load model: data_static/mlbalance/antarctic.pt
+          load model: data_generated/train_mlbalance/mlbalance.pt
 
 dirac:
-  ixdir: [70, 22, 62, 52, 44, 23, 17, 31, 70]
-  iydir: [33, 30, 32, 31, 28, 11,  5,  2,  4]
-  izdir: [ 1,  1,  1,  1,  1,  1,  1,  1,  1]
-  ifdir: [ 4,  4,  4,  4,  4,  4,  4,  4,  4]
+  ixdir: [70, 22, 20, 62, 52, 44, 23, 17, 31, 70, 70, 22, 20, 62, 52, 44, 23, 17, 31, 70]
+  iydir: [33, 34, 33, 32, 31, 28, 11,  5,  2,  4, 33, 34, 33, 32, 31, 28, 11,  5,  2,  4]
+  izdir: [ 1,  1,  1,  1,  1,  1,  1,  1,  1,  1, 1,  1,  1,  1,  1,  1,  1,  1,  1,  1]
+  ifdir: [ 4,  4,  4,  4,  4,  4,  4,  4,  4,  4, 1,  1,  1,  1,  1,  1,  1,  1,  1,  1]
 
 output dirac:
   datadir: data_output/
@@ -48,3 +60,4 @@ output dirac:
 test:
   reference filename: testref/dirac_mlbalance.test
   test output filename: testoutput/dirac_mlbalance.test
+  float absolute tolerance: 1e-1  # related to the the num. of epochs in the training

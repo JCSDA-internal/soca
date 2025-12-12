@@ -9,54 +9,65 @@ background:
   date: &date 2018-04-15T00:00:00Z
   ocn_filename: MOM.res.nc
   ice_filename: cice.res.nc
-  state variables: &soca_vars [cicen, hicen, socn, tocn, uocn, vocn, ssh, hocn, mld, layer_depth]
+  state variables: &soca_vars
+  - sea_ice_area_fraction
+  - sea_ice_thickness
+  - sea_water_salinity
+  - sea_water_potential_temperature
+  - eastward_sea_water_velocity
+  - northward_sea_water_velocity
+  - sea_surface_height_above_geoid
+  - sea_water_cell_thickness
+  - ocean_mixed_layer_thickness
+  - sea_water_depth
 
 background error:
   covariance model: SABER
   saber central block:
-    saber block name: EXPLICIT_DIFFUSION
-    active variables: [cicen, hicen, uocn, vocn, tocn, socn, ssh]
-    geometry: *geom
-    group mapping:
-    - name: group1
-      variables: [cicen, hicen, uocn, vocn, tocn, socn, ssh]
+    saber block name: diffusion
     read:
       groups:
-      - name: group1
+      - variables:
+        - sea_ice_area_fraction
+        - sea_ice_thickness
+        - eastward_sea_water_velocity
+        - northward_sea_water_velocity
+        - sea_water_potential_temperature
+        - sea_water_salinity
+        - sea_surface_height_above_geoid
         horizontal:
-          filename: data_generated/parameters_diffusion/hz_smaller.nc
+          filepath: data_generated/parameters_diffusion/hz_smaller
         vertical:
-          filename: data_generated/parameters_diffusion/vt_5lvls.nc
+          levels: 25
+          filepath: data_generated/parameters_diffusion/vt_5lvls
+
+  saber outer blocks:
+  - saber block name: SOCABkgErrFilt
+    ocean_depth_min: 100 # [m]
+    rescale_bkgerr: 1.0
+    efold_z: 2500.0       # [m]
+
+  - saber block name: SOCAParametricOceanStdDev
+    temperature:
+      sst:
+        filepath: data_static/godas_sst_bgerr.nc
+        variable: sst_bgerr
+    unbalanced salinity: {} # use default values
+    unbalanced ssh: {} # use default values
+    other variables:
+    - variable: sea_ice_area_fraction
+      min: 0.1
+    - variable: sea_ice_thickness
+      min: 10.0
+    - variable: eastward_sea_water_velocity
+      fraction of background: 0.2
+    - variable: northward_sea_water_velocity
+      fraction of background: 0.2
 
   linear variable change:
     input variables: *soca_vars
     output variables: *soca_vars
-
     linear variable changes:
-    - linear variable change name: BkgErrFILT
-      ocean_depth_min: 100 # [m]
-      rescale_bkgerr: 1.0
-      efold_z: 2500.0       # [m]
-      input variables: *soca_vars
-      output variables: *soca_vars
-
-    - linear variable change name: BkgErrGODAS
-      sst_bgerr_file: data_static/godas_sst_bgerr.nc
-      t_min: 0.1
-      t_max: 2.0
-      t_dz:  20.0
-      t_efold: 500.0
-      s_min: 0.0
-      s_max: 0.25
-      ssh_min: 0.0   # value at EQ
-      ssh_max: 0.1   # value in Extratropics
-      ssh_phi_ex: 20 # lat of transition from extratropics
-      cicen_min: 0.1
-      cicen_max: 0.5
-      hicen_min: 10.0
-      hicen_max: 100.0
-      input variables: *soca_vars
-      output variables: *soca_vars
 
     - linear variable change name: BalanceSOCA
       kst:
@@ -69,8 +80,6 @@ background error:
       dcdt:
         filename: data_static/72x35x25/dcdt.nc
         name: dcdt
-      input variables: *soca_vars
-      output variables: *soca_vars
 
 dirac:
   ixdir: [1, 17, 41, 31, 51, 63, 81, 14, 16, 43, 55]

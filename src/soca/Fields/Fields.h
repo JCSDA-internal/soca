@@ -36,6 +36,9 @@ class Fields : public util::Serializable,
   // These create copies of FieldSets
   void toFieldSet(atlas::FieldSet &) const;
   void fromFieldSet(const atlas::FieldSet &);
+  // TODO(travis) remove this direct accessor
+  const atlas::FieldSet & fieldSet() const {return fieldSet_;}
+  atlas::FieldSet & fieldSet() {return fieldSet_;}
 
   // math operators
   void zero();

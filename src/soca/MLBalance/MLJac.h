@@ -10,42 +10,44 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <iostream>
 
 #include "torch/torch.h"
 
-#include "daml/IceEmul/IceEmul.h"
+#include "KEmul/IceEmul.h"
 
 #include "soca/Geometry/Geometry.h"
 
 namespace soca {
   class MLJac {
    private:
-    daml::IceEmul iceEmulArctic_;
-    daml::IceEmul iceEmulAntarctic_;
+    soca::IceEmul iceEmulArctic_;
+    soca::IceEmul iceEmulAntarctic_;
 
    public:
     MLJac(const eckit::Configuration & config,
           const oops::FieldSet3D & xb,
           atlas::FieldSet jacobian,
-          const oops::GeometryData & GeometryData,
+          const oops::GeometryData & geometryData,
           const eckit::mpi::Comm & comm) :
       iceEmulArctic_(getConf(config, "arctic"), comm),
       iceEmulAntarctic_(getConf(config, "antarctic"), comm)
     {
       oops::Log::trace() << "In MLJack" << std::endl;
       // Geometry info
-      const auto lonlat =
-        atlas::array::make_view<double, 2>(GeometryData.functionSpace().lonlat());
+      const auto lonlat = atlas::array::make_view<double, 2>(geometryData.functionSpace().lonlat());
+      const auto & mask = atlas::array::make_view<double, 2>(geometryData.getField("interp_mask"));
+      const auto & ghost = atlas::array::make_view<int, 1>(geometryData.functionSpace().ghost());
 
       // Pointers to the background
-      auto cicen = atlas::array::make_view<double, 2>(xb["cicen"]);
-      auto hi = atlas::array::make_view<double, 2>(xb["hicen"]);
-      auto hs = atlas::array::make_view<double, 2>(xb["hsnon"]);
-      auto sst = atlas::array::make_view<double, 2>(xb["tocn"]);
-      auto sss = atlas::array::make_view<double, 2>(xb["socn"]);
-      auto sice = atlas::array::make_view<double, 2>(xb["sice"]);
-      auto tair = atlas::array::make_view<double, 2>(xb["tair"]);
-      auto tsfc = atlas::array::make_view<double, 2>(xb["tsfc"]);
+      auto cicen = atlas::array::make_view<double, 2>(xb["sea_ice_area_fraction"]);
+      auto hi = atlas::array::make_view<double, 2>(xb["sea_ice_thickness"]);
+      auto hs = atlas::array::make_view<double, 2>(xb["sea_ice_snow_thickness"]);
+      auto sst = atlas::array::make_view<double, 2>(xb["sea_water_potential_temperature"]);
+      auto sss = atlas::array::make_view<double, 2>(xb["sea_water_salinity"]);
+      auto sice = atlas::array::make_view<double, 2>(xb["bulk_ice_salinity"]);
+      auto tair = atlas::array::make_view<double, 2>(xb["air_temperature"]);
+      auto tsfc = atlas::array::make_view<double, 2>(xb["snow_ice_surface_temperature"]);
 
       // Pointers to the Jacobian
       auto dcdsst = atlas::array::make_view<double, 2>(jacobian["dc/dsst"]);
@@ -54,9 +56,11 @@ namespace soca {
       auto dcdhs = atlas::array::make_view<double, 2>(jacobian["dc/dhs"]);
 
       // Containerize the model's bkg in a torch tensor and compute Jacobian
-      torch::Tensor pattern = torch::zeros({iceEmulArctic_.inputSize_});
-      for (atlas::idx_t jnode = 0; jnode < xb["tocn"].shape(0); ++jnode) {
-        // TODO(G): add tair, tsfc & ice salinity to the soca background
+      torch::Tensor pattern = torch::zeros({iceEmulArctic_.getInputSize()});
+      const int nnodes = xb["sea_water_potential_temperature"].shape(0);
+      for (atlas::idx_t jnode = 0; jnode < nnodes; ++jnode) {
+        if ((ghost(jnode)) | (mask(jnode, 0) == 0) |
+            (abs(lonlat(jnode, 1)) <= 40.0)) continue;
         pattern[0] = tair(jnode, 0);
         pattern[1] = tsfc(jnode, 0);
         pattern[2] = sst(jnode, 0);
@@ -64,12 +68,12 @@ namespace soca {
         pattern[4] = hs(jnode, 0);
         pattern[5] = hi(jnode, 0);
         pattern[6] = sice(jnode, 0);
-        torch::Tensor dcdx = torch::zeros({iceEmulArctic_.inputSize_});
+        torch::Tensor dcdx = torch::zeros({iceEmulArctic_.getInputSize()});
         if ( lonlat(jnode, 1) > 40.0 ) {
-          dcdx = iceEmulArctic_.model_->jac(pattern);
+          dcdx = iceEmulArctic_.getModel()->jac(pattern);
         }
         if ( lonlat(jnode, 1) < -40.0 ) {
-          dcdx = iceEmulAntarctic_.model_->jac(pattern);
+          dcdx = iceEmulAntarctic_.getModel()->jac(pattern);
         }
         dcdsst(jnode, 0) = dcdx[2].item<float>();
         dcdsss(jnode, 0) = dcdx[3].item<float>();

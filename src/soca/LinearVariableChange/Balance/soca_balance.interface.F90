@@ -59,7 +59,6 @@ subroutine soca_balance_setup_c(c_key_self, c_conf, c_key_traj, c_key_geom) &
   call soca_state_registry%get(c_key_traj, traj)
   call soca_geom_registry%get(c_key_geom, geom)
 
-  call traj%sync_from_atlas()
   call self%setup(fckit_configuration(c_conf), traj, geom)
 end subroutine soca_balance_setup_c
 
@@ -97,9 +96,7 @@ subroutine soca_balance_mult_c(c_key_self, c_key_a, c_key_m)&
   call soca_balance_registry%get(c_key_self,self)
 
   !< Computes dxm = K dxa
-  call dxa%sync_from_atlas()
   call self%mult(dxa, dxm)
-  call dxm%sync_to_atlas()
 end subroutine soca_balance_mult_c
 
 
@@ -123,9 +120,7 @@ subroutine soca_balance_multinv_c(c_key_self, c_key_m, c_key_a)&
   call soca_balance_registry%get(c_key_self,self)
 
   !< Computes dxa = K^-1 dxm
-  call dxm%sync_from_atlas()
   call self%multinv(dxa, dxm)
-  call dxa%sync_to_atlas()
 end subroutine soca_balance_multinv_c
 
 
@@ -149,9 +144,7 @@ subroutine soca_balance_multad_c(c_key_self, c_key_m, c_key_a)&
   call soca_balance_registry%get(c_key_self,self)
 
   !< Computes dxa = K^T dxm
-  call dxm%sync_from_atlas()
   call self%multad(dxa, dxm)
-  call dxa%sync_to_atlas()
 end subroutine soca_balance_multad_c
 
 
@@ -175,9 +168,7 @@ subroutine soca_balance_multinvad_c(c_key_self, c_key_a, c_key_m)&
   call soca_balance_registry%get(c_key_self,self)
 
   !< Computes dxm = (K^-1)^T dxa
-  call dxa%sync_from_atlas()
   call self%multinvad(dxa, dxm)
-  call dxm%sync_to_atlas()
 end subroutine soca_balance_multinvad_c
 
 end module soca_balance_mod_c

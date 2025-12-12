@@ -42,15 +42,14 @@ contains
 subroutine soca_soca2cice_setup_f90(c_key_self, c_conf, c_key_geom) &
   bind(c,name='soca_soca2cice_setup_f90')
 
-  integer(c_int), intent(inout) :: c_key_self   !<
-  type(c_ptr),       intent(in) :: c_conf       !< The configuration
-  integer(c_int),    intent(in) :: c_key_geom   !< Geometry
+  integer(c_int), intent(inout)  :: c_key_self   !<
+  type(c_ptr), value, intent(in) :: c_conf       !< The configuration
+  integer(c_int),    intent(in)  :: c_key_geom   !< Geometry
 
   type(soca_soca2cice), pointer :: self
   type(soca_geom), pointer :: geom
 
   type(fckit_configuration) :: f_conf
-  character(len=:), allocatable :: str
 
   f_conf = fckit_configuration(c_conf)
 
@@ -65,31 +64,34 @@ subroutine soca_soca2cice_setup_f90(c_key_self, c_conf, c_key_geom) &
   call f_conf%get_or_die("cice background state.sno_lev", self%sno_lev)
 
   ! seaice edge
-  self%seaice_edge = 0.15_kind_real
-  if (f_conf%has("seaice edge")) call f_conf%get_or_die("seaice edge", self%seaice_edge)
-
+  call f_conf%get_or_die("arctic.seaice edge", self%arctic%seaice_edge)
+  call f_conf%get_or_die("antarctic.seaice edge", self%antarctic%seaice_edge)
   ! shuffle switch
-  self%shuffle = .true.
-  if (f_conf%has("shuffle")) call f_conf%get_or_die("shuffle", self%shuffle)
-
+  call f_conf%get_or_die("arctic.shuffle", self%arctic%shuffle)
+  call f_conf%get_or_die("antarctic.shuffle", self%antarctic%shuffle)
   ! rescale to prior switch
-  self%rescale_prior = .false.
-  if (f_conf%has("rescale prior")) then
-     self%rescale_prior = .true.
-     self%rescale_min_hice = 0.5_kind_real   ! set default min ice thickness above which to rescale
-     if (f_conf%has("rescale prior.min hice")) then
-        call f_conf%get_or_die("rescale prior.min hice", self%rescale_min_hice)
-     end if
-     self%rescale_min_hsno = 0.1_kind_real   ! set default min snow thickness above which to rescale
-     if (f_conf%has("rescale prior.min hsno")) then
-        call f_conf%get_or_die("rescale prior.min hsno", self%rescale_min_hsno)
-     end if
+  call f_conf%get_or_die("arctic.rescale prior.rescale", self%arctic%rescale_prior)
+  call f_conf%get_or_die("arctic.rescale prior.min hice", self%arctic%rescale_min_hice)
+  call f_conf%get_or_die("arctic.rescale prior.min hsno", self%arctic%rescale_min_hsno)
+  call f_conf%get_or_die("arctic.update SST", self%arctic%update_sst)
+  call f_conf%get_or_die("arctic.max positive SST update", self%arctic%max_update_sst)
+  call f_conf%get_or_die("antarctic.rescale prior.rescale", self%antarctic%rescale_prior)
+  call f_conf%get_or_die("antarctic.rescale prior.min hice", self%antarctic%rescale_min_hice)
+  call f_conf%get_or_die("antarctic.rescale prior.min hsno", self%antarctic%rescale_min_hsno)
+  call f_conf%get_or_die("antarctic.update SST", self%antarctic%update_sst)
+  call f_conf%get_or_die("antarctic.max positive SST update", self%antarctic%max_update_sst)
+  ! icepack parameters
+  call f_conf%get_or_die("icepack time step", self%dt)
+  call f_conf%get_or_die("icepack tfrz_option", self%tfrz_option)
+  ! minimum allowable ice concentration and volume
+  call f_conf%get_or_die("min aice", self%min_aice)
+  call f_conf%get_or_die("min vice", self%min_vice)
+  ! shuffle stencil size
+  if (f_conf%has("shuffle stencil depth")) then
+    call f_conf%get_or_die("shuffle stencil depth", self%shuffle_n)
+  else
+    self%shuffle_n = 0
   end if
-
-  ! domain
-  self%domain = "global"
-  if (f_conf%has("domain")) call f_conf%get_or_die("domain", self%domain)
-
   ! cice input restart
   call f_conf%get_or_die("cice background state.restart", self%rst_filename)
 
@@ -110,16 +112,13 @@ subroutine soca_soca2cice_changevar_f90(c_key_self, c_key_geom, c_key_xin, c_key
   type(soca_soca2cice), pointer :: self
   type(soca_geom),      pointer :: geom
   type(soca_state),     pointer :: xin, xout
-  type(soca_field),     pointer :: field
 
   call soca_soca2cice_registry%get(c_key_self, self)
   call soca_geom_registry%get(c_key_geom, geom)
   call soca_state_registry%get(c_key_xin, xin)
   call soca_state_registry%get(c_key_xout, xout)
 
-  call xin%sync_from_atlas()
   call self%changevar(geom, xin, xout)
-  call xout%sync_to_atlas()
 
 end subroutine
 

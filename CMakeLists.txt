@@ -35,12 +35,15 @@ find_package( fms    2023.3.0 REQUIRED COMPONENTS R4 R8)
 add_library(  fms ALIAS FMS::fms_r8)
 find_package( OpenMP COMPONENTS C Fortran REQUIRED)
 
-# Optionally look for Torch and daml
-find_package(Torch QUIET)
-find_package(daml QUIET)
-
-# Optionally look for icepack
-find_package( icepack 1.2.0 QUIET)
+# Check if we are building with Torch
+# ideally just do this: find_package(Torch QUIET)  # needs a fix to spack-stack
+set(Torch_FOUND FALSE CACHE BOOL "Torch not found")
+if(DEFINED Torch_ROOT AND NOT Torch_ROOT STREQUAL "")
+  set(Torch_FOUND TRUE CACHE BOOL "Torch found" FORCE)
+  # Temporary fix until Torch is properly installed as a cmake package
+  include_directories("${Torch_ROOT}/include")
+  include_directories("${Torch_ROOT}/include/torch/csrc/api/include")
+endif()
 
 include_directories( ${NETCDF_INCLUDE_DIRS} )
 
@@ -48,7 +51,8 @@ include_directories( ${NETCDF_INCLUDE_DIRS} )
 # Model
 # TODO update to allow switching between mom6solo (here) and UFS (external)
 ################################################################################
-add_subdirectory(mom6)
+add_subdirectory(external/mom6)
+add_subdirectory(external/icepack)
 
 ################################################################################
 # Sources
@@ -57,7 +61,6 @@ set( SOCA_LINKER_LANGUAGE CXX)
 
 add_subdirectory( src )
 add_subdirectory( test )
-add_subdirectory( tutorial )
 
 # Build Doxygen documentation
 add_subdirectory( docs )

@@ -18,12 +18,16 @@
 
 #include "eckit/config/LocalConfiguration.h"
 #include "eckit/exception/Exceptions.h"
+#include "eckit/mpi/Comm.h"
 
+#include "oops/base/GeometryData.h"
 #include "oops/base/Variables.h"
+#include "oops/generic/GlobalInterpolator.h"
 #include "oops/util/DateTime.h"
-#include "oops/util/Logger.h"
 #include "oops/util/FieldSetHelpers.h"
 #include "oops/util/FieldSetOperations.h"
+#include "oops/util/Logger.h"
+#include "oops/util/missingValues.h"
 
 #include "ufo/GeoVaLs.h"
 
@@ -60,12 +64,31 @@ namespace soca {
   }
 
   // -----------------------------------------------------------------------------
-
+  // Resolution change
   State::State(const Geometry & geom, const State & other)
     : Fields(geom, other.vars_, other.time_)
   {
     soca_state_create_f90(keyFlds_, geom_.toFortran(), vars_, fieldSet_.get());
-    soca_state_change_resol_f90(toFortran(), other.keyFlds_);
+
+    // if geometry is the same, just copy and quit
+    if (geom == other.geom_) {
+      *this = other;
+      return;
+    }
+
+    // otherwise, different geometry, do resolution change
+    eckit::LocalConfiguration conf;
+    conf.set("local interpolator type", "oops unstructured grid interpolator");
+    const oops::GeometryData sourceGeom(other.geom_.functionSpace(), other.geom_.fields(),
+                                        other.geom_.levelsAreTopDown(), other.geom_.getComm());
+    oops::GlobalInterpolator interp(conf, sourceGeom, geom_.functionSpace(), geom.getComm());
+    interp.apply(other.fieldSet_, fieldSet_);
+
+    // TODO(Travis) There is a possibility of missing values if the land masks
+    // do not match, handle this somehow?
+
+    // TODO(travis) handle a change of resolution in the vertical, someday
+
     Log::trace() << "State::State created by interpolation." << std::endl;
   }
 
@@ -91,7 +114,7 @@ namespace soca {
     : Fields(other.geom_, other.vars_, other.time_)
   {
     soca_state_create_f90(keyFlds_, geom_.toFortran(), vars_, fieldSet_.get());
-    soca_state_copy_f90(toFortran(), other.toFortran());
+    *this = other;
     Log::trace() << "State::State copied." << std::endl;
   }
 
@@ -105,8 +128,10 @@ namespace soca {
   /// Basic operators
   // -----------------------------------------------------------------------------
   State & State::operator=(const State & rhs) {
+    ASSERT(geom_ == rhs.geom_);
+    ASSERT(vars_ == rhs.vars_);
     time_ = rhs.time_;
-    soca_state_copy_f90(toFortran(), rhs.toFortran());
+    util::copyFieldSet(rhs.fieldSet_, fieldSet_);
     return *this;
   }
 
@@ -115,14 +140,75 @@ namespace soca {
   // -----------------------------------------------------------------------------
   void State::rotate2north(const oops::Variables & u, const oops::Variables & v) {
     Log::trace() << "State::State rotate from logical to geographical North." << std::endl;
-    soca_state_rotate2north_f90(toFortran(), u, v);
+
+    ASSERT(u.size() == v.size());
+    for (size_t n = 0; n < u.size(); n++) {
+      const std::string & uName = u[n].name();
+      const std::string & vName = v[n].name();
+      if (!vars_.has(uName) || !vars_.has(vName)) {
+        throw eckit::UserError("State variables " + uName + " or " + vName + " not found.");
+      } else {
+        Log::info() << "rotating variables " << uName << " and " << vName << std::endl;
+      }
+
+      atlas::Field & uField = fieldSet_.field(uName);
+      atlas::Field & vField = fieldSet_.field(vName);
+      auto uView = atlas::array::make_view<double, 2>(uField);
+      auto vView = atlas::array::make_view<double, 2>(vField);
+      const auto & ghostView = atlas::array::make_view<int, 1>(uField.functionspace().ghost());
+      const auto & cosView = atlas::array::make_view<double, 2>(geom_.fields().field("cos_rot"));
+      const auto & sinView = atlas::array::make_view<double, 2>(geom_.fields().field("sin_rot"));
+
+      for (size_t i = 0; i < uField.shape(0); ++i) {
+        if (ghostView(i)) continue;
+
+        for (size_t j = 0; j < uField.shape(1); ++j) {
+          double uOrig = uView(i, j);
+          double vOrig = vView(i, j);
+          uView(i, j) = uOrig * cosView(i, 0) + vOrig * sinView(i, 0);
+          vView(i, j) = -uOrig * sinView(i, 0) + vOrig * cosView(i, 0);
+        }
+      }
+      uField.set_dirty();
+      vField.set_dirty();
+    }
   }
 
   // -----------------------------------------------------------------------------
 
   void State::rotate2grid(const oops::Variables & u, const oops::Variables & v) {
     Log::trace() << "State::State rotate from geographical to logical North." << std::endl;
-    soca_state_rotate2grid_f90(toFortran(), u, v);
+    ASSERT(u.size() == v.size());
+    for (size_t n = 0; n < u.size(); n++) {
+      const std::string & uName = u[n].name();
+      const std::string & vName = v[n].name();
+      if (!vars_.has(uName) || !vars_.has(vName)) {
+        throw eckit::UserError("State variables " + uName + " or " + vName + " not found.");
+      } else {
+        Log::info() << "rotating variables " << uName << " and " << vName << std::endl;
+      }
+
+      atlas::Field & uField = fieldSet_.field(uName);
+      atlas::Field & vField = fieldSet_.field(vName);
+      auto uView = atlas::array::make_view<double, 2>(uField);
+      auto vView = atlas::array::make_view<double, 2>(vField);
+      const auto & ghostView = atlas::array::make_view<int, 1>(uField.functionspace().ghost());
+      const auto & cosView = atlas::array::make_view<double, 2>(geom_.fields().field("cos_rot"));
+      const auto & sinView = atlas::array::make_view<double, 2>(geom_.fields().field("sin_rot"));
+
+      for (size_t i = 0; i < uField.shape(0); ++i) {
+        if (ghostView(i)) continue;
+
+        for (size_t j = 0; j < uField.shape(1); ++j) {
+          double uOrig = uView(i, j);
+          double vOrig = vView(i, j);
+          uView(i, j) = uOrig * cosView(i, 0) - vOrig * sinView(i, 0);
+          vView(i, j) = uOrig * sinView(i, 0) + vOrig * cosView(i, 0);
+        }
+      }
+      uField.set_dirty();
+      vField.set_dirty();
+    }
   }
 
   // -----------------------------------------------------------------------------
@@ -144,12 +230,35 @@ namespace soca {
   // -----------------------------------------------------------------------------
   State & State::operator+=(const Increment & dx) {
     ASSERT(validTime() == dx.validTime());
-    // Interpolate increment to analysis grid
-    Increment dx_hr(geom_, dx);
+
+    // Interpolate increment to analysis grid only if needed
+    std::shared_ptr<const Increment> dx_interp;
+    if (geom_ != dx.geometry()) {
+      dx_interp = std::make_shared<Increment>(geom_, dx);
+    } else {
+      dx_interp.reset(&dx, [](const Increment*) {});  // don't delete original dx!
+    }
 
     // Add increment to background state
-    atlas::FieldSet fs2; dx.toFieldSet(fs2);
-    util::addFieldSets(fieldSet_, fs2);
+    // NOTE: if the land masks are not carefully constructed, this can
+    // result in MISSING_VALUEs in the increment trying to be added to the state.
+    // TODO(travis) issue a warning if this happens? Fix this deeper down in the
+    // increment side? In the meantime we can just ignore the missing values
+
+    const auto missing = util::missingValue<double>();
+    for (const auto & src : dx_interp->fieldSet()) {
+      const auto v_src = atlas::array::make_view<double, 2>(src);
+      auto & dst = fieldSet_.field(src.name());
+      auto v_dst = atlas::array::make_view<double, 2>(dst);
+      for (size_t i = 0; i < src.shape(0); ++i) {
+        for (size_t j = 0; j < src.shape(1); ++j) {
+          if (v_src(i, j) == missing) continue;
+          v_dst(i, j) += v_src(i, j);
+        }
+      }
+      dst.set_dirty(dst.dirty() || src.dirty());
+    }
+
     return *this;
   }
 
@@ -160,6 +269,9 @@ namespace soca {
     Log::trace() << "State::State read started." << std::endl;
     util::DateTime * dtp = &time_;
     soca_state_read_file_f90(toFortran(), &files, &dtp);
+
+    fieldSet_.set_dirty();  // just in case, i don't trust the fortran code
+
     Log::trace() << "State::State read done." << std::endl;
   }
 
@@ -173,6 +285,16 @@ namespace soca {
   // -----------------------------------------------------------------------------
 
   void State::updateFields(const oops::Variables & vars) {
+    // remove fields from the fieldset that are no longer in vars
+    atlas::FieldSet orig = util::shareFields(fieldSet_);
+    fieldSet_.clear();
+    for (const auto & v : vars) {
+      if (orig.has(v.name())) {
+        fieldSet_.add(orig.field(v.name()));
+      }
+    }
+
+    // update new vars
     vars_ = vars;
     soca_state_update_fields_f90(toFortran(), vars_);
   }
@@ -183,14 +305,48 @@ namespace soca {
 
   void State::logtrans(const oops::Variables & trvar) {
     Log::trace() << "State::State apply logarithmic transformation." << std::endl;
-    soca_state_logtrans_f90(toFortran(), trvar);
+
+    double minVal = 1.0e-6;
+    for (const auto & var : trvar) {
+      const std::string & varName = var.name();
+      if (!vars_.has(varName)) {
+        throw eckit::UserError("State variable " + varName + " not found in State.");
+      } else {
+        Log::info() << "transforming variable "  << varName << std::endl;
+      }
+
+      auto & field = fieldSet_.field(varName);
+      auto view = atlas::array::make_view<double, 2>(field);
+      for (size_t i = 0; i < field.shape(0); ++i) {
+        for (size_t j = 0; j < field.shape(1); ++j) {
+          view(i, j) = std::log(view(i, j)+minVal);
+        }
+      }
+    }
   }
 
   // -----------------------------------------------------------------------------
 
   void State::expontrans(const oops::Variables & trvar) {
     Log::trace() << "State::State apply exponential transformation." << std::endl;
-    soca_state_expontrans_f90(toFortran(), trvar);
+
+    double minVal = 1.0e-6;
+    for (const auto & var : trvar) {
+      const std::string & varName = var.name();
+      if (!vars_.has(varName)) {
+        throw eckit::UserError("State variable " + varName + " not found in State.");
+      } else {
+        Log::info() << "transforming variable "  << varName << std::endl;
+      }
+
+      auto & field = fieldSet_.field(varName);
+      auto view = atlas::array::make_view<double, 2>(field);
+      for (size_t i = 0; i < field.shape(0); ++i) {
+        for (size_t j = 0; j < field.shape(1); ++j) {
+          view(i, j) = std::exp(view(i, j))-minVal;
+        }
+      }
+    }
   }
 
   // -----------------------------------------------------------------------------

@@ -43,17 +43,19 @@ MLBalance::MLBalance(
     jacStr{"ds/dt",
            "dssh/dt", "dssh/ds",
            "dc/dsst", "dc/dsss", "dc/dhi", "dc/dhs"};
-  int nz(xb["tocn"].shape(1));
+  int nz(xb["sea_water_potential_temperature"].shape(1));
+  const int SINGLE_LEVEL = 1;
   std::vector<int> jacLevels{nz,
                              nz, nz,
-                             1, 1, 1, 1};
+                             SINGLE_LEVEL, SINGLE_LEVEL, SINGLE_LEVEL, SINGLE_LEVEL};
   oops::Variables jacVars(jacStr);
   for (size_t i = 0; i < jacStr.size(); ++i) {
-    jacVars.addMetaData(jacStr[i], "levels", jacLevels[i]);
+    jacVars[jacStr[i]].setLevels(jacLevels[i]);
   }
 
   // Initialize the Jacobian
-  jac_ = util::createFieldSet(outerGeometryData.functionSpace(), jacVars, 0.0);
+  const double INITIAL_VALUE = 0.0;
+  jac_ = util::createFieldSet(outerGeometryData.functionSpace(), jacVars, INITIAL_VALUE);
 
   // Initialize Jacobian
   setupJac(xb, outerGeometryData.comm(), mlbConf);
@@ -85,12 +87,12 @@ void MLBalance::multiply(oops::FieldSet3D & fset) const {
   //    [ dc/dsst       dc/dsss   0      dc/dhi dc/dhs   I ]   ice concentration
 
   // Increment fields
-  auto dc = atlas::array::make_view<double, 2>(fset["cicen"]);
-  auto dhi = atlas::array::make_view<double, 2>(fset["hicen"]);
-  auto dhs = atlas::array::make_view<double, 2>(fset["hsnon"]);
-  auto dt = atlas::array::make_view<double, 2>(fset["tocn"]);
-  auto ds = atlas::array::make_view<double, 2>(fset["socn"]);
-  auto dssh = atlas::array::make_view<double, 2>(fset["ssh"]);
+  auto dc = atlas::array::make_view<double, 2>(fset["sea_ice_area_fraction"]);
+  auto dhi = atlas::array::make_view<double, 2>(fset["sea_ice_thickness"]);
+  auto dhs = atlas::array::make_view<double, 2>(fset["sea_ice_snow_thickness"]);
+  auto dt = atlas::array::make_view<double, 2>(fset["sea_water_potential_temperature"]);
+  auto ds = atlas::array::make_view<double, 2>(fset["sea_water_salinity"]);
+  auto dssh = atlas::array::make_view<double, 2>(fset["sea_surface_height_above_geoid"]);
 
   // Jacobian fields
   auto dsdt = atlas::array::make_view<double, 2>(jac_["ds/dt"]);
@@ -101,15 +103,16 @@ void MLBalance::multiply(oops::FieldSet3D & fset) const {
   auto dcdhi = atlas::array::make_view<double, 2>(jac_["dc/dhi"]);
   auto dcdhs = atlas::array::make_view<double, 2>(jac_["dc/dhs"]);
 
-  for (atlas::idx_t jnode = 0; jnode < fset["tocn"].shape(0); ++jnode) {
+  const int nnodes = fset["sea_water_potential_temperature"].shape(0);
+  const int nlevs = fset["sea_water_potential_temperature"].shape(1);
+  for (atlas::idx_t jnode = 0; jnode < nnodes; ++jnode) {
     // Deep copy of some of the input increments
     auto dsshi = dssh(jnode, 0);
     std::vector<double> dsi(ds.shape(1));
     for (size_t j = 0; j < ds.shape(1); ++j) {
       dsi[j] = ds(jnode, j);
     }
-
-    for ( atlas::idx_t jlevel = 0; jlevel < fset["tocn"].shape(1); ++jlevel ) {
+    for ( atlas::idx_t jlevel = 0; jlevel < nlevs; ++jlevel ) {
         ds(jnode, jlevel) += dsdt(jnode, jlevel) * dt(jnode, jlevel);
         dssh(jnode, 0) += dsshdt(jnode, jlevel) * dt(jnode, jlevel) +
                           dsshds(jnode, jlevel) * dsi[jlevel];
@@ -133,12 +136,12 @@ void MLBalance::multiplyAD(oops::FieldSet3D & fset) const {
   //        [ 0         0      0        0      0      I       ]   ice concentration
 
   // Increment fields
-  auto dc = atlas::array::make_view<double, 2>(fset["cicen"]);
-  auto dhi = atlas::array::make_view<double, 2>(fset["hicen"]);
-  auto dhs = atlas::array::make_view<double, 2>(fset["hsnon"]);
-  auto dt = atlas::array::make_view<double, 2>(fset["tocn"]);
-  auto ds = atlas::array::make_view<double, 2>(fset["socn"]);
-  auto dssh = atlas::array::make_view<double, 2>(fset["ssh"]);
+  auto dc = atlas::array::make_view<double, 2>(fset["sea_ice_area_fraction"]);
+  auto dhi = atlas::array::make_view<double, 2>(fset["sea_ice_thickness"]);
+  auto dhs = atlas::array::make_view<double, 2>(fset["sea_ice_snow_thickness"]);
+  auto dt = atlas::array::make_view<double, 2>(fset["sea_water_potential_temperature"]);
+  auto ds = atlas::array::make_view<double, 2>(fset["sea_water_salinity"]);
+  auto dssh = atlas::array::make_view<double, 2>(fset["sea_surface_height_above_geoid"]);
 
   // Jacobian fields
   auto dsdt = atlas::array::make_view<double, 2>(jac_["ds/dt"]);
@@ -149,7 +152,8 @@ void MLBalance::multiplyAD(oops::FieldSet3D & fset) const {
   auto dcdhi = atlas::array::make_view<double, 2>(jac_["dc/dhi"]);
   auto dcdhs = atlas::array::make_view<double, 2>(jac_["dc/dhs"]);
 
-  for (atlas::idx_t jnode = 0; jnode < fset["tocn"].shape(0); ++jnode) {
+  const int nnodes = fset["sea_water_potential_temperature"].shape(0);
+  for (atlas::idx_t jnode = 0; jnode < nnodes; ++jnode) {
     auto dci = dc(jnode, 0);
     auto dsshi = dssh(jnode, 0);
     // Deep copy of some of the input increments
@@ -162,7 +166,8 @@ void MLBalance::multiplyAD(oops::FieldSet3D & fset) const {
     ds(jnode, 0) += dcdsss(jnode, 0) * dci;
     dhi(jnode, 0) += dcdhi(jnode, 0) * dci;
     dhs(jnode, 0) += dcdhs(jnode, 0) * dci;
-    for (atlas::idx_t jlevel = 0; jlevel < fset["tocn"].shape(1); ++jlevel) {
+    const int nlevs = fset["sea_water_potential_temperature"].shape(1);
+    for (atlas::idx_t jlevel = 0; jlevel < nlevs; ++jlevel) {
       dt(jnode, jlevel) += dsdt(jnode, jlevel) * dsi[jlevel] +
                            dsshdt(jnode, jlevel) * dsshi;
       ds(jnode, jlevel) += dsshds(jnode, jlevel) * dsshi;

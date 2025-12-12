@@ -1,0 +1,13 @@
+ffnn:
+  inputSize: 7
+  outputSize: 1
+  hiddenSize: 2
+
+training:
+  epochs: 10000
+  cice history: "data_static/72x35x25/history/cice_history.nc"
+  model output: "data_output/mlbalance.pt"
+
+domain:
+  pole: north
+  clean data: true

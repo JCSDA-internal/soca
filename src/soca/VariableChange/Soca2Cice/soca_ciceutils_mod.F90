@@ -8,7 +8,7 @@ module soca_ciceutils_mod
 use kinds, only: kind_real
 use netcdf
 use fckit_mpi_module, only: fckit_mpi_comm
-use icepack_itd
+use icepack_itd, only: aggregate_area
 use soca_utils, only: nc_check
 use soca_geom_mod, only: soca_geom
 use mpp_domains_mod, only : mpp_update_domains
@@ -17,37 +17,29 @@ use mpp_mod, only : mpp_gather, mpp_root_pe, mpp_pe
 implicit none
 private
 
-type, public :: agg_cice_state
-   real(kind=kind_real),  allocatable :: aice(:)
-   real(kind=kind_real),  allocatable :: lon(:)
-   real(kind=kind_real),  allocatable :: lat(:)
-   integer,  allocatable :: ij(:,:)
-   integer :: n_src
-end type agg_cice_state
-
 type, public :: cice_state
-   integer :: ncat, ni, nj, ice_lev=7, sno_lev=1
+   integer :: ncat, ni, nj, ice_lev, sno_lev
    integer :: isc, iec, jsc, jec   ! compute domain
    integer :: isd, ied, jsd, jed   ! data domain
+   integer :: halo ! halo size
    logical :: initialized = .false.
    character(len=:), allocatable :: rst_filename
    character(len=:), allocatable :: rst_out_filename
-   real(kind=kind_real),  allocatable :: aicen(:,:,:)
-   real(kind=kind_real),  allocatable :: vicen(:,:,:)
-   real(kind=kind_real),  allocatable :: vsnon(:,:,:)
-   real(kind=kind_real),  allocatable :: apnd(:,:,:)
-   real(kind=kind_real),  allocatable :: hpnd(:,:,:)
-   real(kind=kind_real),  allocatable :: ipnd(:,:,:)
-   real(kind=kind_real),  allocatable :: tsfcn(:,:,:)
-   real(kind=kind_real),  allocatable :: qice(:,:,:,:)
-   real(kind=kind_real),  allocatable :: qsno(:,:,:,:)
-   real(kind=kind_real),  allocatable :: sice(:,:,:,:)
-   real(kind=kind_real),  allocatable :: iceumask(:,:)
-   real(kind=kind_real),  allocatable :: aice(:,:)
-   type(agg_cice_state):: agg
+   real(kind=kind_real),  allocatable :: aicen(:,:,:)    ! ice concentration
+   real(kind=kind_real),  allocatable :: vicen(:,:,:)    ! ice volume
+   real(kind=kind_real),  allocatable :: vsnon(:,:,:)    ! snow volume
+   real(kind=kind_real),  allocatable :: apnd(:,:,:)     ! melt pond area fraction
+   real(kind=kind_real),  allocatable :: hpnd(:,:,:)     ! melt pond depth
+   real(kind=kind_real),  allocatable :: ipnd(:,:,:)     ! melt pond refrozen lid thickness
+   real(kind=kind_real),  allocatable :: tsfcn(:,:,:)    ! ice/snow temperature
+   real(kind=kind_real),  allocatable :: qice(:,:,:,:)   ! volume-weighted ice enthalpy
+   real(kind=kind_real),  allocatable :: qsno(:,:,:,:)   ! volume-weighted snow enthalpy
+   real(kind=kind_real),  allocatable :: sice(:,:,:,:)   ! volume-weighted ice bulk salinity
+   real(kind=kind_real),  allocatable :: aice(:,:)       ! total ice concentration
 contains
   procedure :: init => soca_ciceutils_init
   procedure :: alloc => soca_ciceutils_alloc
+  procedure :: copydata => soca_ciceutils_copydata
   procedure :: read => soca_ciceutils_read
   procedure :: write => soca_ciceutils_write
   procedure :: gather => soca_ciceutils_gather
@@ -60,11 +52,12 @@ contains
 
 
 ! ------------------------------------------------------------------------------
-subroutine soca_ciceutils_init(self, geom, rst_filename, rst_out_filename, global)
+subroutine soca_ciceutils_init(self, geom, rst_filename, rst_out_filename, ice_lev, sno_lev, global)
   class(cice_state),    intent(inout) :: self
   type(soca_geom), target, intent(in) :: geom
   character(len=*),        intent(in) :: rst_filename
   character(len=*),        intent(in) :: rst_out_filename
+  integer,                 intent(in) :: ice_lev, sno_lev
   logical,    optional, intent(inout) :: global
   integer(kind=4) :: ncid, dimid, varid
   logical :: isglobal
@@ -88,6 +81,8 @@ subroutine soca_ciceutils_init(self, geom, rst_filename, rst_out_filename, globa
   self%ied = geom%ied
   self%jsd = geom%jsd
   self%jed = geom%jed
+  self%halo = min(abs(self%isd-self%isc), abs(self%ied-self%iec), &
+                  abs(self%jsd-self%jsc), abs(self%jed-self%jec))
 
   ! Get global seaice grid info
   call nc_check(nf90_open(self%rst_filename, nf90_nowrite, ncid))
@@ -98,6 +93,9 @@ subroutine soca_ciceutils_init(self, geom, rst_filename, rst_out_filename, globa
   call nc_check(nf90_inq_dimid(ncid, 'nj', dimid))
   call nc_check(nf90_inquire_dimension(ncid, dimid, len = self%nj))
   call nc_check(nf90_close(ncid))
+
+  self%ice_lev = ice_lev
+  self%sno_lev = sno_lev
 
   ! Allocate seaice fields
   if (isglobal) then
@@ -130,16 +128,9 @@ subroutine soca_ciceutils_gather(self, glb, geom)
 
   ! allocate the global cice_state data structure
   if (geom%f_comm%rank() == mpp_root_pe()) then
-     call glb%init(geom, self%rst_filename, self%rst_out_filename, global=isglobal)
-     allocate(var2d(self%ni, self%nj))
+     call glb%init(geom, self%rst_filename, self%rst_out_filename, self%ice_lev, self%sno_lev, global=isglobal)
   end if
-
-  ! gather 2D arrays
-  call mpp_gather(self%isc, self%iec, self%jsc, self%jec, pelist, &
-       self%iceumask(self%isc:self%iec,self%jsc:self%jec), &
-       var2d, is_root_pe)
-  if ( pe == mpp_root_pe()) glb%iceumask(1:self%ni,1:self%nj) = var2d
-  call geom%f_comm%barrier()
+  allocate(var2d(self%ni, self%nj))
 
   ! gather 2D arrays along categories, snow and ice levels
   do n = 1, self%ncat
@@ -147,38 +138,38 @@ subroutine soca_ciceutils_gather(self, glb, geom)
      call mpp_gather(self%isc, self%iec, self%jsc, self%jec, pelist, &
           self%aicen(self%isc:self%iec,self%jsc:self%jec,n), &
           var2d, is_root_pe)
-     if ( pe == mpp_root_pe()) glb%aicen(1:self%ni,1:self%nj,n) = var2d*glb%iceumask
+     if ( pe == mpp_root_pe()) glb%aicen(1:self%ni,1:self%nj,n) = var2d
 
      ! vicen
      call mpp_gather(self%isc, self%iec, self%jsc, self%jec, pelist, &
           self%vicen(self%isc:self%iec,self%jsc:self%jec,n), &
           var2d, is_root_pe)
-     if ( pe == mpp_root_pe()) glb%vicen(1:self%ni,1:self%nj,n) = var2d*glb%iceumask
+     if ( pe == mpp_root_pe()) glb%vicen(1:self%ni,1:self%nj,n) = var2d
 
      ! vsnon
      call mpp_gather(self%isc, self%iec, self%jsc, self%jec, pelist, &
           self%vsnon(self%isc:self%iec,self%jsc:self%jec,n), &
           var2d, is_root_pe)
-     if ( pe == mpp_root_pe()) glb%vsnon(1:self%ni,1:self%nj,n) = var2d*glb%iceumask
+     if ( pe == mpp_root_pe()) glb%vsnon(1:self%ni,1:self%nj,n) = var2d
 
      ! Tsfcn
      call mpp_gather(self%isc, self%iec, self%jsc, self%jec, pelist, &
           self%tsfcn(self%isc:self%iec,self%jsc:self%jec,n), &
           var2d, is_root_pe)
-     if ( pe == mpp_root_pe()) glb%tsfcn(1:self%ni,1:self%nj,n) = var2d*glb%iceumask
+     if ( pe == mpp_root_pe()) glb%tsfcn(1:self%ni,1:self%nj,n) = var2d
 
      do l = 1, self%ice_lev
         ! Qice
         call mpp_gather(self%isc, self%iec, self%jsc, self%jec, pelist, &
              self%qice(self%isc:self%iec,self%jsc:self%jec,n,l), &
              var2d, is_root_pe)
-        if ( pe == mpp_root_pe()) glb%qice(1:self%ni,1:self%nj,n,l) = var2d*glb%iceumask
+        if ( pe == mpp_root_pe()) glb%qice(1:self%ni,1:self%nj,n,l) = var2d
 
         ! Sice
         call mpp_gather(self%isc, self%iec, self%jsc, self%jec, pelist, &
              self%sice(self%isc:self%iec,self%jsc:self%jec,n,l), &
              var2d, is_root_pe)
-        if ( pe == mpp_root_pe()) glb%sice(1:self%ni,1:self%nj,n,l) = var2d*glb%iceumask
+        if ( pe == mpp_root_pe()) glb%sice(1:self%ni,1:self%nj,n,l) = var2d
      end do
 
      do l = 1, self%sno_lev
@@ -186,9 +177,10 @@ subroutine soca_ciceutils_gather(self, glb, geom)
         call mpp_gather(self%isc, self%iec, self%jsc, self%jec, pelist, &
              self%qsno(self%isc:self%iec,self%jsc:self%jec,n,l), &
              var2d, is_root_pe)
-        if ( pe == mpp_root_pe()) glb%qsno(1:self%ni,1:self%nj,n,l) = var2d*glb%iceumask
+        if ( pe == mpp_root_pe()) glb%qsno(1:self%ni,1:self%nj,n,l) = var2d
      end do
   end do
+  deallocate(var2d)
 
 end subroutine soca_ciceutils_gather
 
@@ -201,8 +193,6 @@ subroutine soca_ciceutils_alloc(self, isd, ied, jsd, jed)
   ncat = self%ncat
   ice_lev = self%ice_lev
   sno_lev = self%sno_lev
-
-  allocate(self%iceumask(isd:ied, jsd:jed));      self%iceumask = 0.0_kind_real
 
   allocate(self%aice(isd:ied, jsd:jed));          self%aice = 0.0_kind_real
 
@@ -222,17 +212,52 @@ subroutine soca_ciceutils_alloc(self, isd, ied, jsd, jed)
 end subroutine soca_ciceutils_alloc
 
 ! ------------------------------------------------------------------------------
+subroutine soca_ciceutils_copydata(self, other)
+  class(cice_state), intent(inout) :: self
+  class(cice_state),    intent(in) :: other
+  integer :: isd, ied, jsd, jed
+  integer :: ncat, ice_lev, sno_lev
+
+  self%ncat = other%ncat; ncat = other%ncat
+  self%ice_lev = other%ice_lev; ice_lev = other%ice_lev
+  self%sno_lev = other%sno_lev; sno_lev = other%sno_lev
+  self%ni = other%ni
+  self%nj = other%nj
+  self%isc = other%isc
+  self%iec = other%iec
+  self%jsc = other%jsc
+  self%jec = other%jec
+  self%isd = other%isd; isd = other%isd
+  self%ied = other%ied; ied = other%ied
+  self%jsd = other%jsd; jsd = other%jsd
+  self%jed = other%jed; jed = other%jed
+
+  allocate(self%aice(isd:ied, jsd:jed));          self%aice = other%aice
+
+  allocate(self%aicen(isd:ied, jsd:jed, ncat));   self%aicen = other%aicen
+  allocate(self%vicen(isd:ied, jsd:jed, ncat));   self%vicen = other%vicen
+  allocate(self%vsnon(isd:ied, jsd:jed, ncat));   self%vsnon = other%vsnon
+
+  allocate(self%apnd(isd:ied, jsd:jed, ncat));    self%apnd = other%apnd
+  allocate(self%hpnd(isd:ied, jsd:jed, ncat));    self%hpnd = other%hpnd
+  allocate(self%ipnd(isd:ied, jsd:jed, ncat));    self%ipnd = other%ipnd
+
+  allocate(self%tsfcn(isd:ied, jsd:jed, ncat));           self%tsfcn = other%tsfcn
+  allocate(self%qsno(isd:ied, jsd:jed, ncat, sno_lev));   self%qsno = other%qsno
+  allocate(self%qice(isd:ied, jsd:jed, ncat, ice_lev));   self%qice = other%qice
+  allocate(self%sice(isd:ied, jsd:jed, ncat, ice_lev));   self%sice = other%sice
+
+end subroutine soca_ciceutils_copydata
+
+! ------------------------------------------------------------------------------
 subroutine soca_ciceutils_read(self, geom)
   class(cice_state), intent(inout) :: self
   type(soca_geom), target, intent(in)  :: geom
 
-  integer(kind=4) :: ncid, dimid, varid, i, j, cnt, n_src
+  integer(kind=4) :: ncid, dimid, varid, i, j
   real(kind=kind_real) :: aice0
 
   call nc_check(nf90_open(self%rst_filename, nf90_nowrite, ncid))
-
-  ! ice mask
-  call getvar2d('iceumask', self%iceumask, self%ni, self%nj, geom, ncid)
 
   ! dynamic variables
   call getvar3d('aicen', self%aicen, self%ni, self%nj, self%ncat, geom, ncid)
@@ -252,26 +277,9 @@ subroutine soca_ciceutils_read(self, geom)
 
   call nc_check(nf90_close(ncid))
 
-  ! aggregate categories
-  cnt = 1
-  n_src = sum(self%iceumask)
-  self%agg%n_src = n_src
-  allocate(self%agg%lon(n_src), self%agg%lat(n_src), self%agg%aice(n_src))
-  allocate(self%agg%ij(2,n_src))
-
   do j = geom%jsd, geom%jed
      do i = geom%isd, geom%ied
-        if (self%iceumask(i,j).eq.1) then
-           call aggregate_area (self%ncat, &
-                                self%aicen(i,j,:), &
-                                self%aice(i,j), aice0)
-           self%agg%lon(cnt) = geom%lon(i,j)
-           self%agg%lat(cnt) = geom%lat(i,j)
-           self%agg%aice(cnt) = self%aice(i,j)
-           self%agg%ij(1,cnt) = i
-           self%agg%ij(2,cnt) = j
-           cnt = cnt + 1
-        end if
+       call aggregate_area(self%aicen(i,j,:), self%aice(i,j), aice0)
      end do
   end do
 
@@ -313,9 +321,6 @@ subroutine soca_ciceutils_write(self, geom)
      call nc_check(nf90_inq_varid(ncid,"Tsfcn",varid))
      call nc_check(nf90_put_var(ncid,varid,glb%tsfcn))
 
-     call nc_check(nf90_inq_varid(ncid,"iceumask",varid))
-     call nc_check(nf90_put_var(ncid,varid,glb%iceumask))
-
      do l = 1, self%ice_lev
         write(strnum,'(i1)') l
         cicevarname = "qice00"//strnum
@@ -349,8 +354,6 @@ subroutine soca_ciceutils_finalize(self)
   ncat = 0
   ice_lev = 0
   sno_lev = 0
-
-  deallocate(self%iceumask)
 
   deallocate(self%aicen)
   deallocate(self%vicen)

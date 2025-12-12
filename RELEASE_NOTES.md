@@ -44,9 +44,7 @@ to be used for unit testing and running tutorials on workstations or laptops wit
 ### Analysis fields
 
 SOCA outputs FMS restart files in netCDF format that can be visualized easily with for example [Ncview](http://cirrus.ucsd.edu/~pierce/software/ncview/quick_intro.html) (a netCDF visual browser) or [Panoply](https://www.giss.nasa.gov/tools/panoply/).
-Examples of Python utility are provided as part of the SOCA tutorial to visualize horizontal fields.
 
 ### Observations
 
-Observation output is available in netCDF following formatting structured defined in IODA. Example of simple python utilities
-to read the IODA output is also provided in the tutorial.
+Observation output is available in netCDF following formatting structured defined in IODA.

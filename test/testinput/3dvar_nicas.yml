@@ -10,7 +10,12 @@ cost function:
   time window:
     begin: 2018-04-14T00:00:00Z
     length: P2D
-  analysis variables: &soca_vars [socn, tocn, uocn, vocn, ssh]
+  analysis variables: &soca_an_vars
+  - sea_water_salinity
+  - sea_water_potential_temperature
+  - eastward_sea_water_velocity
+  - northward_sea_water_velocity
+  - sea_surface_height_above_geoid
   geometry: &geom_small
     geom_grid_file: data_static/36x17x25/soca_gridspec.nc
     mom6_input_nml: data_static/36x17x25/input.nml
@@ -22,7 +27,15 @@ cost function:
     basename: data_static/36x17x25/restarts/
     ocn_filename: MOM.res.nc
     date: 2018-04-15T00:00:00Z
-    state variables: [hocn, socn, tocn, uocn, vocn, ssh, mld, layer_depth]
+    state variables:
+    - sea_water_cell_thickness
+    - sea_water_salinity
+    - sea_water_potential_temperature
+    - eastward_sea_water_velocity
+    - northward_sea_water_velocity
+    - sea_surface_height_above_geoid
+    - ocean_mixed_layer_thickness
+    - sea_water_depth
 
   background error:
     covariance model: SABER
@@ -38,38 +51,36 @@ cost function:
         grids:
         - model:
             variables:
-            - socn
-            - tocn
-            - uocn
-            - vocn
+            - sea_water_salinity
+            - sea_water_potential_temperature
+            - eastward_sea_water_velocity
+            - northward_sea_water_velocity
         - model:
             variables:
-            - ssh
+            - sea_surface_height_above_geoid
+    saber outer blocks:
+    - saber block name: SOCABkgErrFilt
+      ocean_depth_min: 1000 # [m]
+      rescale_bkgerr: 1.0
+      efold_z: 2500.0       # [m]
+
+    - saber block name: SOCAParametricOceanStdDev
+      temperature:
+        sst:
+          filepath: data_static/godas_sst_bgerr.nc
+          variable: sst_bgerr
+      unbalanced salinity: {} # use default values
+      unbalanced ssh: {} # use default values
+      other variables:
+      - variable: eastward_sea_water_velocity
+        fraction of background: 0.2
+      - variable: northward_sea_water_velocity
+        fraction of background: 0.2
 
     linear variable change:
-      input variables: *soca_vars
-      output variables: *soca_vars
+      input variables: *soca_an_vars
+      output variables: *soca_an_vars
       linear variable changes:
-      - linear variable change name: BkgErrFILT
-        ocean_depth_min: 1000 # [m]
-        rescale_bkgerr: 1.0
-        efold_z: 2500.0       # [m]
-
-      - linear variable change name: BkgErrGODAS
-        sst_bgerr_file: data_static/godas_sst_bgerr.nc
-        t_min: 0.1
-        t_max: 2.0
-        t_dz:  20.0
-        t_efold: 500.0
-        s_min: 0.0
-        s_max: 0.25
-        ssh_min: 0.0   # value at EQ
-        ssh_max: 0.1   # value in Extratropics
-        ssh_phi_ex: 20 # lat of transition from extratropics
-        cicen_min: 0.1
-        cicen_max: 0.5
-        hicen_min: 10.0
-        hicen_max: 100.0
 
       - linear variable change name: BalanceSOCA
         kst:
@@ -204,17 +215,10 @@ variational:
     ninner: 5
     gradient norm reduction: 1e-15
     test: on
-    diagnostics:
-      departures: ombg
-
 output:
   datadir: data_output/
   exp: 3dvar_nicas
   type: an
-
-final:
-  diagnostics:
-    departures: oman
 
 test:
   reference filename: testref/3dvar_nicas.test
