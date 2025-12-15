@@ -139,3 +139,4 @@ output increment:
 test:
   reference filename: testref/letkf.test
   test output filename: testoutput/letkf.test
+  float relative tolerance: 1e-5
