@@ -108,6 +108,11 @@ ecbuild_add_executable( TARGET  soca_linearization_error.x
                         LIBS    soca
                       )
 
+ecbuild_add_executable( TARGET  soca_tlm_toolbox.x
+                        SOURCES TLMToolbox.cc
+                        LIBS    soca
+                      )
+
 if(Torch_FOUND)
   ecbuild_add_executable( TARGET  soca_ice_emulator.x
                         SOURCES IceEmul.cc

@@ -94,6 +94,7 @@ set( soca_test_input
   testinput/setcorscales.yml
   testinput/sqrtvertloc.yml
   testinput/state.yml
+  testinput/tlm_toolbox_linearization_error.yml
   testinput/varchange_ana2model.yml
   testinput/varchange_balance_TSSSH.yml
   testinput/varchange_balance.yml
@@ -157,6 +158,7 @@ set( soca_test_ref
   testref/parameters_bump_loc.test
   testref/setcorscales.test
   testref/sqrtvertloc.test
+  testref/tlm_toolbox_linearization_error.test
 )
 
 # Create directory for test input/output/reference and symlink all files
@@ -595,6 +597,14 @@ soca_add_test( NAME gen_hybrid_linear_model_coeffs
 
 soca_add_test( NAME linearization_error
                EXE  soca_linearization_error.x
+               TEST_DEPENDS test_soca_gridgen
+                            test_soca_forecast_mom6
+                            test_soca_forecast_mom6_ens1
+                            test_soca_forecast_mom6_ens2
+                            test_soca_forecast_mom6_ens3 )
+
+soca_add_test( NAME tlm_toolbox_linearization_error
+               EXE  soca_tlm_toolbox.x
                TEST_DEPENDS test_soca_gridgen
                             test_soca_forecast_mom6
                             test_soca_forecast_mom6_ens1
