@@ -91,6 +91,7 @@ set( soca_test_input
   testinput/varchange_ana2model.yml
   testinput/varchange_balance_TSSSH.yml
   testinput/varchange_balance.yml
+  testinput/soca2cice_new.yml
 )
 
 set( soca_test_ref
@@ -149,6 +150,7 @@ set( soca_test_ref
   testref/setcorscales.test
   testref/sqrtvertloc.test
   testref/tlm_toolbox_linearization_error.test
+  testref/soca2cice_new.test
 )
 
 # Create directory for test input/output/reference and symlink all files
@@ -801,6 +803,15 @@ file(COPY ${CMAKE_CURRENT_BINARY_DIR}/data_static/72x35x25/restarts/iced.2018-04
      DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/data_generated/convertstate_soca2cice/ )
 soca_add_test( NAME convertstate_soca2cice
               EXE  soca_convertstate.x
+              MPI 2
+              NOTRAPFPE
+              TEST_DEPENDS test_soca_gridgen
+                           test_soca_3dvar )
+
+file(COPY ${CMAKE_CURRENT_BINARY_DIR}/data_static/72x35x25/restarts/iced.2018-04-15-00000.nc
+     DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/data_generated/soca2cice_new/ )
+soca_add_test( NAME soca2cice_new
+              EXE  soca_postproc.x
               MPI 2
               NOTRAPFPE
               TEST_DEPENDS test_soca_gridgen

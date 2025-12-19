@@ -603,8 +603,10 @@ subroutine soca_fields_read(self, f_conf, vdate)
         end do
 
         ! read
-        call restore_state(restart, directory='')
-        call free_restart_type(restart)
+        if (n > 0) then
+          call restore_state(restart, directory='')
+          call free_restart_type(restart)
+        end if
 
         ! copy back into atlas fields, filling land with fillvalue
         do n=1,size(vars)

@@ -103,22 +103,22 @@
 - name: sea_ice_category<CATEGORY>_area_fraction
   categories: 5
   io file: ice
-  io sup name: aicen_h
-  io name: aice<CATEGORY>_h
+  io sup name: aicen
+  io name: aice<CATEGORY>
   property: positive_definite
 
 - name: sea_ice_category<CATEGORY>_volume
   categories: 5
   io file: ice
-  io sup name: vicen_h
-  io name: vice<CATEGORY>_h
+  io sup name: vicen
+  io name: vice<CATEGORY>
   property: positive_definite
 
 - name: sea_ice_snow_category<CATEGORY>_volume
   categories: 5
   io file: ice
-  io sup name: vsnon_h
-  io name: vsno<CATEGORY>_h
+  io sup name: vsnon
+  io name: vsno<CATEGORY>
   property: positive_definite
 
 # --------------------------------------------------------------------------------------------------
