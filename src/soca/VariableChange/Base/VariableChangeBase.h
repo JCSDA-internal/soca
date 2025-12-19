@@ -14,7 +14,7 @@
 
 #include <boost/noncopyable.hpp>
 
-#include "oops/base/VariableChangeParametersBase.h"
+#include "oops/base/ParameterTraitsVariables.h"
 #include "oops/base/Variables.h"
 #include "oops/util/AssociativeContainers.h"
 #include "oops/util/parameters/ConfigurationParameter.h"
@@ -31,10 +31,11 @@ namespace soca {
 
 // -----------------------------------------------------------------------------
 
-class VariableChangeParametersBase : public oops::VariableChangeParametersBase {
-  OOPS_ABSTRACT_PARAMETERS(VariableChangeParametersBase,
-                           oops::VariableChangeParametersBase)
+class VariableChangeParametersBase : public oops::Parameters {
+  OOPS_ABSTRACT_PARAMETERS(VariableChangeParametersBase, oops::Parameters)
  public:
+  oops::OptionalParameter<oops::Variables> inputVariables{"input variables", this};
+  oops::OptionalParameter<oops::Variables> outputVariables{"output variables", this};
   oops::OptionalParameter<std::string> name{"variable change name", this};
 };
 

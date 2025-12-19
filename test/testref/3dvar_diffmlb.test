@@ -1,24 +1,21 @@
 CostJb   : Nonlinear Jb = 0.0000000000000000e+00
-CostJo   : Nonlinear Jo(SeaIceFraction) = 5.9780675099388782e+02, nobs = 89, Jo/n = 6.7169297864481781e+00, err = 1.0000000149011612e-01
-CostFunction: Nonlinear J = 5.9780675099388782e+02
-RPCGMinimizer: reduction in residual norm = 6.9578333084327329e-02
+CostJo   : Nonlinear Jo(SeaIceFraction) = 5.9780675099388759e+02, nobs = 89, Jo/n = 6.7169297864481754e+00, err = 1.0000000149011612e-01
+CostFunction: Nonlinear J = 5.9780675099388759e+02
+RPCGMinimizer: reduction in residual norm = 3.8045064913893797e-02
 CostFunction::addIncrement: Analysis: 
   Valid time: 2018-04-15T00:00:00Z
-          sea_ice_area_fraction   min=-0.1036522281921659   max=1.5890707917345379   mean=0.1770510723993644
-              sea_ice_thickness   min=-0.0001516309943195   max=4.0319498634926729   mean=0.4765411500997312
-         sea_ice_snow_thickness   min=-0.2868864405725090   max=1.2926802129154602   mean=0.0725973325096385
-   snow_ice_surface_temperature   min=-11.8000000000000007   max=0.0000000000000000   mean=-2.9751257610129023
+          sea_ice_area_fraction   min=-0.1220236561147721   max=1.5730181144567630   mean=0.1605433969334469
+              sea_ice_thickness   min=0.0000000000000000   max=4.0326673084246947   mean=0.4761309705025341
+         sea_ice_snow_thickness   min=-0.3665363750782519   max=1.2712833951042413   mean=0.0736718561611819
+   snow_ice_surface_temperature   min=-11.8000000000000007   max=-1.8000000000000000   mean=-2.9751257610129023
                 air_temperature   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
               bulk_ice_salinity   min=0.0000000000000000   max=5.0000000000000000   mean=4.4124371194935357
-             sea_water_salinity   min=10.7210460395083924   max=40.4416591897031168   mean=34.5442658885472085
-sea_water_potential_temperature   min=-2.1878887257523498   max=31.7004645720657692   mean=6.0124666456320730
+             sea_water_salinity   min=10.7210460395083924   max=40.4416591897031168   mean=34.5442708434014634
+sea_water_potential_temperature   min=-2.1614480405030303   max=31.7004645720658580   mean=6.0128204721574283
  sea_surface_height_above_geoid   min=-1.9244847628277935   max=0.9272826517867588   mean=-0.2767903423591662
        sea_water_cell_thickness   min=0.0009999999999977   max=1345.6400000000003274   mean=128.6280642064969300
     ocean_mixed_layer_thickness   min=2.2854716757984130   max=4593.1533423819937525   mean=192.4109073940401515
                 sea_water_depth   min=2.2854716757984130   max=5658.3057467114012979   mean=1200.5229536158342398
-
-
-
-CostJb   : Nonlinear Jb = 1.3323617471985911
-CostJo   : Nonlinear Jo(SeaIceFraction) = 36.2017471888988069, nobs = 89, Jo/n = 0.4067612043696495, err = 0.1000000014901161
-CostFunction: Nonlinear J = 37.5341089360973967
+CostJb   : Nonlinear Jb = 8.6185609179730402
+CostJo   : Nonlinear Jo(SeaIceFraction) = 97.4445614117535257, nobs = 89, Jo/n = 1.0948827124916127, err = 0.1000000014901161
+CostFunction: Nonlinear J = 106.0631223297265677

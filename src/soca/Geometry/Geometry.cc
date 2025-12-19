@@ -6,6 +6,7 @@
  */
 
 #include <algorithm>
+#include <numeric>
 
 #include "atlas/functionspace.h"
 #include "atlas/mesh/actions/BuildHalo.h"
@@ -150,23 +151,17 @@ namespace soca {
   // -----------------------------------------------------------------------------
 
   GeometryIterator Geometry::begin() const {
-    ASSERT(IteratorDimension() == 2);  // Modification will be needed for 3D.
-                                       // We don't use 3D right now
-
     // find the first non ghost point
     const auto & ghost = atlas::array::make_view<int, 1>(functionSpace_.ghost());
     size_t idx = 0;
     while (idx < ghost.size() && ghost(idx)) idx++;
-    return GeometryIterator(*this, idx, -1 );
+    return GeometryIterator(*this, idx, 0);
   }
 
   // -----------------------------------------------------------------------------
 
   GeometryIterator Geometry::end() const {
-    ASSERT(IteratorDimension() == 2);  // Modification will be needed for 3D.
-                                       // We don't use 3D right now
-
-    return GeometryIterator(*this, functionSpace_.size(), -1);
+    return GeometryIterator(*this, functionSpace_.size(), 0);
   }
 
   // -----------------------------------------------------------------------------
@@ -176,6 +171,19 @@ namespace soca {
     soca_geo_get_num_levels_f90(toFortran(), vars, lvls.size(), lvls.data());
     return lvls;
   }
+
+  // -----------------------------------------------------------------------------
+  std::vector<double> Geometry::verticalCoord(std::string & vertcoord) const {
+    if (vertcoord != "levels") {
+      throw eckit::NotImplemented("Vertical coordinate not supported. Only 'levels' "
+        "vertical coordinate currently supported.", Here());
+    }
+    const size_t nlevs = fields_["vert_coord"].shape(1);
+    std::vector<double> coords(nlevs);
+    std::iota(coords.begin(), coords.end(), 1.0);
+    return coords;
+  }
+
   // -----------------------------------------------------------------------------
   void Geometry::print(std::ostream & os) const {
     // TODO(Travis): Implement this correctly.

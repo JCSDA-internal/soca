@@ -14,7 +14,6 @@
 #include "soca/Geometry/Geometry.h"
 #include "soca/Increment/Increment.h"
 #include "soca/State/State.h"
-#include "soca/Traits.h"
 #include "soca/LinearVariableChange/LinearModel2GeoVaLs/LinearModel2GeoVaLs.h"
 
 namespace soca {
@@ -63,6 +62,8 @@ void LinearModel2GeoVaLs::multiply(const Increment &dxin,
         v_fOut(i, lvl) = v_fIn(i, lvl);
       }
     }
+
+    fOut.set_dirty(fIn.dirty());
   }
 }
 
@@ -98,6 +99,8 @@ void LinearModel2GeoVaLs::multiplyAD(const Increment &dxin,
         v_fOut(i, lvl) += v_fIn(i, lvl);
       }
     }
+
+    fOut.set_dirty(fIn.dirty());
   }
 }
 

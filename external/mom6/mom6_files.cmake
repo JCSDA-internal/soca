@@ -8,6 +8,23 @@ list(APPEND mom6_src_files
   MOM6/src/ALE/PLM_functions.F90
   MOM6/src/ALE/PPM_functions.F90
   MOM6/src/ALE/PQM_functions.F90
+  MOM6/src/ALE/Recon1d_EMPLM_CWK.F90
+  MOM6/src/ALE/Recon1d_EMPLM_WA.F90
+  MOM6/src/ALE/Recon1d_EMPLM_WA_poly.F90
+  MOM6/src/ALE/Recon1d_EPPM_CWK.F90
+  MOM6/src/ALE/Recon1d_MPLM_CWK.F90
+  MOM6/src/ALE/Recon1d_MPLM_WA.F90
+  MOM6/src/ALE/Recon1d_MPLM_WA_poly.F90
+  MOM6/src/ALE/Recon1d_PCM.F90
+  MOM6/src/ALE/Recon1d_PLM_CW.F90
+  MOM6/src/ALE/Recon1d_PLM_CWK.F90
+  MOM6/src/ALE/Recon1d_PLM_hybgen.F90
+  MOM6/src/ALE/Recon1d_PPM_CW.F90
+  MOM6/src/ALE/Recon1d_PPM_CWK.F90
+  MOM6/src/ALE/Recon1d_PPM_H4_2018.F90
+  MOM6/src/ALE/Recon1d_PPM_H4_2019.F90
+  MOM6/src/ALE/Recon1d_PPM_hybgen.F90
+  MOM6/src/ALE/Recon1d_type.F90
   MOM6/src/ALE/coord_adapt.F90
   MOM6/src/ALE/coord_hycom.F90
   MOM6/src/ALE/coord_rho.F90
@@ -21,7 +38,6 @@ list(APPEND mom6_src_files
   MOM6/src/ALE/regrid_edge_values.F90
   MOM6/src/ALE/regrid_interp.F90
   MOM6/src/ALE/regrid_solvers.F90
-  MOM6/src/ALE/remapping_attic.F90
 
   MOM6/src/core/MOM.F90
   MOM6/src/core/MOM_CoriolisAdv.F90
@@ -35,6 +51,7 @@ list(APPEND mom6_src_files
   MOM6/src/core/MOM_continuity.F90
   MOM6/src/core/MOM_continuity_PPM.F90
   MOM6/src/core/MOM_density_integrals.F90
+  MOM6/src/core/MOM_dynamics_split_RK2b.F90
   MOM6/src/core/MOM_dynamics_split_RK2.F90
   MOM6/src/core/MOM_dynamics_unsplit.F90
   MOM6/src/core/MOM_dynamics_unsplit_RK2.F90
@@ -51,14 +68,18 @@ list(APPEND mom6_src_files
   MOM6/src/core/MOM_verticalGrid.F90
 
   MOM6/src/diagnostics/MOM_PointAccel.F90
+  MOM6/src/diagnostics/MOM_diagnose_MLD.F90
   MOM6/src/diagnostics/MOM_debugging.F90
+  MOM6/src/diagnostics/MOM_harmonic_analysis.F90
   MOM6/src/diagnostics/MOM_spatial_means.F90
   MOM6/src/diagnostics/MOM_diagnostics.F90
   MOM6/src/diagnostics/MOM_obsolete_diagnostics.F90
   MOM6/src/diagnostics/MOM_obsolete_params.F90
   MOM6/src/diagnostics/MOM_sum_output.F90
   MOM6/src/diagnostics/MOM_wave_speed.F90
+  MOM6/src/diagnostics/MOM_diagnose_KdWork.F90
 
+  MOM6/src/equation_of_state/MOM_EOS_base_type.F90
   MOM6/src/equation_of_state/MOM_EOS.F90
   MOM6/src/equation_of_state/MOM_EOS_Jackett06.F90
   MOM6/src/equation_of_state/MOM_EOS_Roquet_SpV.F90
@@ -136,8 +157,9 @@ list(APPEND mom6_src_files
   MOM6/src/framework/MOM_unique_scales.F90
   MOM6/src/framework/MOM_unit_testing.F90
   MOM6/src/framework/MOM_write_cputime.F90
+  MOM6/src/framework/numerical_testing_type.F90
   MOM6/src/framework/testing/MOM_file_parser_tests.F90
-
+  MOM6/src/framework/MOM_murmur_hash.F90
   MOM6/src/ice_shelf/MOM_ice_shelf.F90
   MOM6/src/ice_shelf/MOM_ice_shelf_diag_mediator.F90
   MOM6/src/ice_shelf/MOM_ice_shelf_dynamics.F90
@@ -162,10 +184,12 @@ list(APPEND mom6_src_files
   MOM6/src/parameterizations/lateral/MOM_lateral_mixing_coeffs.F90
   MOM6/src/parameterizations/lateral/MOM_mixed_layer_restrat.F90
   MOM6/src/parameterizations/lateral/MOM_spherical_harmonics.F90
+  MOM6/src/parameterizations/lateral/MOM_streaming_filter.F90
   MOM6/src/parameterizations/lateral/MOM_thickness_diffuse.F90
   MOM6/src/parameterizations/lateral/MOM_tidal_forcing.F90
   MOM6/src/parameterizations/lateral/MOM_Zanna_Bolton.F90
   MOM6/src/parameterizations/lateral/MOM_self_attr_load.F90
+  MOM6/src/parameterizations/lateral/MOM_wave_drag.F90
 
   MOM6/src/parameterizations/vertical/MOM_ALE_sponge.F90
   MOM6/src/parameterizations/vertical/MOM_CVMix_KPP.F90
@@ -207,9 +231,9 @@ list(APPEND mom6_src_files
   MOM6/src/tracer/DOME_tracer.F90
 
   MOM6/src/tracer/ISOMIP_tracer.F90
-
+  MOM6/src/tracer/MARBL_tracers.F90
+  MOM6/src/tracer/MARBL_forcing_mod.F90
   MOM6/src/tracer/MOM_OCMIP2_CFC.F90
-  MOM6/src/tracer/MOM_generic_tracer.F90
   MOM6/src/tracer/MOM_hor_bnd_diffusion.F90
   MOM6/src/tracer/MOM_neutral_diffusion.F90
   MOM6/src/tracer/nw2_tracers.F90
@@ -232,6 +256,7 @@ list(APPEND mom6_src_files
   MOM6/src/tracer/pseudo_salt_tracer.F90
   MOM6/src/tracer/tracer_example.F90
   MOM6/src/tracer/MOM_CFC_cap.F90
+  MOM6/src/tracer/MOM_tracer_advect_schemes.F90
 
   MOM6/src/user/BFB_initialization.F90
   MOM6/src/user/BFB_surface_forcing.F90
@@ -272,9 +297,7 @@ list(APPEND mom6_src_files
   MOM6/src/ocean_data_assim/MOM_oda_driver.F90
   MOM6/src/ocean_data_assim/MOM_oda_incupd.F90
 
-  MOM6/config_src/external/GFDL_ocean_BGC/FMS_coupler_util.F90
-  MOM6/config_src/external/GFDL_ocean_BGC/generic_tracer.F90
-  MOM6/config_src/external/GFDL_ocean_BGC/generic_tracer_utils.F90
+  MOM6/config_src/external/GFDL_ocean_BGC/MOM_generic_tracer.F90
   MOM6/config_src/external/ODA_hooks/kdtree.f90
   MOM6/config_src/external/ODA_hooks/ocean_da_core.F90
   MOM6/config_src/external/ODA_hooks/ocean_da_types.F90
@@ -283,6 +306,10 @@ list(APPEND mom6_src_files
   MOM6/config_src/external/drifters/MOM_particles_types.F90
   MOM6/config_src/external/database_comms/MOM_database_comms.F90
   MOM6/config_src/external/database_comms/database_client_interface.F90
+  MOM6/config_src/external/MARBL/marbl_interface.F90
+  MOM6/config_src/external/MARBL/marbl_interface_public_types.F90
+  MOM6/config_src/external/MARBL/marbl_logging.F90
+  MOM6/config_src/external/MARBL/marbl_constants_mod.F90
 
   MOM6/config_src/infra/FMS2/MOM_coms_infra.F90
   MOM6/config_src/infra/FMS2/MOM_constants.F90
@@ -297,6 +324,7 @@ list(APPEND mom6_src_files
   MOM6/config_src/infra/FMS2/MOM_io_infra.F90
   MOM6/config_src/infra/FMS2/MOM_time_manager.F90
 
+  MOM6/config_src/drivers/unit_tests/test_numerical_testing_type.F90
 )
 
 # list(APPEND mom6_nuopc_src_files

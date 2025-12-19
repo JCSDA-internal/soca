@@ -50,7 +50,6 @@ subroutine soca_soca2cice_setup_f90(c_key_self, c_conf, c_key_geom) &
   type(soca_geom), pointer :: geom
 
   type(fckit_configuration) :: f_conf
-  character(len=:), allocatable :: str
 
   f_conf = fckit_configuration(c_conf)
 
@@ -74,10 +73,25 @@ subroutine soca_soca2cice_setup_f90(c_key_self, c_conf, c_key_geom) &
   call f_conf%get_or_die("arctic.rescale prior.rescale", self%arctic%rescale_prior)
   call f_conf%get_or_die("arctic.rescale prior.min hice", self%arctic%rescale_min_hice)
   call f_conf%get_or_die("arctic.rescale prior.min hsno", self%arctic%rescale_min_hsno)
+  call f_conf%get_or_die("arctic.update SST", self%arctic%update_sst)
+  call f_conf%get_or_die("arctic.max positive SST update", self%arctic%max_update_sst)
   call f_conf%get_or_die("antarctic.rescale prior.rescale", self%antarctic%rescale_prior)
   call f_conf%get_or_die("antarctic.rescale prior.min hice", self%antarctic%rescale_min_hice)
   call f_conf%get_or_die("antarctic.rescale prior.min hsno", self%antarctic%rescale_min_hsno)
-
+  call f_conf%get_or_die("antarctic.update SST", self%antarctic%update_sst)
+  call f_conf%get_or_die("antarctic.max positive SST update", self%antarctic%max_update_sst)
+  ! icepack parameters
+  call f_conf%get_or_die("icepack time step", self%dt)
+  call f_conf%get_or_die("icepack tfrz_option", self%tfrz_option)
+  ! minimum allowable ice concentration and volume
+  call f_conf%get_or_die("min aice", self%min_aice)
+  call f_conf%get_or_die("min vice", self%min_vice)
+  ! shuffle stencil size
+  if (f_conf%has("shuffle stencil depth")) then
+    call f_conf%get_or_die("shuffle stencil depth", self%shuffle_n)
+  else
+    self%shuffle_n = 0
+  end if
   ! cice input restart
   call f_conf%get_or_die("cice background state.restart", self%rst_filename)
 
@@ -98,16 +112,13 @@ subroutine soca_soca2cice_changevar_f90(c_key_self, c_key_geom, c_key_xin, c_key
   type(soca_soca2cice), pointer :: self
   type(soca_geom),      pointer :: geom
   type(soca_state),     pointer :: xin, xout
-  type(soca_field),     pointer :: field
 
   call soca_soca2cice_registry%get(c_key_self, self)
   call soca_geom_registry%get(c_key_geom, geom)
   call soca_state_registry%get(c_key_xin, xin)
   call soca_state_registry%get(c_key_xout, xout)
 
-  call xin%sync_from_atlas()
   call self%changevar(geom, xin, xout)
-  call xout%sync_to_atlas()
 
 end subroutine
 

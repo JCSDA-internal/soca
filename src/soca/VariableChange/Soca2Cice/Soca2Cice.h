@@ -16,8 +16,6 @@
 #include "oops/util/parameters/Parameters.h"
 #include "oops/util/parameters/RequiredParameter.h"
 
-#include "soca/Traits.h"
-
 #include "soca/VariableChange/Base/VariableChangeBase.h"
 
 namespace soca {
@@ -51,6 +49,11 @@ class Soca2Cice: public VariableChangeBase {
     oops::Parameter<RescaleParameters> rescale{"rescale prior",
       "Option to rescale sea ice in the ice pack zone (where ice concentration"
       " > seaice edge)", {}, this};
+    oops::Parameter<bool> adjustSST{"update SST",
+      "Option to update sea surface temperature", true, this};
+    oops::Parameter<double> sstDiffMax{"max positive SST update",
+      "Maximum update to sea surface temperature (K)", 1.0, this,
+      {oops::minConstraint(0.0)}};
   };
 
   // ---------------------------------------------------------------------------
@@ -79,8 +82,20 @@ class Soca2Cice: public VariableChangeBase {
    public:
     oops::RequiredParameter<BackgroundParameters> background{"cice background state", this};
     oops::RequiredParameter<OutputParameters> output{"cice output", this};
+    oops::OptionalParameter<eckit::LocalConfiguration> incOutput{"increment output", this};
+    oops::OptionalParameter<eckit::LocalConfiguration> incInput{"soca increment", this};
     oops::RequiredParameter<RedistributionParameters> arctic{"arctic", this};
     oops::RequiredParameter<RedistributionParameters> antarctic{"antarctic", this};
+    oops::Parameter<float> icepackTstep{"icepack time step",
+            "icepack time step used for thickness categories rebinning", 300, this};
+    oops::OptionalParameter<int> shuffleStencilSize{"shuffle stencil depth",
+            "stencil depth used in the shuffle search", this, {oops::minConstraint(1)}};
+    oops::Parameter<std::string> tFrzOption{"icepack tfrz_option",
+            "icepack option to compute freezing temperature", "mushy", this};
+    oops::Parameter<double> minAice{"min aice",
+            "minimum allowable ice concentration", 0.0, this, {oops::minConstraint(0.0)}};
+    oops::Parameter<double> minVice{"min vice",
+            "minimum allowable ice volume", 0.00001, this, {oops::minConstraint(0.0)}};
   };
 
   const std::string classname() {return "soca::Soca2Cice";}
@@ -93,6 +108,7 @@ class Soca2Cice: public VariableChangeBase {
 
  private:
   const Geometry & geom_;
+  Parameters params_;
   int keySoca2Cice_;
   void print(std::ostream &) const override {}
 };

@@ -16,6 +16,7 @@
 
 #include "oops/util/Logger.h"
 #include "oops/util/Timer.h"
+#include "oops/util/FieldSetHelpers.h"
 
 using oops::Log;
 
@@ -100,7 +101,7 @@ void VariableChange::changeVar(State & x, const oops::Variables & vars) const {
   // vader_->changeVar also returns the variables fulfilled by Vader. These variables are allocated
   // and populated and added to the FieldSet (xfs).
   atlas::FieldSet xfs;
-  x.toFieldSet(xfs);
+  util::copyFieldSet(x.fieldSet(), xfs);
   varsFilled += vader_->changeVar(xfs, varsVader);
   x.updateFields(varsFilled);
   x.fromFieldSet(xfs);

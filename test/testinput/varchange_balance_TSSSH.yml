@@ -27,8 +27,11 @@ linear variable change tests:
     output variables: *soca_an_vars
     linear variable changes:
     - linear variable change name: BalanceSOCA
-      dsdtmax: 1.0
-      dsdzmin: 3.0e-3
-      dtdzmin: 1.0e-3
-      nlayers: 10
+      kst:
+        dsdtmax: 1.0
+        dsdzmin: 3.0e-3
+        dtdzmin: 1.0e-3
+        nlayers: 10
+      ksshts:
+        nlayers: 10
 

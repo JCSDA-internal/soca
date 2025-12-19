@@ -61,18 +61,28 @@
 # --------------------------------------------------------------------------------------------------
 # ice state variables with no categories
 # --------------------------------------------------------------------------------------------------
-- name: sea_ice_thickness
+- name: sea_ice_volume           # per unit grid cell area
   io file: ice
   io name: hi_h #note, was hicen
+  property: positive_definite
+
+- name: sea_ice_thickness        # per ice area, i.e. sea_ice_volume / sea_ice_area_fraction
+  io file: ice
+  io name: hi_div_aice_h
   property: positive_definite
 
 - name: sea_ice_area_fraction
   io file: ice
   io name: aice_h #note, was aicen
 
-- name: sea_ice_snow_thickness
+- name: sea_ice_snow_volume      # per unit grid cell area
   io file: ice
   io name: hs_h #note, was hsnon
+  property: positive_definite
+
+- name: sea_ice_snow_thickness   # per ice area, i.e. sea_ice_snow_volume / sea_ice_area_fraction
+  io file: ice
+  io name: hs_div_aice_h
   property: positive_definite
 
 - name: snow_ice_surface_temperature

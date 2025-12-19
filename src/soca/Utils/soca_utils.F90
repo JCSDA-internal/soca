@@ -255,6 +255,8 @@ subroutine soca_stencil_interp(lon_src, lat_src, lon_dst, lat_dst, data, data_ou
      data_out(k) = val/sum(w(1:nn))
   end do
 
+  call ageometry%final()
+
 end subroutine soca_stencil_interp
 
 ! ------------------------------------------------------------------------------

@@ -10,17 +10,22 @@
 
 #include <string>
 
+#include "oops/generic/UnstructuredInterpolator.h"
+
 #include "soca/Covariance/ErrorCovariance.h"
 #include "soca/Geometry/Geometry.h"
 #include "soca/GeometryIterator/GeometryIterator.h"
 #include "soca/Increment/Increment.h"
+#include "soca/LinearModel/OceanIceEmulator/LinearModelOceanIceEmulator.h"
 #include "soca/LinearVariableChange/LinearVariableChange.h"
+#include "soca/Model/OceanIceEmulator/ModelOceanIceEmulator.h"
 #include "soca/ModelBias/ModelBias.h"
 #include "soca/ModelBias/ModelBiasCovariance.h"
 #include "soca/ModelBias/ModelBiasIncrement.h"
 #include "soca/ModelData/ModelData.h"
 #include "soca/State/State.h"
 #include "soca/VariableChange/VariableChange.h"
+#include "ufo/obslocalization/ObsLocalization.h"
 
 namespace soca {
 
@@ -34,11 +39,15 @@ struct Traits {
   static std::string name() {return "SOCA";}
   static std::string nameCovar() {return "SocaError";}
 
-  typedef soca::Geometry             Geometry;
-  typedef soca::GeometryIterator     GeometryIterator;
-  typedef soca::State                State;
-  typedef soca::Increment            Increment;
-  typedef soca::ErrorCovariance      Covariance;  // Not actually used, just empty stubs
+  typedef soca::Geometry                  Geometry;
+  typedef soca::GeometryIterator          GeometryIterator;
+  typedef soca::State                     State;
+  typedef soca::Increment                 Increment;
+  typedef oops::UnstructuredInterpolator  LocalInterpolator;
+  typedef soca::ErrorCovariance           Covariance;  // Not actually used, just empty stubs
+
+  typedef soca::ModelOceanIceEmulator        Model;
+  typedef soca::LinearModelOceanIceEmulator  LinearModel;
 
   typedef soca::ModelBias            ModelAuxControl;
   typedef soca::ModelBiasIncrement   ModelAuxIncrement;
@@ -47,6 +56,8 @@ struct Traits {
   typedef soca::LinearVariableChange LinearVariableChange;
   typedef soca::VariableChange       VariableChange;
   typedef soca::ModelData            ModelData;
+
+  typedef ufo::ObsLocalization<GeometryIterator>   ObsLocalization;
 };
 
 }  // namespace soca

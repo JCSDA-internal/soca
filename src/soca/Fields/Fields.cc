@@ -41,10 +41,17 @@ void Fields::zero() {
 // -----------------------------------------------------------------------------
 
 void Fields::accumul(const double & zz, const Fields & xx) {
-  atlas::FieldSet fs1, fs2; xx.toFieldSet(fs1);
-  util::copyFieldSet(fs1, fs2);
-  util::multiplyFieldSet(fs2, zz);
-  util::addFieldSets(fieldSet_, fs2);
+  for (auto & field : fieldSet_) {
+    const auto & otherField = xx.fieldSet().field(field.name());
+    const auto & otherView = atlas::array::make_view<double, 2>(otherField);
+    auto view = atlas::array::make_view<double, 2>(fieldSet_.field(otherField.name()));
+    for (size_t i = 0; i < otherField.shape(0); i++) {
+      for (size_t lvl = 0; lvl < otherField.shape(1); lvl++) {
+        view(i, lvl) += zz * otherView(i, lvl);
+      }
+    }
+    field.set_dirty(field.dirty() || otherField.dirty());
+  }
 }
 
 // -----------------------------------------------------------------------------
@@ -93,6 +100,7 @@ void Fields::deserialize(const std::vector<double> & vect, size_t & index) {
         view(i, j) = vect[index++];
       }
     }
+    field.set_dirty();  // just to be safe, we don't know the status when serialized
   }
   // Use magic value to validate deserialization
   ASSERT(vect.at(index++) == SerializeCheckValue);
@@ -146,7 +154,7 @@ void Fields::print(std::ostream & os) const {
   for (const auto & field : fieldSet_) {
     size_t count = 0;
     double min = std::numeric_limits<double>::max();
-    double max = std::numeric_limits<double>::min();
+    double max = std::numeric_limits<double>::lowest();
     double sum = 0.0;
 
     const auto & vGhost = atlas::array::make_view<int, 1>(field.functionspace().ghost());
@@ -193,26 +201,26 @@ void Fields::print(std::ostream & os) const {
 // -----------------------------------------------------------------------------
 
 void Fields::toFieldSet(atlas::FieldSet & fset) const {
-  // copy seems like a waste, it would be nice if we could get away with "share"
-  util::copyFieldSet(fieldSet_, fset);
+  fset.clear();
+  util::shareFields(fieldSet_, fset);
 }
 
 // -----------------------------------------------------------------------------
 
 void Fields::fromFieldSet(const atlas::FieldSet &fset) {
-  // keep a copy of the metadata to copy back
-  std::map<std::string, atlas::util::Metadata> metadata;
-  for (const auto & f : fieldSet_) metadata[f.name()] = f.metadata();
-
-  util::copyFieldSet(fset, fieldSet_);
-
-  for (auto & f : fieldSet_) {
-    if (metadata[f.name()].has("name")) {  // that's weird
-      // THERE IS A BUG IN SOCA, i'm getting fieldsets with one or two fields
-      // (hocn) that have have no metadata even though the rest of the field
-      // do. Eh, i'll figure it out at a later date.
-      f.metadata() = metadata[f.name()];
+  // copy fields (note that I don't use util::copyFieldSet because I want to
+  // keep the metadata untouched)
+  for (const auto & field : fset) {
+    ASSERT(fieldSet_.has(field.name()));
+    const auto & view = atlas::array::make_view<double, 2>(field);
+    auto myField = fieldSet_.field(field.name());
+    auto myView = atlas::array::make_view<double, 2>(myField);
+    for (size_t i = 0; i < field.shape(0); i++) {
+      for (size_t lvl = 0; lvl < field.shape(1); lvl++) {
+        myView(i, lvl) = view(i, lvl);
+      }
     }
+    myField.set_dirty(field.dirty());
   }
 }
 
