@@ -6,7 +6,6 @@
 module soca_write_jacobian_mod
 
 use kinds, only: kind_real
-use netcdf
 use soca_geom_mod, only: soca_geom
 use fms_mod, only: write_data, set_domain
 use fms_io_mod, only: fms_io_init, fms_io_exit
