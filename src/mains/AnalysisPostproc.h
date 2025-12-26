@@ -204,8 +204,9 @@ class AnalysisPostproc : public oops::Application {
       oops::Log::test() << "Analysis ensemble standard deviation: " << anEnsVar << std::endl;
       // Set increments to be analysis increments for the postprocessing below
       incs = analysisIncrs;
-    // No analysis ensemble increments provided: use inflation only, if available
-    // (can't use Inflation classes because they assume analysis increments)
+    // No analysis ensemble increments provided: apply inflation to background
+    // ensemble perturbations directly (Inflation classes operate on analysis
+    // increments, which are not available in this branch)
     } else if (fullConfig.has("ensemble inflation")) {
       // Save the original increments for differencing later
       IncrementSet_ origincs(incs);
