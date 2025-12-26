@@ -44,7 +44,7 @@ ensemble mean output:
 
 ensemble inflation:
   method: Multiplicative
-  factor: 0.5
+  factor: 1.05
 
 recentering state:
   read_from_file: 1
