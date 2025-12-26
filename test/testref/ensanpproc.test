@@ -1,4 +1,4 @@
-Ensemble mean: 
+Background ensemble mean: 
   Valid time: 2018-04-15T00:00:00Z
 sea_water_potential_temperature   min=-1.8000000000000000   max=31.7266785987746971   mean=6.0631953325566377
              sea_water_salinity   min=10.7210460395083924   max=38.0000000000000000   mean=34.5212190251308328
@@ -8,14 +8,24 @@ sea_water_potential_temperature   min=-1.8000000000000000   max=31.7266785987746
               sea_ice_thickness   min=-0.4945079752930821   max=4.2383578169684073   mean=0.4194380401580169
          sea_ice_snow_thickness   min=0.0000000000000000   max=1.2712833951042413   mean=0.0734733582119349
        sea_water_cell_thickness   min=0.0009999999999977   max=1345.6400000000003274   mean=128.6280642065405004
- Ensemble perturbations: 
+ Background ensemble standard deviation: 
+  Valid time: 2018-04-15T00:00:00Z
+sea_water_potential_temperature   min=0.0000000000000000   max=2.9744174236509098   mean=0.3029834476083366
+             sea_water_salinity   min=0.0000000000000000   max=1.3505286498877809   mean=0.1074690758953311
+    eastward_sea_water_velocity   min=0.0000000000000000   max=0.0108861055020160   mean=0.0007106851503927
+   northward_sea_water_velocity   min=0.0000000000000000   max=0.0099017027109353   mean=0.0004747325510539
+          sea_ice_area_fraction   min=0.0007513172795469   max=0.0172481249736482   mean=0.0067083304987286
+              sea_ice_thickness   min=0.0000000000000000   max=1.9501662252139709   mean=0.2581126306283945
+         sea_ice_snow_thickness   min=0.0000000000000000   max=0.6197996590654210   mean=0.0105493216875704
+       sea_water_cell_thickness   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
+ Background ensemble perturbations: 
   Valid time: 2018-04-15T00:00:00Z
 sea_water_potential_temperature   min=-1.9672961375786215   max=4.4338589944899249   mean=0.0298818579330344
              sea_water_salinity   min=-1.3823141207873846   max=1.0585495306811552   mean=0.0207435664257011
     eastward_sea_water_velocity   min=-0.0092275044750261   max=0.0108712789440456   mean=-0.0000095580848872
    northward_sea_water_velocity   min=-0.0094110101542083   max=0.0111248052463291   mean=0.0000004516323990
           sea_ice_area_fraction   min=-0.0189143937311176   max=0.0205955341564218   mean=-0.0000987540431257
-              sea_ice_thickness   min=-1.7520556507092333   max=1.8237833313991176   mean=0.0200824149003331
+              sea_ice_thickness   min=-1.7520556507092335   max=1.8237833313991176   mean=0.0200824149003331
          sea_ice_snow_thickness   min=-0.3968488361071074   max=0.6905346568349053   mean=0.0047276797156756
        sea_water_cell_thickness   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
   Valid time: 2018-04-15T00:00:00Z
@@ -42,8 +52,45 @@ sea_water_potential_temperature   min=-2.9183907399444533   max=3.27631782389318
     eastward_sea_water_velocity   min=-0.0106353397568411   max=0.0137958079111262   mean=0.0000309965073559
    northward_sea_water_velocity   min=-0.0123879748356349   max=0.0125846387484655   mean=0.0000011365341636
           sea_ice_area_fraction   min=-0.0240524488928229   max=0.0176975544503365   mean=0.0000475584854581
-              sea_ice_thickness   min=-2.6330220660525230   max=2.0891026310278118   mean=0.0274612994439183
-         sea_ice_snow_thickness   min=-0.8037630906408594   max=0.7378492609363690   mean=0.0042651798017032
+              sea_ice_thickness   min=-2.6330220660525234   max=2.0891026310278118   mean=0.0274612994439183
+         sea_ice_snow_thickness   min=-0.8037630906408594   max=0.7378492609363689   mean=0.0042651798017032
+       sea_water_cell_thickness   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
+Increments after inflation: 
+  Valid time: 2018-04-15T00:00:00Z
+sea_water_potential_temperature   min=-0.9836480687893108   max=2.2169294972449629   mean=0.0149409289665172
+             sea_water_salinity   min=-0.6911570603936923   max=0.5292747653405776   mean=0.0103717832128505
+    eastward_sea_water_velocity   min=-0.0046137522375130   max=0.0054356394720228   mean=-0.0000047790424436
+   northward_sea_water_velocity   min=-0.0047055050771042   max=0.0055624026231646   mean=0.0000002258161995
+          sea_ice_area_fraction   min=-0.0094571968655588   max=0.0102977670782109   mean=-0.0000493770215629
+              sea_ice_thickness   min=-0.8760278253546168   max=0.9118916656995588   mean=0.0100412074501665
+         sea_ice_snow_thickness   min=-0.1984244180535537   max=0.3452673284174528   mean=0.0023638398578378
+       sea_water_cell_thickness   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
+  Valid time: 2018-04-15T00:00:00Z
+sea_water_potential_temperature   min=-1.2419044411189772   max=1.5614276850335855   mean=-0.0240681162054433
+             sea_water_salinity   min=-0.7058882998897786   max=0.5366356798164027   mean=-0.0102067487320353
+    eastward_sea_water_velocity   min=-0.0055005837770613   max=0.0055548639129842   mean=-0.0000023882213950
+   northward_sea_water_velocity   min=-0.0026451713150677   max=0.0060001901189371   mean=0.0000133410595114
+          sea_ice_area_fraction   min=-0.0113606360261935   max=0.0096111965407122   mean=-0.0006702355071705
+              sea_ice_thickness   min=-0.9264716284395873   max=0.6945161840174729   mean=-0.0110397662924335
+         sea_ice_snow_thickness   min=-0.4158141728145408   max=0.1339605151068099   mean=-0.0026482262673761
+       sea_water_cell_thickness   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
+  Valid time: 2018-04-15T00:00:00Z
+sea_water_potential_temperature   min=-1.0697439183135748   max=1.6902051745785043   mean=0.0205029680806465
+             sea_water_salinity   min=-0.5293569258293189   max=0.5361514345980858   mean=-0.0037489879990111
+    eastward_sea_water_velocity   min=-0.0064920119012585   max=0.0060295520811215   mean=-0.0000083309898394
+   northward_sea_water_velocity   min=-0.0044511151159543   max=0.0027210264221943   mean=-0.0000141351427927
+          sea_ice_area_fraction   min=-0.0100301295672326   max=0.0089132401405157   mean=0.0006958332860043
+              sea_ice_thickness   min=-0.7014696855982701   max=0.9268397352313460   mean=-0.0127320908796922
+         sea_ice_snow_thickness   min=-0.2683811250037943   max=0.2616644026403535   mean=-0.0018482034913132
+       sea_water_cell_thickness   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
+  Valid time: 2018-04-15T00:00:00Z
+sea_water_potential_temperature   min=-1.4591953699722269   max=1.6381589119465909   mean=-0.0113757808417200
+             sea_water_salinity   min=-0.4890597123845026   max=0.9118935730924278   mean=0.0035839535181958
+    eastward_sea_water_velocity   min=-0.0053176698784205   max=0.0068979039555631   mean=0.0000154982536780
+   northward_sea_water_velocity   min=-0.0061939874178175   max=0.0062923193742327   mean=0.0000005682670818
+          sea_ice_area_fraction   min=-0.0120262244464115   max=0.0088487772251683   mean=0.0000237792427291
+              sea_ice_thickness   min=-1.3165110330262615   max=1.0445513155139059   mean=0.0137306497219591
+         sea_ice_snow_thickness   min=-0.4018815453204297   max=0.3689246304681844   mean=0.0021325899008516
        sea_water_cell_thickness   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
 Recentering increment: 
   Valid time: 2018-04-15T00:00:00Z
@@ -53,7 +100,7 @@ sea_water_potential_temperature   min=-1.7995800890423692   max=1.50763934106552
    northward_sea_water_velocity   min=-0.0070607706097978   max=0.0057314175829543   mean=-0.0000083522450611
           sea_ice_area_fraction   min=-0.0078020367586440   max=0.0112418992909670   mean=0.0007579006312480
               sea_ice_thickness   min=-0.5172244875776413   max=2.6580501851758127   mean=0.0518135304193748
-         sea_ice_snow_thickness   min=0.0000000000000000   max=1.0068370866024217   mean=0.0152132295408627
+         sea_ice_snow_thickness   min=-0.0000000000000001   max=1.0068370866024217   mean=0.0152132295408627
        sea_water_cell_thickness   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
 Increments after inflation and recentering: 
   Valid time: 2018-04-15T00:00:00Z
@@ -62,7 +109,7 @@ sea_water_potential_temperature   min=-1.8854360563271637   max=3.39073704138744
     eastward_sea_water_velocity   min=-0.0111124450051346   max=0.0069581412319031   mean=0.0000103468499671
    northward_sea_water_velocity   min=-0.0117662756869019   max=0.0081005210228262   mean=-0.0000081264288616
           sea_ice_area_fraction   min=-0.0154863986601735   max=0.0149896940835902   mean=0.0007085236096852
-              sea_ice_thickness   min=-0.7765059570648166   max=2.7355566668424305   mean=0.0618547378695413
+              sea_ice_thickness   min=-0.7765059570648166   max=2.7355566668424300   mean=0.0618547378695413
          sea_ice_snow_thickness   min=-0.0661414726845179   max=1.0358019852523581   mean=0.0175770693987005
        sea_water_cell_thickness   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
   Valid time: 2018-04-15T00:00:00Z
@@ -89,8 +136,8 @@ sea_water_potential_temperature   min=-2.6577186495806382   max=1.63682702618663
     eastward_sea_water_velocity   min=-0.0088737931997287   max=0.0148617732104438   mean=0.0000306241460887
    northward_sea_water_velocity   min=-0.0066407195960183   max=0.0097482507315229   mean=-0.0000077839779793
           sea_ice_area_fraction   min=-0.0142123508347196   max=0.0168120937024575   mean=0.0007816798739771
-              sea_ice_thickness   min=-0.7813947868500319   max=2.9249410340098358   mean=0.0655441801413340
-         sea_ice_snow_thickness   min=-0.1339605151068100   max=1.1067738914045535   mean=0.0173458194417143
+              sea_ice_thickness   min=-0.7813947868500324   max=2.9249410340098354   mean=0.0655441801413340
+         sea_ice_snow_thickness   min=-0.1339605151068100   max=1.1067738914045533   mean=0.0173458194417143
        sea_water_cell_thickness   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
 Increments after inflation and recentering and postprocessing: 
   Valid time: 2018-04-15T00:00:00Z

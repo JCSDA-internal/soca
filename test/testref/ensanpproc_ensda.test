@@ -1,0 +1,181 @@
+Background ensemble mean: 
+  Valid time: 2018-04-15T00:00:00Z
+sea_water_potential_temperature   min=-1.8000000000000000   max=31.7266785987746971   mean=6.0631953325566377
+             sea_water_salinity   min=10.7210460395083924   max=38.0000000000000000   mean=34.5212190251308328
+    eastward_sea_water_velocity   min=-0.8609011929693486   max=0.7010172866364175   mean=-0.0002563200079172
+   northward_sea_water_velocity   min=-0.7677450905884780   max=1.4343611949404274   mean=0.0020277479786758
+       sea_water_cell_thickness   min=0.0009999999999977   max=1345.6400000000003274   mean=128.6280642065405004
+ Background ensemble standard deviation: 
+  Valid time: 2018-04-15T00:00:00Z
+sea_water_potential_temperature   min=0.0000000000000000   max=2.9744174236509098   mean=0.3029834476083366
+             sea_water_salinity   min=0.0000000000000000   max=1.3505286498877809   mean=0.1074690758953311
+    eastward_sea_water_velocity   min=0.0000000000000000   max=0.0108861055020160   mean=0.0007106851503927
+   northward_sea_water_velocity   min=0.0000000000000000   max=0.0099017027109353   mean=0.0004747325510539
+       sea_water_cell_thickness   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
+ Background ensemble perturbations: 
+  Valid time: 2018-04-15T00:00:00Z
+sea_water_potential_temperature   min=-1.9672961375786215   max=4.4338589944899249   mean=0.0298818579330344
+             sea_water_salinity   min=-1.3823141207873846   max=1.0585495306811552   mean=0.0207435664257011
+    eastward_sea_water_velocity   min=-0.0092275044750261   max=0.0108712789440456   mean=-0.0000095580848872
+   northward_sea_water_velocity   min=-0.0094110101542083   max=0.0111248052463291   mean=0.0000004516323990
+       sea_water_cell_thickness   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
+  Valid time: 2018-04-15T00:00:00Z
+sea_water_potential_temperature   min=-2.4838088822379545   max=3.1228553700671711   mean=-0.0481362324108867
+             sea_water_salinity   min=-1.4117765997795573   max=1.0732713596328054   mean=-0.0204134974640705
+    eastward_sea_water_velocity   min=-0.0110011675541226   max=0.0111097278259683   mean=-0.0000047764427900
+   northward_sea_water_velocity   min=-0.0052903426301354   max=0.0120003802378741   mean=0.0000266821190229
+       sea_water_cell_thickness   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
+  Valid time: 2018-04-15T00:00:00Z
+sea_water_potential_temperature   min=-2.1394878366271493   max=3.3804103491570094   mean=0.0410059361612929
+             sea_water_salinity   min=-1.0587138516586379   max=1.0723028691961716   mean=-0.0074979759980221
+    eastward_sea_water_velocity   min=-0.0129840238025171   max=0.0120591041622430   mean=-0.0000166619796788
+   northward_sea_water_velocity   min=-0.0089022302319086   max=0.0054420528443885   mean=-0.0000282702855855
+       sea_water_cell_thickness   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
+  Valid time: 2018-04-15T00:00:00Z
+sea_water_potential_temperature   min=-2.9183907399444533   max=3.2763178238931818   mean=-0.0227515616834400
+             sea_water_salinity   min=-0.9781194247690053   max=1.8237871461848556   mean=0.0071679070363917
+    eastward_sea_water_velocity   min=-0.0106353397568411   max=0.0137958079111262   mean=0.0000309965073559
+   northward_sea_water_velocity   min=-0.0123879748356349   max=0.0125846387484655   mean=0.0000011365341636
+       sea_water_cell_thickness   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
+Analysis increments: 
+  Valid time: 2018-04-15T00:00:00Z
+sea_water_potential_temperature   min=-6.6687340172332270   max=10.7911722242134509   mean=-0.0100544939535702
+             sea_water_salinity   min=-2.4464843379531298   max=1.9584042685021688   mean=0.0177750208698229
+    eastward_sea_water_velocity   min=-0.0226333865508450   max=0.0354577214431557   mean=0.0000143611986106
+   northward_sea_water_velocity   min=-0.0141725941683523   max=0.0553251017170820   mean=0.0000492749831091
+       sea_water_cell_thickness   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
+  Valid time: 2018-04-15T00:00:00Z
+sea_water_potential_temperature   min=-6.5365142835521501   max=10.9806123636152044   mean=-0.0005101080852913
+             sea_water_salinity   min=-2.5133215140076799   max=2.0491166486281607   mean=0.0196851772528496
+    eastward_sea_water_velocity   min=-0.0218978096439954   max=0.0349754708428661   mean=0.0000159803355432
+   northward_sea_water_velocity   min=-0.0149923682805271   max=0.0569977108193188   mean=0.0000482780939592
+       sea_water_cell_thickness   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
+  Valid time: 2018-04-15T00:00:00Z
+sea_water_potential_temperature   min=-6.8421969292051825   max=11.0806587491458455   mean=-0.0020777070564122
+             sea_water_salinity   min=-2.4799253981659510   max=2.0409260010744088   mean=0.0215902110156208
+    eastward_sea_water_velocity   min=-0.0234253541733563   max=0.0333582858012615   mean=0.0000139495310588
+   northward_sea_water_velocity   min=-0.0147793657929184   max=0.0582391963109435   mean=0.0000517633700505
+       sea_water_cell_thickness   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
+  Valid time: 2018-04-15T00:00:00Z
+sea_water_potential_temperature   min=-6.5152729018527076   max=11.2103621256090324   mean=-0.0006610587637860
+             sea_water_salinity   min=-2.5473278542319799   max=2.0510624364844352   mean=0.0213658628696781
+    eastward_sea_water_velocity   min=-0.0220586624726171   max=0.0330489645723260   mean=0.0000137216868121
+   northward_sea_water_velocity   min=-0.0145460864432350   max=0.0585653794675243   mean=0.0000509327601501
+       sea_water_cell_thickness   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
+Multiplicative Background member 1:
+  Valid time: 2018-04-15T00:00:00Z
+sea_water_potential_temperature   min=-1.8000000000000000   max=31.6933380143948185   mean=6.0930771904896845
+             sea_water_salinity   min=10.7210460395083924   max=38.0000000000000000   mean=34.5419625915567536
+    eastward_sea_water_velocity   min=-0.8641522861445371   max=0.7036119745230547   mean=-0.0002658780928043
+   northward_sea_water_velocity   min=-0.7634486847749620   max=1.4361818799661243   mean=0.0020281996110748
+       sea_water_cell_thickness   min=0.0009999999999977   max=1345.6400000000003274   mean=128.6280642065405004
+Multiplicative Analysis Increment member 1:
+  Valid time: 2018-04-15T00:00:00Z
+sea_water_potential_temperature   min=-6.6687340172332270   max=10.7911722242134509   mean=-0.0100544939535702
+             sea_water_salinity   min=-2.4464843379531298   max=1.9584042685021688   mean=0.0177750208698229
+    eastward_sea_water_velocity   min=-0.0226333865508450   max=0.0354577214431557   mean=0.0000143611986106
+   northward_sea_water_velocity   min=-0.0141725941683523   max=0.0553251017170820   mean=0.0000492749831091
+       sea_water_cell_thickness   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
+Multiplicative Updated Analysis Increment member 1:
+  Valid time: 2018-04-15T00:00:00Z
+sea_water_potential_temperature   min=-6.4290884748116390   max=10.2007373381982163   mean=-0.0216310969256847
+             sea_water_salinity   min=-2.1560975731441805   max=1.8340335759464743   mean=0.0085677612230572
+    eastward_sea_water_velocity   min=-0.0234630228286093   max=0.0377139036837173   mean=0.0000192112357520
+   northward_sea_water_velocity   min=-0.0130633204270396   max=0.0507410717747350   mean=0.0000494428262637
+       sea_water_cell_thickness   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
+Analysis increments after inflation: 
+  Valid time: 2018-04-15T00:00:00Z
+sea_water_potential_temperature   min=-6.4290884748116390   max=10.2007373381982163   mean=-0.0216310969256847
+             sea_water_salinity   min=-2.1560975731441805   max=1.8340335759464743   mean=0.0085677612230572
+    eastward_sea_water_velocity   min=-0.0234630228286093   max=0.0377139036837173   mean=0.0000192112357520
+   northward_sea_water_velocity   min=-0.0130633204270396   max=0.0507410717747350   mean=0.0000494428262637
+       sea_water_cell_thickness   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
+  Valid time: 2018-04-15T00:00:00Z
+sea_water_potential_temperature   min=-6.4275094148405181   max=11.4677479834952436   mean=0.0221501411804147
+             sea_water_salinity   min=-2.6608704705240895   max=2.6716127011975659   mean=0.0301013713594563
+    eastward_sea_water_velocity   min=-0.0218951801109304   max=0.0370934287061494   mean=0.0000176299831697
+   northward_sea_water_velocity   min=-0.0181204826947239   max=0.0582430592561574   mean=0.0000358291383768
+       sea_water_cell_thickness   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
+  Valid time: 2018-04-15T00:00:00Z
+sea_water_potential_temperature   min=-7.5894754937378135   max=10.6120819939191815   mean=-0.0232047425912347
+             sea_water_salinity   min=-2.2587228088365374   max=2.2598284474600803   mean=0.0245961275078173
+    eastward_sea_water_velocity   min=-0.0261683733783354   max=0.0277572646079166   mean=0.0000225573493719
+   northward_sea_water_velocity   min=-0.0143545909116521   max=0.0560256565930379   mean=0.0000650479787266
+       sea_water_cell_thickness   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
+  Valid time: 2018-04-15T00:00:00Z
+sea_water_potential_temperature   min=-6.1166447484532931   max=11.7822381469708901   mean=0.0093823304774443
+             sea_water_salinity   min=-2.9113682518539332   max=2.2037004613501638   mean=0.0171510119176395
+    eastward_sea_water_velocity   min=-0.0207559623244103   max=0.0342758456618262   mean=-0.0000013858162688
+   northward_sea_water_velocity   min=-0.0140409628687674   max=0.0641176006909382   mean=0.0000499292639018
+       sea_water_cell_thickness   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
+Analysis ensemble mean: 
+  Valid time: 2018-04-15T00:00:00Z
+sea_water_potential_temperature   min=-4.0934672195972786   max=39.0513527792136088   mean=6.0598694905918640
+             sea_water_salinity   min=10.7210460395083924   max=39.0134411183835681   mean=34.5413230931331086
+    eastward_sea_water_velocity   min=-0.8572272512653948   max=0.6996116115736933   mean=-0.0002418168199110
+   northward_sea_water_velocity   min=-0.7669957317009206   max=1.4343630397286529   mean=0.0020778102804930
+       sea_water_cell_thickness   min=0.0009999999999977   max=1345.6400000000003274   mean=128.6280642065405004
+Analysis ensemble standard deviation: 
+  Valid time: 2018-04-15T00:00:00Z
+sea_water_potential_temperature   min=0.0000000000000000   max=1.4022880303798113   mean=0.1425318874062333
+             sea_water_salinity   min=0.0000000000000000   max=0.6539167123641333   mean=0.0508716020254333
+    eastward_sea_water_velocity   min=0.0000000000000000   max=0.0054031109978871   mean=0.0003382039041665
+   northward_sea_water_velocity   min=0.0000000000000000   max=0.0050298114466532   mean=0.0002267431056032
+       sea_water_cell_thickness   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
+Recentering increment: 
+  Valid time: 2018-04-15T00:00:00Z
+sea_water_potential_temperature   min=-11.6182675419887715   max=6.4986191255151322   mean=-0.0423045322385412
+             sea_water_salinity   min=-1.9494045455336746   max=2.4416591897031168   mean=0.0030666330191716
+    eastward_sea_water_velocity   min=-0.0311063743188810   max=0.0242675919568887   mean=0.0000006227044045
+   northward_sea_water_velocity   min=-0.0570064138696695   max=0.0144751069909961   mean=-0.0000584145468783
+       sea_water_cell_thickness   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
+Increments after inflation and recentering: 
+  Valid time: 2018-04-15T00:00:00Z
+sea_water_potential_temperature   min=-2.5010047100716930   max=1.4927535556818512   mean=-0.0639356291642254
+             sea_water_salinity   min=-0.9356809389934685   max=2.4416591897031168   mean=0.0116343942422288
+    eastward_sea_water_velocity   min=-0.0102987779982844   max=0.0121039499518039   mean=0.0000198339401565
+   northward_sea_water_velocity   min=-0.0079291379308680   max=0.0088262823323219   mean=-0.0000089717206146
+       sea_water_cell_thickness   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
+  Valid time: 2018-04-15T00:00:00Z
+sea_water_potential_temperature   min=-1.5563056266289852   max=2.0581352553385206   mean=-0.0201543910581260
+             sea_water_salinity   min=-0.7484744093295375   max=2.4416591897031168   mean=0.0331680043786283
+    eastward_sea_water_velocity   min=-0.0122063830395607   max=0.0073179658171641   mean=0.0000182526875742
+   northward_sea_water_velocity   min=-0.0059172851409248   max=0.0067193534203937   mean=-0.0000225854085015
+       sea_water_cell_thickness   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
+  Valid time: 2018-04-15T00:00:00Z
+sea_water_potential_temperature   min=-2.7040725008792386   max=1.9479388563125881   mean=-0.0655092748297754
+             sea_water_salinity   min=-0.8392065385065787   max=2.4416591897031168   mean=0.0276627605269895
+    eastward_sea_water_velocity   min=-0.0077986646587757   max=0.0125009262524044   mean=0.0000231800537764
+   northward_sea_water_velocity   min=-0.0082849631610235   max=0.0076524639142125   mean=0.0000066334318483
+       sea_water_cell_thickness   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
+  Valid time: 2018-04-15T00:00:00Z
+sea_water_potential_temperature   min=-2.6604776305167106   max=2.1658491390677366   mean=-0.0329222017610972
+             sea_water_salinity   min=-1.0269007943362940   max=2.4416591897031168   mean=0.0202176449368114
+    eastward_sea_water_velocity   min=-0.0066647037849269   max=0.0073905563166296   mean=-0.0000007631118643
+   northward_sea_water_velocity   min=-0.0115937032982206   max=0.0083868753007516   mean=-0.0000084852829764
+       sea_water_cell_thickness   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
+Increments after inflation and recentering and postprocessing: 
+  Valid time: 2018-04-15T00:00:00Z
+sea_water_potential_temperature   min=-2.5010000000000003   max=1.4927500000000000   mean=-0.0639356279975650
+             sea_water_salinity   min=-0.9356800000000001   max=2.4416600000000002   mean=0.0116344160681680
+    eastward_sea_water_velocity   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
+   northward_sea_water_velocity   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
+       sea_water_cell_thickness   min=0.0009999999999977   max=1345.6400000000003274   mean=128.6280642065405004
+  Valid time: 2018-04-15T00:00:00Z
+sea_water_potential_temperature   min=-1.5563100000000001   max=2.0581400000000003   mean=-0.0201544267802799
+             sea_water_salinity   min=-0.7484700000000001   max=2.4416600000000002   mean=0.0331679953743150
+    eastward_sea_water_velocity   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
+   northward_sea_water_velocity   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
+       sea_water_cell_thickness   min=0.0009999999999977   max=1345.6400000000003274   mean=128.6280642065405004
+  Valid time: 2018-04-15T00:00:00Z
+sea_water_potential_temperature   min=-2.7040700000000002   max=1.9479400000000002   mean=-0.0655092861838099
+             sea_water_salinity   min=-0.8392100000000001   max=2.4416600000000002   mean=0.0276627608034083
+    eastward_sea_water_velocity   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
+   northward_sea_water_velocity   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
+       sea_water_cell_thickness   min=0.0009999999999977   max=1345.6400000000003274   mean=128.6280642065405004
+  Valid time: 2018-04-15T00:00:00Z
+sea_water_potential_temperature   min=-2.6604800000000002   max=2.1658500000000003   mean=-0.0329221818624461
+             sea_water_salinity   min=-1.0269000000000001   max=2.4416600000000002   mean=0.0202176314059647
+    eastward_sea_water_velocity   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
+   northward_sea_water_velocity   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
+       sea_water_cell_thickness   min=0.0009999999999977   max=1345.6400000000003274   mean=128.6280642065405004

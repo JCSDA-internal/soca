@@ -94,6 +94,7 @@ observations:
 driver:
   do posterior observer: true
   save posterior mean increment: true
+  save posterior ensemble increments: true
   save posterior mean: true
   save posterior variance: true
   save prior mean: true
@@ -110,6 +111,12 @@ output:
   datadir: data_output/
   date: *date
   exp: letkf
+  type: ens
+
+output ensemble increments:
+  datadir: data_output/
+  date: *date
+  exp: letkf.inc
   type: ens
 
 output mean prior:

@@ -46,6 +46,7 @@ set( soca_test_input
   testinput/dirac_soca_cov.yml
   testinput/dirac_socahyb_cov.yml
   testinput/ensanpproc.yml
+  testinput/ensanpproc_ensda.yml
   testinput/enshofx_1.yml
   testinput/enshofx_2.yml
   testinput/enshofx_3.yml
@@ -131,6 +132,7 @@ set( soca_test_ref
   testref/dirac_soca_cov.test
   testref/dirac_socahyb_cov.test
   testref/ensanpproc.test
+  testref/ensanpproc_ensda.test
   testref/enshofx.test
   testref/ensmeanandvariance.test
   testref/enspert.test
@@ -568,6 +570,10 @@ file(COPY ${CMAKE_CURRENT_BINARY_DIR}/data_static/72x35x25/restarts/iced.2018-04
 soca_add_test( NAME ensanpproc
                EXE  soca_anpproc.x
                TEST_DEPENDS test_soca_gridgen )
+
+soca_add_test( NAME ensanpproc_ensda
+               EXE  soca_anpproc.x
+               TEST_DEPENDS test_soca_gridgen test_soca_letkf )
 
 soca_add_test( NAME hybridgain
                EXE  soca_hybridgain.x
