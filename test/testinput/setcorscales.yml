@@ -5,44 +5,57 @@ resolution:
 
 date: 2018-04-15T00:00:00Z
 
-corr variables: [socn, tocn, uocn, vocn, ssh, cicen, hicen]
+corr variables:
+- sea_water_salinity
+- sea_water_potential_temperature
+- eastward_sea_water_velocity
+- northward_sea_water_velocity
+- sea_surface_height_above_geoid
+- sea_ice_area_fraction
+- sea_ice_thickness
+
+#islands:
+#  scale: 1000.0  # in kilometers
+#  lat: [35.24, 35.639, 32.288]
+#  lon: [-75.55, -75.477, -64.74]
 
 scales:
   vert layers: 100 # in units of layer
-  socn:
+  sea_water_salinity:
     rossby mult: 40.0
     min grid mult: 5.0
-  tocn:
+  sea_water_potential_temperature:
     rossby mult: 30.0
     min grid mult: 6.0
-  uocn:
+  eastward_sea_water_velocity:
     rossby mult: 30.0
     min grid mult: 6.0
-  vocn:
+  northward_sea_water_velocity:
     rossby mult: 30.0
     min grid mult: 6.0
-  ssh:
+  sea_surface_height_above_geoid:
     rossby mult: 20.0
     min grid mult: 7.0
-  cicen:
+  sea_ice_area_fraction:
     rossby mult: 0.0
     min grid mult: 8.0
-    min: 1000000
-  hicen:
+    min value: 1000000
+  sea_ice_thickness:
     rossby mult: 0.0
     min grid mult: 9.0
-    min: 5000000
+    min value: 5000000
 
 rh output:
-  datadir: data_generated/setcorscales
+  datadir: data_output/
   exp: cor_rh
   type: incr
 
 rv output:
-  datadir: data_generated/setcorscales
+  datadir: data_output/
   exp: cor_rv
   type: incr
 
 test:
   reference filename: testref/setcorscales.test
   test output filename: testoutput/setcorscales.test
+  float relative tolerance: 2e-5

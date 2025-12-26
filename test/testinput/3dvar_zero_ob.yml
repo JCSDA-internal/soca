@@ -7,8 +7,9 @@ _: &land_mask
 
 cost function:
   cost type: 3D-Var
-  window begin: 2018-04-14T00:00:00Z
-  window length: P2D
+  time window:
+    begin: 2018-04-14T00:00:00Z
+    length: P2D
   analysis variables: &soca_vars [cicen, hicen, hsnon, socn, tocn, ssh, hocn, sw, lhf, shf, lw, us, mld, layer_depth]
   geometry:
     mom6_input_nml: ./inputnml/input.nml
@@ -75,8 +76,6 @@ variational:
     ninner: 5
     gradient norm reduction: 1e-15
     test: on
-    diagnostics:
-      departures: ombg
     online diagnostics:
       write increment: true
       increment:
@@ -89,10 +88,6 @@ output:
   datadir: Data
   exp: 3dvargodas
   type: an
-
-final:
-  diagnostics:
-    departures: oman
 
 test:
   reference filename: testref/3dvar_zero_ob.test

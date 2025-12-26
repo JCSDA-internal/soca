@@ -9,6 +9,10 @@
 #include "soca/VariableChange/Model2GeoVaLs/Model2GeoVaLsFortran.h"
 
 #include "oops/util/abor1_cpp.h"
+#include "oops/util/Timer.h"
+
+#include "soca/Geometry/Geometry.h"
+#include "soca/State/State.h"
 
 namespace soca {
 
@@ -25,6 +29,7 @@ static VariableChangeMaker<Model2GeoVaLs>
 Model2GeoVaLs::Model2GeoVaLs(const Geometry & geom,
                              const eckit::Configuration & conf)
   : geom_(geom) {
+  util::Timer timer("soca::Model2GeoVaLs", "Model2GeoVaLs");
 }
 
 // -----------------------------------------------------------------------------
@@ -34,6 +39,7 @@ Model2GeoVaLs::~Model2GeoVaLs() {}
 // -----------------------------------------------------------------------------
 
 void Model2GeoVaLs::changeVar(const State & xin, State & xout) const {
+  util::Timer timer("soca::Model2GeoVaLs", "changeVar");
   soca_model2geovals_changevar_f90(geom_.toFortran(),
                                    xin.toFortran(), xout.toFortran());
 }

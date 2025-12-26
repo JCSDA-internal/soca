@@ -1,0 +1,39 @@
+Input Dirac increment:
+  Valid time: 2018-04-15T00:00:00Z
+             sea_water_salinity   min=0.0000000000000000   max=1.0000000000000000   mean=0.0000243457090688
+sea_water_potential_temperature   min=0.0000000000000000   max=1.0000000000000000   mean=0.0000973828362751
+ sea_surface_height_above_geoid   min=0.0000000000000000   max=1.0000000000000000   mean=0.0006086427267194
+       sea_water_cell_thickness   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
+    ocean_mixed_layer_thickness   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
+                sea_water_depth   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
+    eastward_sea_water_velocity   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
+   northward_sea_water_velocity   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
+Adjoint test for block SOCAParametricOceanStdDev passed
+Inner inverse test for block SOCAParametricOceanStdDev passed: U Uinv (U x) == (U x)
+Outer inverse test for block SOCAParametricOceanStdDev passed: Uinv U (Uinv x) == (Uinv x)
+Adjoint test for block ID passed
+Covariance(SABER) diagnostics:
+- Variances at Dirac points:
+  + Value for variable sea_water_salinity, subwindow 0, at (longitude, latitude, vertical index) point (-122.46168, 71.13133, 1): 1.0000000000000000e+00
+  + Value for variable sea_water_potential_temperature, subwindow 0, at (longitude, latitude, vertical index) point (-277.50000, -47.50000, 1): 1.0000000000000000e+00
+  + Value for variable sea_water_potential_temperature, subwindow 0, at (longitude, latitude, vertical index) point (-197.50000, 17.50000, 5): 1.0000000000000000e+00
+  + Value for variable sea_water_potential_temperature, subwindow 0, at (longitude, latitude, vertical index) point (32.50000, 42.50000, 1): 1.0000000000000000e+00
+  + Value for variable sea_water_potential_temperature, subwindow 0, at (longitude, latitude, vertical index) point (-27.50000, 57.50000, 1): 1.0000000000000000e+00
+  + Value for variable sea_surface_height_above_geoid, subwindow 0, at (longitude, latitude, vertical index) point (-27.50000, -7.50000, 1): 1.0000000000000000e+00
+- Covariances at diagnostic points:
+  + Value for variable sea_water_salinity, subwindow 0, at (longitude, latitude, vertical index) point (-122.46168, 71.13133, 1): 1.0000000000000000e+00
+  + Value for variable sea_water_potential_temperature, subwindow 0, at (longitude, latitude, vertical index) point (-277.50000, -47.50000, 1): 1.0000000000000000e+00
+  + Value for variable sea_water_potential_temperature, subwindow 0, at (longitude, latitude, vertical index) point (-197.50000, 17.50000, 5): 1.0000000000000000e+00
+  + Value for variable sea_water_potential_temperature, subwindow 0, at (longitude, latitude, vertical index) point (32.50000, 42.50000, 1): 1.0000000000000000e+00
+  + Value for variable sea_water_potential_temperature, subwindow 0, at (longitude, latitude, vertical index) point (-27.50000, 57.50000, 1): 1.0000000000000000e+00
+  + Value for variable sea_surface_height_above_geoid, subwindow 0, at (longitude, latitude, vertical index) point (-27.50000, -7.50000, 1): 1.0000000000000000e+00
+Covariance(SABER) * Increment:
+  Valid time: 2018-04-15T00:00:00Z
+             sea_water_salinity   min=0.0000000000000000   max=1.0000000000000000   mean=0.0000243457090688
+sea_water_potential_temperature   min=0.0000000000000000   max=1.0000000000000000   mean=0.0000973828362751
+ sea_surface_height_above_geoid   min=0.0000000000000000   max=1.0000000000000000   mean=0.0006086427267194
+       sea_water_cell_thickness   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
+    ocean_mixed_layer_thickness   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
+                sea_water_depth   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
+    eastward_sea_water_velocity   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
+   northward_sea_water_velocity   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000

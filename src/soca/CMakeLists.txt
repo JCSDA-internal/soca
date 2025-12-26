@@ -30,19 +30,27 @@ target_include_directories(soca PUBLIC
   $<INSTALL_INTERFACE:include/soca>)
 
 target_link_libraries( soca PUBLIC NetCDF::NetCDF_Fortran )
+target_link_libraries( soca PUBLIC NetCDF::NetCDF_C )
 target_link_libraries( soca PUBLIC fckit )
 target_link_libraries( soca PUBLIC atlas )
 target_link_libraries( soca PUBLIC atlas_f )
 target_link_libraries( soca PUBLIC fms )
 target_link_libraries( soca PUBLIC gsw )
 target_link_libraries( soca PUBLIC mom6 )
+target_link_libraries( soca PUBLIC icepack_limited ) # custom soca build with only some functions built
 target_link_libraries( soca PUBLIC oops )
 target_link_libraries( soca PUBLIC saber )
 target_link_libraries( soca PUBLIC ioda )
 target_link_libraries( soca PUBLIC ufo )
 target_link_libraries( soca PUBLIC vader )
-if ( BUILD_ICEPACK )
-  target_link_libraries( soca PUBLIC icepack )
+
+
+if(Torch_FOUND)
+  target_link_libraries( soca PUBLIC
+    "${Torch_ROOT}/lib/libtorch.so"          # For the Torch core library
+    "${Torch_ROOT}/lib/libtorch_cpu.so"      # For the CPU backend
+    "${Torch_ROOT}/lib/libc10.so"            # Core library
+    )
 endif()
 
 # Add source code in the subdirectories
@@ -53,10 +61,15 @@ add_subdirectory(Geometry)
 add_subdirectory(GeometryIterator)
 add_subdirectory(Increment)
 add_subdirectory(LinearVariableChange)
-add_subdirectory(Model)
+if(Torch_FOUND)
+  add_subdirectory(MLBalance)
+endif()
 add_subdirectory(ModelBias)
 add_subdirectory(ModelData)
+add_subdirectory(Model)
+add_subdirectory(LinearModel)
 add_subdirectory(ObsLocalization)
+add_subdirectory(SaberBlocks)
 add_subdirectory(State)
 add_subdirectory(Utils)
 add_subdirectory(VariableChange)

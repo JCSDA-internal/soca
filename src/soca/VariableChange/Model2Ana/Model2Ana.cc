@@ -12,6 +12,8 @@
 #include "eckit/config/Configuration.h"
 #include "eckit/exception/Exceptions.h"
 #include "oops/util/Logger.h"
+#include "oops/util/Timer.h"
+
 #include "soca/Geometry/Geometry.h"
 #include "soca/State/State.h"
 #include "soca/VariableChange/Model2Ana/Model2Ana.h"
@@ -30,6 +32,8 @@ Model2Ana::Model2Ana(const Geometry & resol, const eckit::Configuration & conf)
     interp_(initInterp(conf)), logvars_(initTrans(conf, "var"))
 {
   Log::trace() << "Model2Ana::Model2Ana start" << std::endl;
+  util::Timer timer("soca::Model2Ana", "Model2Ana");
+
   ASSERT(uvars_.size() == vvars_.size());
   Log::trace() << "Model2Ana::Model2Ana Rotating:"
                << " u = " << uvars_ << " v = " << vvars_ << std::endl;
@@ -48,6 +52,8 @@ void Model2Ana::changeVar(const State & xm,
                           State & xa) const {
   Log::trace() << "Model2Ana::changeVar starting" <<xm <<
                         std::endl;
+  util::Timer timer("soca::Model2Ana", "changeVar");
+
   util::DateTime * vtime = &xa.validTime();
   xa = xm;
 
@@ -73,6 +79,8 @@ void Model2Ana::changeVarInverse(const State & xa,
                                 State & xm) const {
   oops::Log::trace() << "Model2Ana::changeVarInverse starting" << xa <<
                         std::endl;
+  util::Timer timer("soca::Model2Ana", "changeVarInverse");
+
   util::DateTime * vtime = &xm.validTime();
   xm = xa;
 

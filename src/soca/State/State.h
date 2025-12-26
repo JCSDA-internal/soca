@@ -13,7 +13,10 @@
 #include <string>
 #include <vector>
 
+#include "eckit/mpi/Comm.h"
+
 #include "soca/Fortran.h"
+#include "soca/Fields/Fields.h"
 
 #include "oops/base/Variables.h"
 #include "oops/util/DateTime.h"
@@ -42,9 +45,8 @@ namespace soca {
    * A State contains everything that is needed to propagate the state
    * forward in time.
    */
-  class State : public util::Printable,
-                public util::Serializable,
-    private util::ObjectCounter<State> {
+  class State : public Fields,
+                private util::ObjectCounter<State> {
    public:
       static const std::string classname() {return "soca::State";}
 
@@ -53,24 +55,26 @@ namespace soca {
             const util::DateTime &);
       State(const Geometry &, const eckit::Configuration &);
       State(const Geometry &, const State &);
+      State(const oops::Variables &, const State &);
       State(const State &);
       virtual ~State();
       State & operator=(const State &);
-
-      /// Needed by PseudoModel
-      void updateTime(const util::Duration & dt) {time_ += dt;}
+      void transpose(const State & /*DistState*/, const eckit::mpi::Comm & /*global*/,
+         const int /*ensNum*/, const int /*transNum*/) {
+         throw eckit::NotImplemented("Soca State::transpose not implemented", Here());
+      }
 
       /// Rotations
-      void rotate2north(const oops::Variables &, const oops::Variables &) const;
-      void rotate2grid(const oops::Variables &, const oops::Variables &) const;
+      void rotate2north(const oops::Variables &, const oops::Variables &);
+      void rotate2grid(const oops::Variables &, const oops::Variables &);
 
       /// Staggered grid interpolation
-      void tohgrid(const oops::Variables &, const oops::Variables &) const;
-      void tocgrid(const oops::Variables &, const oops::Variables &) const;
+      void tohgrid(const oops::Variables &, const oops::Variables &);
+      void tocgrid(const oops::Variables &, const oops::Variables &);
 
       /// Logarithmic and exponential transformations
-      void logtrans(const oops::Variables &) const;
-      void expontrans(const oops::Variables &) const;
+      void logtrans(const oops::Variables &);
+      void expontrans(const oops::Variables &);
 
       /// Interactions with Increment
       State & operator+=(const Increment &);
@@ -78,41 +82,15 @@ namespace soca {
       /// I/O and diagnostics
       void read(const eckit::Configuration &);
       void write(const eckit::Configuration &) const;
-      double norm() const;
-      const util::DateTime & validTime() const;
-      util::DateTime & validTime();
-
-      /// Serialize and deserialize
-      size_t serialSize() const override;
-      void serialize(std::vector<double> &) const override;
-      void deserialize(const std::vector<double> &, size_t &) override;
-
 
       int & toFortran() {return keyFlds_;}
       const int & toFortran() const {return keyFlds_;}
-      const Geometry & geometry() const;
-      const oops::Variables & variables() const {return vars_;}
-      const util::DateTime & time() const {return time_;}
 
       /// Update the fields in variable changes
       void updateFields(const oops::Variables &);
 
-      /// Other
-      void zero();
-      void accumul(const double &, const State &);
-
-      /// ATLAS Interfaces
-      void toFieldSet(atlas::FieldSet &) const;
-      void fromFieldSet(const atlas::FieldSet &);
-
    private:
-      void print(std::ostream &) const override;
-
       F90flds keyFlds_;
-
-      const Geometry & geom_;
-      oops::Variables vars_;
-      util::DateTime time_;
   };
 // -----------------------------------------------------------------------------
 

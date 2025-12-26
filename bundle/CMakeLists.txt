@@ -26,16 +26,6 @@ endif()
 #===================================================================================================
 # other optional repositories
 #===================================================================================================
-option(BUILD_FMS "download and build fms" OFF) # NOTE, changed to default=OFF, but this will be removed in the future
-if ( BUILD_FMS )
-  ecbuild_bundle( PROJECT fms           GIT "https://github.com/jcsda/FMS.git"                     UPDATE BRANCH release-stable )
-endif ()
-
-option(BUILD_ICEPACK "download and build icepack" OFF)
-if ( BUILD_ICEPACK )
-  ecbuild_bundle( PROJECT icepack         GIT "https://github.com/JCSDA-internal/Icepack.git"         UPDATE BRANCH feature/ecbuild-new )
-endif()
-
 option(BUILD_OASIM "download and build OASIM ocean color forward operator" OFF)
 if ( BUILD_OASIM )
   ecbuild_bundle( PROJECT oasim         GIT "https://github.com/JCSDA-internal/oasim.git"           UPDATE BRANCH develop )
@@ -50,7 +40,6 @@ ecbuild_bundle( PROJECT vader           GIT "https://github.com/jcsda-internal/v
 ecbuild_bundle( PROJECT saber           GIT "https://github.com/jcsda-internal/saber.git"           UPDATE BRANCH develop )
 ecbuild_bundle( PROJECT ioda            GIT "https://github.com/jcsda-internal/ioda.git"            UPDATE BRANCH develop )
 ecbuild_bundle( PROJECT ufo             GIT "https://github.com/jcsda-internal/ufo.git"             UPDATE BRANCH develop )
-ecbuild_bundle( PROJECT mom6            GIT "https://github.com/jcsda-internal/MOM6.git"            UPDATE BRANCH main-ecbuild RECURSIVE )
 ecbuild_bundle( PROJECT soca            SOURCE "../" )
 
 #===================================================================================================

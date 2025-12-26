@@ -6,7 +6,6 @@
  */
 
 
-#include "oops/generic/instantiateModelFactory.h"
 #include "oops/runs/Forecast.h"
 #include "oops/runs/Run.h"
 
@@ -14,7 +13,6 @@
 
 int main(int argc,  char ** argv) {
   oops::Run run(argc, argv);
-  oops::instantiateModelFactory<soca::Traits>();
   oops::Forecast<soca::Traits> fc;
   return run.execute(fc);
 }

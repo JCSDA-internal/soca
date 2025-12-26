@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 2021-2021 UCAR.
+ * (C) Copyright 2021-2024 UCAR.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -15,6 +15,8 @@
 #include "soca/VariableChange/VariableChange.h"
 
 #include "oops/util/Logger.h"
+#include "oops/util/Timer.h"
+#include "oops/util/FieldSetHelpers.h"
 
 using oops::Log;
 
@@ -31,6 +33,7 @@ std::map<std::string, std::vector<std::string>> SocaVaderCookbook {
 
 VariableChange::VariableChange(const eckit::Configuration & config,
                                const Geometry & geometry) {
+  util::Timer timer("soca::VariableChange", "VariableChange");
   VariableChangeParameters params;
   params.deserialize(config);
 
@@ -58,6 +61,7 @@ void VariableChange::changeVar(State & x, const oops::Variables & vars) const {
                << x.variables() << std::endl;
   Log::debug() << "VariableChange::changeVar vars out: "
                << vars << std::endl;
+  util::Timer timer("soca::VariableChange", "changeVar");
 
   // TODO(travis) rename in/out variables so that skipping this
   // works for Model2Ana (i.e. we need rotated/unrotate u/v renamed different)
@@ -66,9 +70,9 @@ void VariableChange::changeVar(State & x, const oops::Variables & vars) const {
 
   // The following is TEMPORARY.
   // ----------------------------------------------------------------------------
-  // We need to do some variable renaming BEFORE we run VADER.
-  // Eventually, we will internally rename these variables when they are
-  // first loaded in so that we won't have to worry about it here.
+  // We need to create some variables that VADER will need to run.
+  // TODO(Travis): This is a bit of a hack, create lat/lon directly here
+  // or as a vader recipe.
   if (vars.has("sea_water_temperature")) {
     Log::debug() << "VariableChange::changeVar Pre-VADER variable changes. " << std::endl;
     oops::Variables preVaderVars(std::vector<std::string>{
@@ -79,7 +83,7 @@ void VariableChange::changeVar(State & x, const oops::Variables & vars) const {
       "sea_water_depth",
       "sea_area_fraction"});
     preVaderVars += x.variables();
-    State preVader(x.geometry(), preVaderVars, x.time());
+    State preVader(x.geometry(), preVaderVars, x.validTime());
     variableChange_->changeVar(x, preVader);
     x.updateFields(preVaderVars);
     x = preVader;
@@ -100,7 +104,7 @@ void VariableChange::changeVar(State & x, const oops::Variables & vars) const {
   // vader_->changeVar also returns the variables fulfilled by Vader. These variables are allocated
   // and populated and added to the FieldSet (xfs).
   atlas::FieldSet xfs;
-  x.toFieldSet(xfs);
+  util::copyFieldSet(x.fieldSet(), xfs);
   varsFilled += vader_->changeVar(xfs, varsVader);
   x.updateFields(varsFilled);
   x.fromFieldSet(xfs);
@@ -111,7 +115,7 @@ void VariableChange::changeVar(State & x, const oops::Variables & vars) const {
   // ----------------------------------------------------------------------------
   Log::debug() << "VariableChange::changeVar SOCA specific post-VADER variable changes. "
                << std::endl;
-  State xout(x.geometry(), vars, x.time());
+  State xout(x.geometry(), vars, x.validTime());
   variableChange_->changeVar(x, xout);
   x.updateFields(vars);
   x = xout;
@@ -126,6 +130,7 @@ void VariableChange::changeVar(State & x, const oops::Variables & vars) const {
 
 void VariableChange::changeVarInverse(State & x,
                                       const oops::Variables & vars) const {
+  util::Timer timer("soca::VariableChange", "changeVarInverse");
   changeVar(x, vars);
 }
 

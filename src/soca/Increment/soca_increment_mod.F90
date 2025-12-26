@@ -6,15 +6,14 @@
 !> Increment fields
 module soca_increment_mod
 
+use atlas_module, only: atlas_field
 use fckit_configuration_module, only: fckit_configuration
 use kinds, only: kind_real
 use oops_variables_mod, only: oops_variables
 use random_mod, only: normal_distribution
 
 ! soca modules
-use soca_convert_state_mod, only : soca_convertstate_type
 use soca_fields_mod, only : soca_field, soca_fields
-use soca_geom_iter_mod, only : soca_geom_iter
 use soca_geom_mod, only : soca_geom
 
 
@@ -29,17 +28,6 @@ private
 type, public, extends(soca_fields) :: soca_increment
 
 contains
-  !> \name get/set for a single point
-  !! \{
-
-  !> \copybrief soca_increment_getpoint \see soca_increment_getpoint
-  procedure :: getpoint    => soca_increment_getpoint
-
-  !> \copybrief soca_increment_setpoint \see soca_increment_setpoint
-  procedure :: setpoint    => soca_increment_setpoint
-
-  !> \}
-
 
   !> \name math operators
   !! \{
@@ -49,9 +37,6 @@ contains
 
   !> \copybrief soca_increment_random \see soca_increment_random
   procedure :: random      => soca_increment_random
-
-  !> \copybrief soca_increment_schur \see soca_increment_schur
-  procedure :: schur       => soca_increment_schur
 
   !> \}
 
@@ -65,9 +50,6 @@ contains
   procedure :: vert_scales       => soca_vert_scales
 
   !> \}
-
-  !> \copybrief soca_increment_change_resol \see soca_increment_change_resol
-  procedure :: convert     => soca_increment_change_resol
 
 end type
 
@@ -89,152 +71,54 @@ subroutine soca_increment_random(self)
   integer, parameter :: rseed = 1 ! constant for reproducability of tests
     ! NOTE: random seeds are not quite working the way expected,
     !  it is only set the first time normal_distribution() is called with a seed
-  integer :: jz, i
+  integer :: i, j, k, n, idx
 
   type(soca_field), pointer :: field
+  type(atlas_field) :: afield
+  real(kind=kind_real), pointer :: fdata(:,:)
+  real(kind=kind_real), allocatable :: tmp3d(:,:,:)
 
-  ! set random values
-  do i = 1, size(self%fields)
-    field => self%fields(i)
-    ! TODO remove this once increment / state are fully separated
+
+  do n = 1, self%afieldset%size()
+    afield = self%afieldset%field(n)
+    field => self%fields(n) ! TODO remove this dependency
+    call afield%data(fdata)
+
     ! NOTE: can't randomize "hocn", testIncrementInterpAD fails
-    if (field%name == 'hocn') cycle
-    call normal_distribution(field%val,  0.0_kind_real, 1.0_kind_real, rseed)
-  end do
+    if (afield%name() == "sea_water_cell_thickness") then
+      cycle
+    end if
 
-  ! mask out land, set to zero
-  do i=1,size(self%fields)
-    field => self%fields(i)
-    if (.not. associated(field%mask) ) cycle
-    do jz=1,field%nz
-      field%val(:,:,jz) = field%val(:,:,jz) * field%mask(:,:)
+    ! allocate and fill with random values
+    ! NOTE this is done in a weird way to keep answers from changing when it was refactored
+    allocate(tmp3d(self%geom%isd:self%geom%ied, self%geom%jsd:self%geom%jed, afield%shape(1)))
+    call normal_distribution(tmp3d,  0.0_kind_real, 1.0_kind_real, rseed)
+    do j=self%geom%jsc,self%geom%jec
+      do i=self%geom%isc,self%geom%iec
+        idx = self%geom%atlas_ij2idx(i,j)
+        do k=1,afield%shape(1)
+          fdata(k,idx) = tmp3d(i,j,k)
+        end do
+      end do
     end do
-  end do
+    deallocate(tmp3d)
 
-  ! update domains
-  call self%update_halos()
+    ! mask land
+    if (associated(field%mask)) then
+      do j=self%geom%jsc,self%geom%jec
+        do i=self%geom%isc,self%geom%iec
+          idx = self%geom%atlas_ij2idx(i,j)
+          do k=1,afield%shape(1)
+            fdata(k,idx) = fdata(k,idx) * field%mask(i,j)
+          end do
+        end do
+      end do
+    end if
+
+    call afield%set_dirty()
+  end do
+  call afield%final()
 end subroutine soca_increment_random
-
-
-! ------------------------------------------------------------------------------
-!> perform a shur product between two sets of fields
-!!
-!! \relates soca_increment_mod::soca_increment
-subroutine soca_increment_schur(self,rhs)
-  class(soca_increment), intent(inout) :: self
-  class(soca_increment),    intent(in) :: rhs  !< other incrment in schur product
-  integer :: i
-
-  ! make sure fields are same shape
-  call self%check_congruent(rhs)
-
-  ! schur product
-  do i=1,size(self%fields)
-    self%fields(i)%val = self%fields(i)%val * rhs%fields(i)%val
-  end do
-end subroutine soca_increment_schur
-
-
-! ------------------------------------------------------------------------------
-!> Get the values at a specific grid point
-!!
-!! \todo clean this up so that the variable names are not hardcoded
-!! \relates soca_increment_mod::soca_increment
-subroutine soca_increment_getpoint(self, geoiter, values)
-  class(soca_increment), target, intent(   in) :: self
-  type(soca_geom_iter),          intent(   in) :: geoiter !< iterator pointing to desired gridpoint
-  !> return values for every field in a vertical column
-  real(kind=kind_real),          intent(inout) :: values(:)
-
-  integer :: ff, ii, nz
-  type(soca_field), pointer :: field
-
-  ! get values
-  ! TODO generalize field names
-  ii = 0
-  do ff = 1, size(self%fields)
-    field => self%fields(ff)
-    if (self%geom%iterator_dimension .eq. 2) then
-      ! 2D iterator
-      select case(field%name)
-      case("tocn", "socn", "ssh", "uocn", "vocn", "hocn", "cicen", "hicen", "hsnon", "chl", "biop")
-        nz = field%nz
-        values(ii+1:ii+nz) = field%val(geoiter%iindex, geoiter%jindex,:)
-        ii = ii + nz
-      end select
-    elseif (self%geom%iterator_dimension .eq. 3) then
-      ! 3D iterator
-      if (geoiter%kindex == 0) then
-        ! surface variables
-        select case(field%name)
-        case("ssh", "cicen", "hicen", "hsnon")
-          values(ii+1) = field%val(geoiter%iindex, geoiter%jindex, 1)
-          ii = ii + 1
-        end select
-      else
-        ! 3d variables
-        select case(field%name)
-        case("tocn", "socn", "uocn", "vocn", "hocn", "chl", "biop")
-          values(ii+1) = field%val(geoiter%iindex, geoiter%jindex, geoiter%kindex)
-          ii = ii + 1
-        end select
-      endif
-    else
-      call abor1_ftn('soca_increment_getpoint: unknown geom%iterator_dimension')
-    endif
-  end do
-end subroutine soca_increment_getpoint
-
-
-! ------------------------------------------------------------------------------
-!> Set the values at a specific grid point
-!!
-!! \todo need to remove the hardcoded variable names
-!! \relates soca_increment_mod::soca_increment
-subroutine soca_increment_setpoint(self, geoiter, values)
-  class(soca_increment), target, intent(inout) :: self
-  type(soca_geom_iter),          intent(   in) :: geoiter !< iterator pointing to desired gridpoint
-  !> values to set. Values are for for every field in a vertical column
-  real(kind=kind_real),          intent(   in) :: values(:)
-
-  integer :: ff, ii, nz
-  type(soca_field), pointer :: field
-
-  ! Set values
-  ! TODO generalize field names
-  ii = 0
-  do ff = 1, size(self%fields)
-    field => self%fields(ff)
-    if (self%geom%iterator_dimension .eq. 2) then
-      ! 2D iterator
-      select case(field%name)
-      case("tocn", "socn", "ssh", "uocn", "vocn", "hocn", "cicen", "hicen", "hsnon", "chl", "biop")
-        nz = field%nz
-        field%val(geoiter%iindex, geoiter%jindex,:) = values(ii+1:ii+nz)
-        ii = ii + nz
-      end select
-    elseif (self%geom%iterator_dimension .eq. 3) then
-      ! 3D iterator
-      if (geoiter%kindex == 0) then
-        ! surface variables
-        select case(field%name)
-        case("ssh", "cicen", "hicen", "hsnon")
-          field%val(geoiter%iindex, geoiter%jindex, 1) = values(ii+1)
-          ii = ii + 1
-        end select
-      else
-        ! 3d variables
-        select case(field%name)
-        case("tocn", "socn", "uocn", "vocn", "hocn", "chl", "biop")
-          field%val(geoiter%iindex, geoiter%jindex, geoiter%kindex) = values(ii+1)
-          ii = ii + 1
-        end select
-      endif
-    else
-      call abor1_ftn('soca_increment_getpoint: unknown geom%iterator_dimension')
-    endif
-  end do
-end subroutine soca_increment_setpoint
 
 
 ! ------------------------------------------------------------------------------
@@ -251,7 +135,21 @@ subroutine soca_increment_dirac(self, f_conf)
   integer :: ndir,n, jz
   integer,allocatable :: ixdir(:),iydir(:),izdir(:),ifdir(:)
 
-  type(soca_field), pointer :: field
+  type(atlas_field) :: field
+  real(kind=kind_real), pointer :: fdata(:,:)
+
+  ! Define field name mapping
+  character(len=:), allocatable :: field_names(:)
+  allocate(character(len=50)::field_names(9))
+  field_names(1) = "sea_water_potential_temperature"
+  field_names(2) = "sea_water_salinity"
+  field_names(3) = "sea_surface_height_above_geoid"
+  field_names(4) = "sea_ice_area_fraction"
+  field_names(5) = "sea_ice_thickness"
+  field_names(6) = "mass_concentration_of_chlorophyll_in_sea_water"
+  field_names(7) = "molar_concentration_of_biomass_in_sea_water_in_p_units"
+  field_names(8) = "eastward_sea_water_velocity"
+  field_names(9) = "northward_sea_water_velocity"
 
   ! Get Diracs size
   ndir = f_conf%get_size("ixdir")
@@ -276,95 +174,89 @@ subroutine soca_increment_dirac(self, f_conf)
   isc = self%geom%isc ; iec = self%geom%iec
   jsc = self%geom%jsc ; jec = self%geom%jec
 
-  ! Setup Diracs
-  call self%zeros()
-  do n=1,ndir
-      ! skip this index if not in the bounds of this PE
-      if (ixdir(n) > iec .or. ixdir(n) < isc) cycle
-      if (iydir(n) > jec .or. iydir(n) < jsc) cycle
-
-    ! TODO this list is getting long, change it so that the field name
-    ! is directly used in the yaml?
-    field => null()
-    select case(ifdir(n))
-    case (1)
-      call self%get("tocn", field)
-    case (2)
-      call self%get("socn", field)
-    case (3)
-      call self%get("ssh", field)
-    case (4)
-      call self%get("cicen", field)
-    case (5)
-      call self%get("hicen", field)
-    case (6)
-      call self%get("chl", field)
-    case (7)
-      call self%get("biop", field)
-    case (8)
-      call self%get("uocn", field)
-    case (9)
-      call self%get("vocn", field)
-    case default
-      ! TODO print error that out of range
-    end select
-    if (associated(field)) then
-      jz = 1
-      if (field%nz > 1) jz = izdir(n)
-      field%val(ixdir(n),iydir(n),izdir(n)) = 1.0
-    end if
+  ! set all fields to zero
+  do n=1,self%afieldset%size()
+    field = self%afieldset%field(n)
+    call field%data(fdata)
+    fdata = 0.0
   end do
+
+  ! Setup Diracs
+  do n=1,ndir
+    ! skip this index if not in the bounds of this PE
+     if (ixdir(n) > iec .or. ixdir(n) < isc) cycle
+     if (iydir(n) > jec .or. iydir(n) < jsc) cycle
+
+    ! get field
+    if (ifdir(n) <= 0 .or. ifdir(n) > 9) cycle
+    field = self%afieldset%field(field_names(ifdir(n)))
+    call field%data(fdata)
+
+    ! set dirac
+    fdata(izdir(n), self%geom%atlas_ij2idx(ixdir(n),iydir(n))) = 1.0
+
+  end do
+  call field%final()
 end subroutine soca_increment_dirac
 
 
 ! ------------------------------------------------------------------------------
-!> Change resolution
-!!
-!! \relates soca_increment_mod::soca_increment
-subroutine soca_increment_change_resol(self, rhs)
-  class(soca_increment),         intent(inout) :: self  ! target
-  class(soca_increment), target, intent(in)    :: rhs   ! source
-
-  integer :: n
-  type(soca_convertstate_type) :: convert_state
-  type(soca_field), pointer :: field1, field2, hocn1, hocn2
-
-  call convert_state%setup(rhs%geom, self%geom)
-  do n = 1, size(rhs%fields)
-    if (trim(rhs%fields(n)%name)=="hocn") cycle ! skip layer thickness
-    field1 => rhs%fields(n)
-    call self%get(trim(field1%name),field2)
-    call convert_state%change_resol2d(field1, field2, rhs%geom, self%geom)
-  end do !n
-  call convert_state%clean()
-end subroutine soca_increment_change_resol
-
-
-! ------------------------------------------------------------------------------
 !> compute the horizontal decorelation length scales
-!!
+!! NOTE: this function should be moved somehwere else, it does not belong in Increment!
 !! \relates soca_increment_mod::soca_increment
 subroutine soca_horiz_scales(self, f_conf)
   class(soca_increment),        intent(inout) :: self
   type(fckit_configuration), value, intent(in):: f_conf   !< Configuration
 
-  integer :: i, jz
-  real(kind=kind_real) :: r_mult, r_min_grid, r_min
+  integer :: n, i, j
+  type(fckit_configuration) :: subconf
+  real(kind=kind_real) :: r_base, r_mult, r_min_grid, r_min, r_max, val
 
-  ! compute scales cor_rh = max( r_mult * rossby radius, max( r_min_grid * dx, r_min ) )
-  do i=1,size(self%fields)
-    do jz=1,self%fields(i)%nz
-      call f_conf%get_or_die(trim(self%fields(i)%name//".rossby mult"), r_mult)
-      call f_conf%get_or_die(trim(self%fields(i)%name//".min grid mult"), r_min_grid)
-      if ( .not. f_conf%get(trim(self%fields(i)%name//".min"), r_min) ) then
-        r_min = 0.0_kind_real
-      end if
-      self%fields(i)%val(:,:,jz) = 3.57_kind_real*self%geom%mask2d(:,:)* &
-            max(r_mult*self%geom%rossby_radius(:,:), &
-                max(r_min_grid*sqrt(self%geom%cell_area(:,:)), &
-                    r_min))
+  type(atlas_field) :: afield, area, rossby
+  real(kind=kind_real), pointer :: data_field(:,:), data_area(:,:), data_rossby(:,:)
+
+  ! get a copy of the input atlas fields needed
+  rossby = self%geom%fieldset%field("rossby_radius")
+  area = self%geom%fieldset%field("area")
+  call rossby%data(data_rossby)
+  call area%data(data_area)
+
+  ! NOTE, this is duplicated code also present in soca_covariance_mod and possibly elsewhere.
+  ! This does not belong in soca_increment_mod and should be moved out
+
+  ! rh is calculated as follows :
+  ! 1) rh = "base value" + rossby_radius * "rossby mult"
+  ! 2) minimum value of "min grid mult" * grid_size is imposed
+  ! 3) min/max are imposed based on "min value" and "max value"
+  ! 4) converted from a gaussian sigma to Gaspari-Cohn cutoff distance
+  do n=1, self%afieldset%size()
+    afield = self%afieldset%field(n)
+    call afield%data(data_field)
+
+    ! get parameters for correlation lengths
+    call f_conf%get_or_die(trim(afield%name()), subconf)
+    if (.not. subconf%get("base value", r_base)) r_base = 0.0
+    if (.not. subconf%get("rossby mult", r_mult)) r_mult = 0.0
+    if (.not. subconf%get("min grid mult", r_min_grid)) r_min_grid = 1.0
+    if (.not. subconf%get("min value", r_min)) r_min = 0.0
+    if (.not. subconf%get("max value", r_max)) r_max = huge(r_max)
+
+    do i=1, afield%shape(2)
+      val = r_base + r_mult*data_rossby(1, i)
+      if (r_min_grid > 0.0) val = max(val, sqrt(data_area(1, i))*r_min_grid)
+      val = min(r_max, val)
+      val = max(r_min, val)
+      val = 3.57_kind_real * val ! convert from gaussian sigma to Gaspari-Cohn half width
+      do j=1, afield%shape(1)
+        data_field(j, i) = val
+      end do
     end do
+
+    call afield%set_dirty(rossby%dirty() .or. area%dirty())
   end do
+  call afield%final()
+  call rossby%final()
+  call area%final()
 end subroutine soca_horiz_scales
 
 
@@ -376,14 +268,28 @@ subroutine soca_vert_scales(self, vert)
   class(soca_increment), intent(inout) :: self
   real(kind=kind_real),  intent(in)    :: vert
 
-  integer :: i, jz
+  type(atlas_field) :: field, mask
+  real(kind=kind_real), pointer :: data_field(:,:), data_mask(:,:)
+
+  integer :: n, i, k
+
+  ! get a copy of the input atlas fields needed
+  mask = self%geom%fieldset%field("mask_h")
+  call mask%data(data_mask)
 
   ! compute scales
-  do i=1,size(self%fields)
-    do jz=1,self%fields(i)%nz
-      self%fields(i)%val(:,:,jz) = 3.57_kind_real*self%geom%mask2d(:,:)*vert
+  do n=1,self%afieldset%size()
+    field=self%afieldset%field(n)
+    call field%data(data_field)
+    do i=1,field%shape(2)
+      do k=1,field%shape(1)
+        data_field(k,i) = 3.57_kind_real * data_mask(1,i) * vert
+      end do
     end do
+
   end do
+  call field%final()
+  call mask%final()
 end subroutine soca_vert_scales
 ! ------------------------------------------------------------------------------
 

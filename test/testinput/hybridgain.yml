@@ -8,7 +8,15 @@ _file: &_file
   date: &date_bkg 2018-04-15T00:00:00Z
   basename: data_static/72x35x25/
   remap_filename: data_static/72x35x25/restarts/MOM.res.nc
-  state variables:  &soca_vars [cicen, hicen, socn, tocn, uocn, vocn, ssh, hocn]
+  state variables:
+  - sea_ice_area_fraction
+  - sea_ice_thickness
+  - sea_water_salinity
+  - sea_water_potential_temperature
+  - eastward_sea_water_velocity
+  - northward_sea_water_velocity
+  - sea_surface_height_above_geoid
+  - sea_water_cell_thickness
 
 hybrid weights:
   control: 0.2
@@ -23,25 +31,25 @@ control:
 
 ensemble mean posterior:
   <<: *_file
-  ocn_filename: restarts_ens/ocn.enspert.ens.1.2018-04-15T00:00:00Z.PT0S.nc
-  ice_filename: restarts_ens/ice.enspert.ens.1.2018-04-15T00:00:00Z.PT0S.nc
+  ocn_filename: restarts_ens/MOM.res.ens.1.nc
+  ice_filename: restarts_ens/cice.res.ens.1.nc
 
 ensemble:
 - <<: *_file
-  ocn_filename: restarts_ens/ocn.enspert.ens.1.2018-04-15T00:00:00Z.PT0S.nc
-  ice_filename: restarts_ens/ice.enspert.ens.1.2018-04-15T00:00:00Z.PT0S.nc
+  ocn_filename: restarts_ens/MOM.res.ens.1.nc
+  ice_filename: restarts_ens/cice.res.ens.1.nc
 - <<: *_file
-  ocn_filename: restarts_ens/ocn.enspert.ens.2.2018-04-15T00:00:00Z.PT0S.nc
-  ice_filename: restarts_ens/ice.enspert.ens.2.2018-04-15T00:00:00Z.PT0S.nc
+  ocn_filename: restarts_ens/MOM.res.ens.2.nc
+  ice_filename: restarts_ens/cice.res.ens.2.nc
 - <<: *_file
-  ocn_filename: restarts_ens/ocn.enspert.ens.3.2018-04-15T00:00:00Z.PT0S.nc
-  ice_filename: restarts_ens/ice.enspert.ens.3.2018-04-15T00:00:00Z.PT0S.nc
+  ocn_filename: restarts_ens/MOM.res.ens.3.nc
+  ice_filename: restarts_ens/cice.res.ens.3.nc
 - <<: *_file
-  ocn_filename: restarts_ens/ocn.enspert.ens.4.2018-04-15T00:00:00Z.PT0S.nc
-  ice_filename: restarts_ens/ice.enspert.ens.4.2018-04-15T00:00:00Z.PT0S.nc
+  ocn_filename: restarts_ens/MOM.res.ens.4.nc
+  ice_filename: restarts_ens/cice.res.ens.4.nc
 
 recentered output:
-  datadir: data_generated/hybridgain
+  datadir: data_output/
   exp: hybridgain
   type: ens
   date: *date_bkg

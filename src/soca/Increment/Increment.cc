@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 2017-2022 UCAR
+ * (C) Copyright 2017-2024 UCAR
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -21,11 +21,15 @@
 
 #include "eckit/exception/Exceptions.h"
 
+#include "oops/base/GeometryData.h"
 #include "oops/base/LocalIncrement.h"
 #include "oops/base/Variables.h"
+#include "oops/generic/GlobalInterpolator.h"
 #include "oops/util/DateTime.h"
 #include "oops/util/Duration.h"
 #include "oops/util/Logger.h"
+#include "oops/util/FieldSetOperations.h"
+#include "oops/util/FieldSetHelpers.h"
 
 #include "ufo/GeoVaLs.h"
 
@@ -38,242 +42,334 @@ namespace soca {
   // -----------------------------------------------------------------------------
   Increment::Increment(const Geometry & geom, const oops::Variables & vars,
                        const util::DateTime & vt)
-    : time_(vt), vars_(vars), geom_(geom)
+    : Fields(geom, vars, vt), nlevs_(geom.fields()["vert_coord"].shape(1)),
+      varlens_(vars.size(), geom.IteratorDimension() == 2 ? nlevs_ : 1),
+      totalLen_(std::accumulate(varlens_.begin(), varlens_.end(), 0))
   {
-    soca_increment_create_f90(keyFlds_, geom_.toFortran(), vars_);
-    soca_increment_zero_f90(toFortran());
+    // For now, creation of the fields and their accompanying metadata is done on
+    // the Fortran side. This will be moved to the C++ side at a later date.
+    soca_increment_create_f90(keyFlds_, geom_.toFortran(), vars_, fieldSet_.get());
+    zero();
     Log::trace() << "Increment constructed." << std::endl;
   }
+
   // -----------------------------------------------------------------------------
-  Increment::Increment(const Geometry & geom, const Increment & other)
-    : time_(other.time_), vars_(other.vars_), geom_(geom)
+  // Resolution change
+  Increment::Increment(const Geometry & geom, const Increment & other, const bool ad)
+    : Increment(geom, other.vars_, other.time_)
   {
-    soca_increment_create_f90(keyFlds_, geom_.toFortran(), vars_);
-    soca_increment_change_resol_f90(toFortran(), other.keyFlds_);
-    Log::trace() << "Increment constructed from other." << std::endl;
-  }
-  // -----------------------------------------------------------------------------
-  Increment::Increment(const Increment & other, const bool copy)
-    : time_(other.time_), vars_(other.vars_), geom_(other.geom_)
-  {
-    soca_increment_create_f90(keyFlds_, geom_.toFortran(), vars_);
-    if (copy) {
-      soca_increment_copy_f90(toFortran(), other.toFortran());
+    Log::trace() << "Increment resolution change." << std::endl;
+
+    // same geometry, just copy and quit
+    if (geom == other.geom_) {
+      *this = other;
+      return;
+    }
+
+    // otherwise, different geometry, do resolution change
+    eckit::LocalConfiguration conf;
+    conf.set("local interpolator type", "oops unstructured grid interpolator");
+    if (ad) {
+      // adjoint interpolation
+      const oops::GeometryData sourceGeom(geom_.functionSpace(), geom_.fields(),
+                                          geom_.levelsAreTopDown(), geom_.getComm());
+      oops::GlobalInterpolator interp(conf, sourceGeom,
+                                      other.geom_.functionSpace(), geom.getComm());
+      interp.applyAD(fieldSet_, other.fieldSet_);
     } else {
-      soca_increment_zero_f90(toFortran());
+      // interpolation
+      const oops::GeometryData sourceGeom(other.geom_.functionSpace(), other.geom_.fields(),
+                                          other.geom_.levelsAreTopDown(), other.geom_.getComm());
+      oops::GlobalInterpolator interp(conf, sourceGeom, geom_.functionSpace(), geom.getComm());
+      interp.apply(other.fieldSet_, fieldSet_);
+    }
+
+    // TODO(Travis) There is a possibility of missing values if the land masks
+    // do not match, handle this somehow?
+
+    // TODO(travis) handle a change of resolution in the vertical, someday
+
+    Log::trace() << "soca::Increment resolution change DONE." << std::endl;
+  }
+
+  // -----------------------------------------------------------------------------
+
+  Increment::Increment(const oops::Variables & vars, const Increment & other)
+    : Increment(other.geom_, vars, other.time_)
+  {
+    // assume that the new variables are a subset of the old variables
+    for (auto field : fieldSet_) {
+      const auto & oth = other.fieldSet().field(field.name());
+      const auto & othView = atlas::array::make_view<double, 2>(oth);
+      auto view = atlas::array::make_view<double, 2>(field);
+      for (int jnode = 0; jnode < field.shape(0); ++jnode) {
+        for (int jlevel = 0; jlevel < field.shape(1); ++jlevel) {
+          view(jnode, jlevel) = othView(jnode, jlevel);
+        }
+      }
+
+      field.set_dirty(oth.dirty());
+    }
+    Log::trace() << "Increment subset copy-created." << std::endl;
+  }
+
+  // -----------------------------------------------------------------------------
+
+  Increment::Increment(const Increment & other, const bool copy)
+    : Increment(other.geom_, other.vars_, other.time_)
+  {
+    if (copy) {
+      *this = other;
     }
     Log::trace() << "Increment copy-created." << std::endl;
   }
+
   // -----------------------------------------------------------------------------
+
   Increment::Increment(const Increment & other)
-    : time_(other.time_), vars_(other.vars_), geom_(other.geom_)
+    : Increment(other.geom_, other.vars_, other.time_)
   {
-    soca_increment_create_f90(keyFlds_, geom_.toFortran(), vars_);
-    soca_increment_copy_f90(toFortran(), other.toFortran());
+    *this = other;
     Log::trace() << "Increment copy-created." << std::endl;
   }
+
   // -----------------------------------------------------------------------------
+
   Increment::~Increment() {
     soca_increment_delete_f90(toFortran());
     Log::trace() << "Increment destructed" << std::endl;
   }
+
   // -----------------------------------------------------------------------------
   /// Basic operators
   // -----------------------------------------------------------------------------
   void Increment::diff(const State & x1, const State & x2) {
     ASSERT(this->validTime() == x1.validTime());
     ASSERT(this->validTime() == x2.validTime());
-    State x1_at_geomres(geom_, x1);
-    State x2_at_geomres(geom_, x2);
-    soca_increment_diff_incr_f90(toFortran(), x1_at_geomres.toFortran(),
-                                              x2_at_geomres.toFortran());
+    ASSERT(x1.geometry() == x2.geometry());
+
+    // interpolate state to increment resolution, only if needed
+    std::shared_ptr<const State> x1_interp, x2_interp;
+    if (geom_ != x1.geometry()) {
+      x1_interp = std::make_shared<const State>(geom_, x1);
+      x2_interp = std::make_shared<const State>(geom_, x2);
+    } else {
+      x1_interp.reset(&x1, [](const State *) {});  // don't delete the originals!
+      x2_interp.reset(&x2, [](const State *) {});
+    }
+
+    // subtract fields
+    for (auto & field : fieldSet_) {
+      const auto & f1 = x1_interp->fieldSet().field(field.name());
+      const auto & f2 = x2_interp->fieldSet().field(field.name());
+      const auto & vx1 = atlas::array::make_view<double, 2>(f1);
+      const auto & vx2 = atlas::array::make_view<double, 2>(f2);
+      auto view = atlas::array::make_view<double, 2>(field);
+      for (int jnode = 0; jnode < field.shape(0); ++jnode) {
+        for (int jlevel = 0; jlevel < field.shape(1); ++jlevel) {
+          view(jnode, jlevel) = vx1(jnode, jlevel) - vx2(jnode, jlevel);
+        }
+      }
+      field.set_dirty(f1.dirty() || f2.dirty());
+    }
   }
+
   // -----------------------------------------------------------------------------
+
   Increment & Increment::operator=(const Increment & rhs) {
+    ASSERT(geom_ == rhs.geom_);
+    ASSERT(vars_ == rhs.vars_);
+
     time_ = rhs.time_;
-    soca_increment_copy_f90(toFortran(), rhs.toFortran());
+    util::copyFieldSet(rhs.fieldSet_, fieldSet_);
+
     return *this;
   }
+
   // -----------------------------------------------------------------------------
+
   Increment & Increment::operator+=(const Increment & dx) {
     ASSERT(this->validTime() == dx.validTime());
-    soca_increment_self_add_f90(toFortran(), dx.toFortran());
+    ASSERT(geom_ == dx.geom_);
+
+    // note, can't use util::addFieldSets because it doesn't handle a variable
+    // being in dx but not being in this
+    for (const auto & addField : dx.fieldSet_) {
+      if (!fieldSet_.has(addField.name())) continue;
+
+      atlas::Field field = fieldSet_.field(addField.name());
+
+      auto view = atlas::array::make_view<double, 2>(field);
+      const auto addView = atlas::array::make_view<double, 2>(addField);
+      for (int jnode = 0; jnode < field.shape(0); ++jnode) {
+        for (int jlevel = 0; jlevel < field.shape(1); ++jlevel) {
+          view(jnode, jlevel) += addView(jnode, jlevel);
+        }
+      }
+
+      // If either term in the sum is out-of-date, then the result will be out-of-date
+      field.set_dirty(field.dirty() || addField.dirty());
+    }
     return *this;
   }
+
   // -----------------------------------------------------------------------------
+
   Increment & Increment::operator-=(const Increment & dx) {
     ASSERT(this->validTime() == dx.validTime());
-    soca_increment_self_sub_f90(toFortran(), dx.toFortran());
+    ASSERT(geom_ == dx.geom_);
+
+    util::subtractFieldSets(fieldSet_, dx.fieldSet_);
     return *this;
   }
+
   // -----------------------------------------------------------------------------
+
   Increment & Increment::operator*=(const double & zz) {
-    soca_increment_self_mul_f90(toFortran(), zz);
+    util::multiplyFieldSet(fieldSet_, zz);
     return *this;
   }
+
   // -----------------------------------------------------------------------------
+
   void Increment::ones() {
-    soca_increment_ones_f90(toFortran());
+    for (auto & field : fieldSet_) {
+      auto view = atlas::array::make_view<double, 2>(field);
+      view.assign(1.0);
+      fieldSet_.set_dirty(false);
+    }
   }
+
   // -----------------------------------------------------------------------------
-  void Increment::zero() {
-    soca_increment_zero_f90(toFortran());
-  }
-  // -----------------------------------------------------------------------------
+
   void Increment::dirac(const eckit::Configuration & config) {
     soca_increment_dirac_f90(toFortran(), &config);
     Log::trace() << "Increment dirac initialized" << std::endl;
   }
+
   // -----------------------------------------------------------------------------
   void Increment::zero(const util::DateTime & vt) {
     zero();
     time_ = vt;
   }
+
   // -----------------------------------------------------------------------------
-  void Increment::axpy(const double & zz, const Increment & dx,
-                       const bool check) {
+
+  void Increment::zero(const oops::Variables & vars) {
+    ASSERT(vars <= vars_);
+    for (auto & field : fieldSet_) {
+      // Set data to zero if needed
+      if (vars.has(field.name())) {
+        auto view = atlas::array::make_view<double, 2>(field);
+        view.assign(0.0);
+      }
+    }
+  }
+
+  // -----------------------------------------------------------------------------
+  void Increment::sqrt() {
+    util::sqrtFieldSet(fieldSet_);
+  }
+
+  // -----------------------------------------------------------------------------
+
+  void Increment::axpy(const double & zz, const Increment & dx, const bool check) {
     ASSERT(!check || validTime() == dx.validTime());
-    soca_increment_axpy_f90(toFortran(), zz, dx.toFortran());
+    accumul(zz, dx);
   }
+
   // -----------------------------------------------------------------------------
-  void Increment::accumul(const double & zz, const State & xx) {
-    soca_increment_accumul_f90(toFortran(), zz, xx.toFortran());
-  }
-  // -----------------------------------------------------------------------------
+
   void Increment::schur_product_with(const Increment & dx) {
-    soca_increment_self_schur_f90(toFortran(), dx.toFortran());
+    util::multiplyFieldSets(fieldSet_, dx.fieldSet_);
   }
+
   // -----------------------------------------------------------------------------
+
   double Increment::dot_product_with(const Increment & other) const {
-    double zz;
-    soca_increment_dot_prod_f90(toFortran(), other.toFortran(), zz);
-    return zz;
+    ASSERT(geom_ == other.geom_);
+
+    return util::dotProductFieldSets(fieldSet_, other.fieldSet_,
+      fieldSet_.field_names(), geom_.getComm());
   }
+
   // -----------------------------------------------------------------------------
+
   void Increment::random() {
+    // TODO(travis) use the built-in random. I didn't want to do it with
+    // this PR because it would have changed answers.
     soca_increment_random_f90(toFortran());
   }
 
   // -----------------------------------------------------------------------------
-  oops::LocalIncrement Increment::getLocal(
-                        const GeometryIterator & iter) const {
-    // TODO(Travis) remove the hardcoded variable names
 
-    int nx, ny, nzo, nf;
-    soca_increment_sizes_f90(toFortran(), nx, ny, nzo, nf);
-    eckit::geometry::Point3 p3 = *iter;
-    std::vector<int> varlens(vars_.size());
-
-    int iteratorDimension = geom_.IteratorDimension();
-    switch (iteratorDimension) {
-    case (3) :
-      if (p3[2] == 0.0) {
-      // should probably check if kindex == 0 (bit this requires more code)
-      // surface variables
-        for (int ii = 0; ii < vars_.size(); ii++) {
-          if (vars_[ii] == "ssh")  varlens[ii]=1;
-          else if (vars_[ii] == "cicen") varlens[ii]=1;
-          else if (vars_[ii] == "hicen") varlens[ii]=1;
-          else if (vars_[ii] == "hsnon") varlens[ii]=1;
-          else
-              varlens[ii] = 0;
+  oops::LocalIncrement Increment::getLocal(const GeometryIterator & iter) const {
+      // fill in vector
+    std::vector<double> values(totalLen_, 0);
+    size_t idx = 0;
+    for (const auto & var : vars_.variables()) {
+      const auto & view = atlas::array::make_view<double, 2>(fieldSet_.field(var));
+      if (geom_.IteratorDimension() == 2) {
+        // 2D case, iterate over levels
+        for (size_t lvl = 0; lvl < view.shape(1); lvl++) {
+          values[idx++] = view(iter.i(), lvl);
         }
-      } else {
-      // 3d variables
-        for (int ii = 0; ii < vars_.size(); ii++) {
-          if (vars_[ii] == "tocn") varlens[ii]=nzo;
-          else if (vars_[ii] == "socn") varlens[ii]=nzo;
-          else if (vars_[ii] == "hocn") varlens[ii]=nzo;
-          else if (vars_[ii] == "uocn") varlens[ii]=nzo;
-          else if (vars_[ii] == "vocn") varlens[ii]=nzo;
-          else if (vars_[ii] == "chl") varlens[ii]=nzo;
-          else if (vars_[ii] == "biop") varlens[ii]=nzo;
-          else
-              varlens[ii] = 0;
+        // skip the levels that are not in this variable
+        idx += (nlevs_ - view.shape(1));
+      } else if (geom_.IteratorDimension() == 3) {
+        if (view.shape(1) > iter.k()) {
+          // 3D case, only add if this variable has this level
+          values[idx] = view(iter.i(), iter.k());
         }
-      }
-    default :
-      for (int ii = 0; ii < vars_.size(); ii++) {
-        if (vars_[ii] == "tocn") varlens[ii]=nzo;
-        else if (vars_[ii] == "socn") varlens[ii]=nzo;
-        else if (vars_[ii] == "hocn") varlens[ii]=nzo;
-        else if (vars_[ii] == "uocn") varlens[ii]=nzo;
-        else if (vars_[ii] == "vocn") varlens[ii]=nzo;
-        else if (vars_[ii] == "ssh")  varlens[ii]=1;
-        else if (vars_[ii] == "cicen") varlens[ii]=1;
-        else if (vars_[ii] == "hicen") varlens[ii]=1;
-        else if (vars_[ii] == "hsnon") varlens[ii]=1;
-        else if (vars_[ii] == "chl") varlens[ii]=nzo;
-        else if (vars_[ii] == "biop") varlens[ii]=nzo;
-        else
-            varlens[ii] = 0;
+        idx++;
       }
     }
-
-    int lenvalues = std::accumulate(varlens.begin(), varlens.end(), 0);
-    std::vector<double> values(lenvalues);
-
-    soca_increment_getpoint_f90(keyFlds_, iter.toFortran(), values[0],
-                            values.size());
-
-    return oops::LocalIncrement(vars_, values, varlens);
+    ASSERT(values.size() == totalLen_);
+    return oops::LocalIncrement(vars_, values, varlens_);
   }
 
   // -----------------------------------------------------------------------------
-  void Increment::setLocal(const oops::LocalIncrement & values,
-                             const GeometryIterator & iter) {
-    const std::vector<double> vals = values.getVals();
-    soca_increment_setpoint_f90(toFortran(), iter.toFortran(), vals[0],
-                            vals.size());
+
+  void Increment::setLocal(const oops::LocalIncrement & values, const GeometryIterator & iter) {
+    const std::vector<double> & vals = values.getVals();
+    size_t idx = 0;
+    for (const auto & var : vars_.variables()) {
+      auto field = fieldSet_.field(var);
+      auto view = atlas::array::make_view<double, 2>(field);
+      if (geom_.IteratorDimension() == 2) {
+        // 2D case, iterate over levels
+        for (size_t lvl = 0; lvl < view.shape(1); lvl++) {
+          view(iter.i(), lvl) = vals[idx++];
+        }
+        idx += (nlevs_ - view.shape(1));
+      } else if (geom_.IteratorDimension() == 3) {
+        // 3D case, only set if this variable has this level
+        if (view.shape(1) > iter.k()) {
+          view(iter.i(), iter.k()) = vals[idx];
+        }
+        idx++;
+      }
+      field.set_dirty();
+    }
+    ASSERT(idx == vals.size());
   }
+
   // -----------------------------------------------------------------------------
   /// I/O and diagnostics
   // -----------------------------------------------------------------------------
+
   void Increment::read(const eckit::Configuration & files) {
     util::DateTime * dtp = &time_;
     soca_increment_read_file_f90(toFortran(), &files, &dtp);
+    fieldSet_.set_dirty();  // just in case, i don't trust the fortan code
   }
+
   // -----------------------------------------------------------------------------
+
   void Increment::write(const eckit::Configuration & files) const {
     const util::DateTime * dtp = &time_;
     soca_increment_write_file_f90(toFortran(), &files, &dtp);
   }
-  // -----------------------------------------------------------------------------
-  void Increment::print(std::ostream & os) const {
-    os << std::endl << "  Valid time: " << validTime();
-    int n0, nf;
-    soca_increment_sizes_f90(keyFlds_, n0, n0, n0, nf);
-    std::vector<double> zstat(3*nf);
-    soca_increment_gpnorm_f90(keyFlds_, nf, zstat[0]);
-    for (int jj = 0; jj < nf; ++jj) {
-      os << std::endl << std::right << std::setw(7) << vars_[jj]
-         << "   min="  <<  std::fixed << std::setw(12) <<
-                           std::right << zstat[3*jj]
-         << "   max="  <<  std::fixed << std::setw(12) <<
-                           std::right << zstat[3*jj+1]
-         << "   mean=" <<  std::fixed << std::setw(12) <<
-                           std::right << zstat[3*jj+2];
-    }
-  }
-  // -----------------------------------------------------------------------------
-
-  double Increment::norm() const {
-    double zz = 0.0;
-    soca_increment_rms_f90(toFortran(), zz);
-    return zz;
-  }
-
-  // -----------------------------------------------------------------------------
-
-  const util::DateTime & Increment::validTime() const {return time_;}
-
-  // -----------------------------------------------------------------------------
-
-  util::DateTime & Increment::validTime() {return time_;}
-
-  // -----------------------------------------------------------------------------
-
-  void Increment::updateTime(const util::Duration & dt) {time_ += dt;}
 
   // -----------------------------------------------------------------------------
 
@@ -292,87 +388,41 @@ namespace soca {
   // -----------------------------------------------------------------------------
 
   std::vector<double> Increment::rmsByLevel(const std::string & varname) const {
-    throw eckit::NotImplemented("soca::Increment::rmsByLevel not implemented yet",
-                                Here());
+    throw eckit::NotImplemented("soca::Increment::rmsByLevel not implemented yet", Here());
   }
 
   // -----------------------------------------------------------------------------
 
   void Increment::updateFields(const oops::Variables & vars) {
-    // Update local variables
+    // remove fields from the fieldset that are no longer in vars
+    atlas::FieldSet orig = util::shareFields(fieldSet_);
+    fieldSet_.clear();
+    for (const auto & v : vars) {
+      if (orig.has(v.name())) {
+        fieldSet_.add(orig.field(v.name()));
+      }
+    }
+
+    // update new vars
     vars_ = vars;
-    // Update field data
     soca_increment_update_fields_f90(toFortran(), vars_);
   }
 
   // -----------------------------------------------------------------------------
-  /// Serialization
-  // -----------------------------------------------------------------------------
-  size_t Increment::serialSize() const {
-    // Field
-    size_t nn;
-    soca_increment_serial_size_f90(toFortran(), geom_.toFortran(), nn);
 
-    // Magic factor
-    nn += 1;
-
-    // Date and time
-    nn += time_.serialSize();
-    return nn;
+  void Increment::updateFields(const Increment & other) {
+    ASSERT(geom_ == other.geom_);
+    ASSERT(other.variables() <= vars_);
+    for (const auto & otherField : other.fieldSet_) {
+      const auto otherView = atlas::array::make_view<double, 2>(otherField);
+      auto field = fieldSet_.field(otherField.name());
+      auto view = atlas::array::make_view<double, 2>(field);
+      for (int jnode = 0; jnode < view.shape(0); ++jnode) {
+        for (int jlevel = 0; jlevel < view.shape(1); ++jlevel) {
+          view(jnode, jlevel) = otherView(jnode, jlevel);
+        }
+      }
+      field.set_dirty(field.dirty() || otherField.dirty());
+    }
   }
-  // -----------------------------------------------------------------------------
-  constexpr double SerializeCheckValue = -54321.98765;
-  void Increment::serialize(std::vector<double> & vect) const {
-    // Serialize the field
-    size_t nn;
-    soca_increment_serial_size_f90(toFortran(), geom_.toFortran(), nn);
-    std::vector<double> vect_field(nn, 0);
-    vect.reserve(vect.size() + nn + 1 + time_.serialSize());
-    soca_increment_serialize_f90(toFortran(), geom_.toFortran(), nn,
-                                 vect_field.data());
-    vect.insert(vect.end(), vect_field.begin(), vect_field.end());
-
-    // Magic value placed in serialization; used to validate deserialization
-    vect.push_back(SerializeCheckValue);
-
-    // Serialize the date and time
-    time_.serialize(vect);
-  }
-  // -----------------------------------------------------------------------------
-  void Increment::deserialize(const std::vector<double> & vect,
-                              size_t & index) {
-    // Deserialize the field
-
-    soca_increment_deserialize_f90(toFortran(), geom_.toFortran(), vect.size(),
-                                   vect.data(), index);
-
-    // Use magic value to validate deserialization
-    ASSERT(vect.at(index) == SerializeCheckValue);
-    ++index;
-
-    // Deserialize the date and time
-    time_.deserialize(vect, index);
-  }
-
-// -----------------------------------------------------------------------------
-
-  void Increment::toFieldSet(atlas::FieldSet &fs) const {
-    soca_increment_to_fieldset_f90(toFortran(), vars_, fs.get());
-  }
-
-// -----------------------------------------------------------------------------
-
-  void Increment::toFieldSetAD(const atlas::FieldSet &fs) {
-    if (fs.empty()) return;
-    soca_increment_to_fieldset_ad_f90(toFortran(), vars_, fs.get());
-  }
-
-// -----------------------------------------------------------------------------
-
-  void Increment::fromFieldSet(const atlas::FieldSet &fs) {
-    soca_increment_from_fieldset_f90(toFortran(), vars_, fs.get());
-  }
-
-// -----------------------------------------------------------------------------
-
 }  // namespace soca

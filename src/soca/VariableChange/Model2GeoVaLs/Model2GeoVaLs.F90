@@ -8,6 +8,7 @@ module soca_model2geovals_mod_c
 
 use iso_c_binding
 use kinds, only: kind_real
+use atlas_module, only: atlas_field
 
 ! soca modules
 use soca_fields_mod, only: soca_field
@@ -31,73 +32,141 @@ contains
 !! This is *mostly* an identity operator, except for a small number of derived variables
 !! that are to be calculated here ("distance_from_coast", "sea_area_fraction", etc.)
 !! \throws abor1_ftn aborts if field name is not handled.
+!!
+!! TODO: can this be moved to the pure C++ side?? Probably yes
 subroutine soca_model2geovals_changevar_f90(c_key_geom, c_key_xin, c_key_xout) &
   bind(c,name='soca_model2geovals_changevar_f90')
   integer(c_int), intent(in) :: c_key_geom, c_key_xin, c_key_xout
 
   type(soca_geom),  pointer :: geom
   type(soca_state), pointer :: xin, xout
-  type(soca_field), pointer :: field
-  integer :: i, ii, jj, kk
+  type(soca_field), pointer :: soca_fieldin, soca_fieldout
+  integer :: i, ii, jj, kk, idx
+
+  type(atlas_field) :: field_out, field2
+  real(kind=kind_real), pointer :: data_out(:,:), data2(:,:)
 
   call soca_geom_registry%get(c_key_geom, geom)
   call soca_state_registry%get(c_key_xin, xin)
   call soca_state_registry%get(c_key_xout, xout)
-!
-  do i=1, size(xout%fields)
+
+  do i=1, xout%afieldset%size()
+    field_out = xout%afieldset%field(i)
+    call field_out%data(data_out)
 
     ! special cases
-    select case (xout%fields(i)%name)
+    select case (field_out%name())
 
     ! fields that are obtained from geometry
     case ('latitude')
-      xout%fields(i)%val(:,:,1) = real(geom%lat, kind=kind_real)
-    
+      do jj=geom%jsc,geom%jec;
+        do ii=geom%isc,geom%iec
+          data_out(1, geom%atlas_ij2idx(ii,jj)) = real(geom%lat(ii,jj), kind=kind_real)
+        end do
+      end do
+      call field_out%set_dirty()
+
     case ('longitude')
-      xout%fields(i)%val(:,:,1) = real(geom%lon, kind=kind_real)
+      do jj=geom%jsc,geom%jec
+        do ii=geom%isc,geom%iec
+          data_out(1, geom%atlas_ij2idx(ii,jj)) = real(geom%lon(ii,jj), kind=kind_real)
+        end do
+      end do
+      call field_out%set_dirty()
 
     case ('sea_water_depth')
-      call geom%thickness2depth(geom%h, xout%fields(i)%val)
+      field2 = xin%afieldset%field("sea_water_cell_thickness");
+      call field2%data(data2)
+      do ii = 1, field2%shape(2)
+        data_out(1, ii) = 0.5 * data2(1, ii)
+        do kk =2, field2%shape(1)
+          data_out(kk, ii) = data_out(kk-1,ii) +  0.5 * (data2(kk, ii) + data2(kk-1, ii))
+        end do
+      end do
+      call field_out%set_dirty(field2%dirty());
 
     case ('distance_from_coast')
-      xout%fields(i)%val(:,:,1) = real(geom%distance_from_coast, kind=kind_real)
+      field2 = geom%fieldset%field("distance_from_coast")
+      call field2%data(data2)
+      do ii = 1, field2%shape(2)
+        data_out(1, ii) = data2(1, ii)
+      end do
+      call field_out%set_dirty(field2%dirty())
 
     case ('sea_area_fraction')
-      xout%fields(i)%val(:,:,1) = real(geom%mask2d, kind=kind_real)
+      do jj=geom%jsc,geom%jec
+        do ii=geom%isc,geom%iec
+          data_out(1, geom%atlas_ij2idx(ii,jj)) = real(geom%mask2d(ii,jj), kind=kind_real)
+        end do
+      end do
+      call field_out%set_dirty()
 
     case ('mesoscale_representation_error')
       ! Representation errors: dx/R
-      ! TODO, why is the halo left to 0 for RR ??
-      xout%fields(i)%val(geom%isc:geom%iec, geom%jsc:geom%jec, 1) = &
-          geom%mask2d(geom%isc:geom%iec, geom%jsc:geom%jec) * &
-          sqrt(geom%cell_area(geom%isc:geom%iec, geom%jsc:geom%jec)) / &
-          geom%rossby_radius(geom%isc:geom%iec, geom%jsc:geom%jec)
+      field2 = geom%fieldset%field("rossby_radius")
+      call field2%data(data2)
+      do jj=geom%jsc,geom%jec
+        do ii=geom%isc,geom%iec
+          idx = geom%atlas_ij2idx(ii,jj)
+          data_out(1, idx) = geom%mask2d(ii,jj) * &
+              sqrt(geom%cell_area(ii, jj)) / &
+              data2(1, idx)
+        end do
+      end do
+      call field_out%set_dirty()
 
     ! special derived state variables
-    case ('surface_temperature_where_sea')
-      call xin%get('tocn', field)
-      xout%fields(i)%val(:,:,1) = field%val(:,:,1) + 273.15_kind_real
+    case ('skin_temperature_at_surface_where_sea')
+      field2 = xin%afieldset%field("sea_water_potential_temperature")
+      call field2%data(data2)
+      do jj=geom%jsc,geom%jec
+        do ii=geom%isc,geom%iec
+          idx = geom%atlas_ij2idx(ii,jj)
+          data_out(1, idx) = geom%mask2d(ii,jj) * data2(1, idx) + 273.15_kind_real
+        end do
+      end do
+      call field_out%set_dirty()
 
     case ('sea_floor_depth_below_sea_surface')
-      call xin%get('hocn', field)
-      xout%fields(i)%val(:,:,1) = sum(field%val, dim=3)
+      field2 = xin%afieldset%field("sea_water_cell_thickness")
+      call field2%data(data2)
+      do ii = 1, field2%shape(2)
+        data_out(1, ii) = data2(1, ii)
+        do kk = 2, field2%shape(1)
+          data_out(1, ii) = data_out(1, ii) + data2(kk, ii)
+        end do
+      end do
+      call field_out%set_dirty(field2%dirty())
 
     ! identity operators
     case default
-      call xin%get(xout%fields(i)%metadata%name, field)
-      if (xout%fields(i)%name == field%metadata%name .or. &
-          xout%fields(i)%name == field%metadata%getval_name ) then
-        xout%fields(i)%val(:,:,:) =  field%val(:,:,:) !< full field
-      elseif (field%metadata%getval_name_surface == xout%fields(i)%name) then
-        xout%fields(i)%val(:,:,1) = field%val(:,:,1) !< surface only of a 3D field
+      ! TODO remove the dependency on the fields structure (requires
+      ! chaning how metadata is stored)
+      call xout%get(field_out%name(), soca_fieldout)
+      call xin%get(soca_fieldout%metadata%name, soca_fieldin)
+      field2 = xin%afieldset%field(soca_fieldin%name)
+      call field2%data(data2)
+      if (field_out%name() == soca_fieldin%metadata%name ) then
+        ! full 3D field
+        do ii = 1, field2%shape(2)
+          do kk = 1, field2%shape(1)
+            data_out(kk, ii) = data2(kk, ii)
+          end do
+        end do
+      elseif (soca_fieldin%metadata%name_surface == field_out%name()) then
+        ! surface only of a 3D field
+        do ii = 1, field2%shape(2)
+          data_out(1, ii) = data2(1, ii)
+        end do
       else
         call abor1_ftn( 'error in soca_model2geovals_changevar_f90 processing ' &
-                        // xout%fields(i)%name )
-      endif
-
+                        // field_out%name() )
+      end if
+      call field_out%set_dirty(field2%dirty())
     end select
-
   end do
+  call field_out%final()
+  call field2%final()
 end subroutine
 
 !-------------------------------------------------------------------------------

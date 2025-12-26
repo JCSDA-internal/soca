@@ -1,0 +1,29 @@
+ &MOM_input_nml
+        output_directory = './',
+        input_filename = 'r'
+        restart_input_dir = 'RESTART_IN/',
+        restart_output_dir = 'RESTART/',
+        parameter_filename = 'data_static/72x35x25/MOM_input',
+                             'MOM_override' /
+
+ &diag_manager_nml
+ /
+
+ &ocean_solo_nml
+            months = 0
+            days   = 0
+            date_init = 2018,4,15,0,0,0,
+            hours = 24
+            minutes = 0
+            seconds = 0
+            calendar = 'NOLEAP' /
+
+ &fms_io_nml
+      max_files_w=100
+      checksum_required=.false.
+/
+
+ &fms_nml
+       clock_grain='MODULE'
+       domains_stack_size = 2000000
+       clock_flags='SYNC' /

@@ -1,143 +1,162 @@
+# This file sets up the ctests for SOCA
+#
+# Each ctest will be run in its own working directory (to keep tests from
+# breaking when run in parallel), this working directory is available at
+# "./soca/test/test_workdir/<test_name>". Each test working directy has a link
+# to the following directories:
+#
+# - data_static - input data that does NOT come from any other ctest
+# - data_generated - contains the output from each ctest, and can be used as
+#                    input for another ctest
+# - data_output - a convenience link to "./data_generated/<test_name>", this is
+#                 created to easily differentiate between input and output data
+#                 for a given ctest yaml
+
+
 set( soca_test_input
+  testinput/3dhyb_diffusion.yml
   testinput/3dhyb.yml
-  testinput/3dhybfgat.yml
-  testinput/3dvar_godas.yml
+  testinput/3dhybfgat_pseudo.yml
+  testinput/3dvar_moreice.yml
+  testinput/3dvar_lowres.yml
+  testinput/3dvar_nicas.yml
   testinput/3dvar_single_ob.yml
-  testinput/3dvar_soca.yml
   testinput/3dvar_zero_ob.yml
-  testinput/3dvarbump.yml
+  testinput/3dvar.yml
+  testinput/3dvar_diffmlb.yml
   testinput/3dvarfgat_pseudo.yml
-  testinput/3dvarfgat.yml
-  testinput/3dvarlowres_soca.yml
   testinput/4denvar.yml
   testinput/4dhybenvar.yml
+  testinput/4dvar_identity.yml
+  testinput/4dvar_htlm.yml
+  testinput/4dvar_oceaniceemulator.yml
   testinput/addincrement.yml
-  testinput/balance_mask.yml
-  testinput/checkpointmodel.yml
   testinput/convertincrement.yml
   testinput/convertstate_changevar.yml
   testinput/convertstate_soca2cice.yml
   testinput/convertstate.yml
+  testinput/converttogauss.yml
   testinput/diffstates.yml
-  testinput/dirac_horizfilt.yml
+  testinput/dirac_diffusion.yml
+  testinput/dirac_diffusion_lowres.yml
+  testinput/train_mlbalance.yml
+  testinput/dirac_mlbalance.yml
+  testinput/dirac_parametric_ocean_stddev.yml
   testinput/dirac_soca_cor_nicas_scales.yml
   testinput/dirac_soca_cov.yml
-  testinput/dirac_soca_mask.yml
-  testinput/dirac_soca_nomask.yml
   testinput/dirac_socahyb_cov.yml
+  testinput/ensanpproc.yml
   testinput/enshofx_1.yml
   testinput/enshofx_2.yml
   testinput/enshofx_3.yml
   testinput/enshofx.yml
-  testinput/enspert.yml
   testinput/ensmeanandvariance.yml
+  testinput/enspert.yml
   testinput/ensrecenter.yml
-  testinput/ensvariance.yml
-  testinput/errorcovariance.yml
   testinput/forecast_identity.yml
   testinput/forecast_mom6_bgc.yml
-  testinput/forecast_mom6.yml
   testinput/forecast_mom6_ens1.yml
   testinput/forecast_mom6_ens2.yml
   testinput/forecast_mom6_ens3.yml
+  testinput/forecast_mom6.yml
   testinput/forecast_pseudo.yml
+  testinput/gen_hybrid_linear_model_coeffs.yml
   testinput/geometry_iterator_2d.yml
   testinput/geometry_iterator_3d.yml
   testinput/geometry.yml
+  testinput/getkf.yml
   testinput/getvalues.yml
   testinput/gridgen.yml
   testinput/hofx_3d.yml
+  testinput/hofx_4d_oceaniceemulator.yml
   testinput/hofx_4d_pseudo.yml
-  testinput/hofx_4d.yml
   testinput/hybridgain.yml
   testinput/increment.yml
   testinput/letkf_split_observer.yml
   testinput/letkf_split_solver.yml
   testinput/letkf.yml
-  testinput/linearmodel.yml
+  testinput/letkf3d.yml
+  testinput/linearization_error.yml
+  testinput/linearmodel_oceaniceemulator.yml
   testinput/makeobs.yml
-  testinput/model_ufsm6c6.yml
   testinput/model.yml
   testinput/obslocalization_vertical.yml
   testinput/obslocalization.yml
   testinput/obslocalizations.yml
   testinput/obsop_name_map.yml
+  testinput/oceanSmoother.yml
   testinput/parameters_bump_cor_nicas_scales.yml
   testinput/parameters_bump_cor_nicas.yml
   testinput/parameters_bump_cov.yml
   testinput/parameters_bump_loc.yml
-  testinput/parametric_stddev.yml
+  testinput/parameters_diffusion.yml
+  testinput/parameters_diffusion_lowres.yml
   testinput/setcorscales.yml
   testinput/sqrtvertloc.yml
   testinput/state.yml
-  testinput/static_socaerror_init.yml
-  testinput/static_socaerror_test.yml
-  testinput/static_socaerrorlowres_init.yml
   testinput/varchange_ana2model.yml
   testinput/varchange_balance_TSSSH.yml
   testinput/varchange_balance.yml
-  testinput/varchange_bkgerrfilt.yml
-  testinput/varchange_bkgerrgodas.yml
-  testinput/varchange_bkgerrsoca.yml
-  testinput/varchange_bkgerrsoca_stddev.yml
-  testinput/varchange_horizfilt.yml
-  testinput/varchange_vertconv.yml
 )
 
 set( soca_test_ref
+  testref/3dhyb_diffusion.test
   testref/3dhyb.test
-  testref/3dhybfgat.test
-  testref/3dvar_godas.test
+  testref/3dhybfgat_pseudo.test
+  testref/3dvar_diffmlb.test
+  testref/3dvar_lowres.test
+  testref/3dvar_nicas.test
   testref/3dvar_single_ob.test
-  testref/3dvar_soca.test
   testref/3dvar_zero_ob.test
-  testref/3dvarbump.test
+  testref/3dvar.test
+  testref/3dvar_moreice.test
   testref/3dvarfgat_pseudo.test
-  testref/3dvarfgat.test
-  testref/3dvarlowres_soca.test
   testref/4denvar.test
   testref/4dhybenvar.test
+  testref/4dvar_identity.test
+  testref/4dvar_htlm.test
+  testref/4dvar_oceaniceemulator.test
   testref/addincrement.test
-  testref/balance_mask.test
-  testref/checkpointmodel.test
   testref/convertincrement.test
   testref/convertstate_changevar.test
   testref/convertstate_soca2cice.test
   testref/convertstate.test
+  testref/converttogauss.test
   testref/diffstates.test
-  testref/dirac_horizfilt.test
+  testref/dirac_diffusion.test
+  testref/dirac_parametric_ocean_stddev.test
+  testref/dirac_diffusion_lowres.test
+  testref/dirac_mlbalance.test
   testref/dirac_soca_cor_nicas_scales.test
   testref/dirac_soca_cov.test
-  testref/dirac_soca_mask.test
-  testref/dirac_soca_nomask.test
   testref/dirac_socahyb_cov.test
+  testref/ensanpproc.test
   testref/enshofx.test
-  testref/enspert.test
   testref/ensmeanandvariance.test
+  testref/enspert.test
   testref/ensrecenter.test
-  testref/ensvariance.test
   testref/forecast_identity.test
-  testref/forecast_mom6_bgc.test
-  testref/forecast_mom6.test
   testref/forecast_pseudo.test
+  testref/gen_hybrid_linear_model_coeffs.test
+  testref/getkf.test
   testref/gridgen.test
   testref/hofx_3d.test
   testref/hofx_4d_pseudo.test
-  testref/hofx_4d.test
+  testref/hofx_4d_oceaniceemulator.test
   testref/hybridgain.test
   testref/letkf_split_observer.test
   testref/letkf_split_solver.test
   testref/letkf.test
+  testref/letkf3d.test
+  testref/linearization_error.test
   testref/makeobs.test
-  testref/parameters_bump_loc.test
+  testref/oceanSmoother.test
   testref/parameters_bump_cor_nicas_scales.test
   testref/parameters_bump_cor_nicas.test
   testref/parameters_bump_cov.test
-  testref/parametric_stddev.test
+  testref/parameters_bump_loc.test
   testref/setcorscales.test
   testref/sqrtvertloc.test
-  testref/static_socaerror_init.test
-  testref/static_socaerrorlowres_init.test
 )
 
 # Create directory for test input/output/reference and symlink all files
@@ -179,10 +198,19 @@ install(FILES ${soca_install_model_input}
         DESTINATION ${INSTALL_DATA_DIR}/testdata/72x35x25/INPUT/ )
 
 set( soca_install_data
-  Data/rossrad.dat
+  Data/rossrad.nc
   Data/godas_sst_bgerr.nc )
 install(FILES ${soca_install_data}
         DESTINATION ${INSTALL_DATA_DIR}/testdata/ )
+
+set( soca_install_mlbalance
+  Data/mlbalance/antarctic.pt
+  Data/mlbalance/normalization.antarctic.pt
+  Data/mlbalance/arctic.pt
+  Data/mlbalance/normalization.arctic.pt
+)
+install(FILES ${soca_install_mlbalance}
+        DESTINATION ${INSTALL_DATA_DIR}/testdata/mlbalance/ )
 
 #####################################################################
 
@@ -202,9 +230,10 @@ set( SOCA_TESTS_VALGRIND OFF CACHE BOOL
 
 #-------------------------------------------------------------------------------
 # The following is a wrapper to simplify the generation of tests.
-# There are two types of tests:
+# There are three types of tests:
 #  1) soca executables (EXE must be given)
 #  2) interface tests  (SRC must be given)
+#  3) a test script    (SCRIPT must be given)
 # Soca executables by default will also run a second step where the output test
 # log stream results are compared with reference values. The interface tests
 # do not do this.
@@ -224,7 +253,7 @@ function(soca_add_test)
   # parse the passed arguments
   set(prefix     ARG)
   set(novals     NOTRAPFPE NOVALGRIND)
-  set(singlevals NAME EXE SRC CFG MPI)
+  set(singlevals NAME EXE SRC SCRIPT CFG MPI)
   set(multivals  TEST_DEPENDS)
   cmake_parse_arguments(${prefix}
                         "${novals}" "${singlevals}" "${multivals}"
@@ -255,6 +284,8 @@ function(soca_add_test)
   endif()
 
   # setup working directory
+  # TODO, most of these are not needed for most tests, now that the MOM6
+  # model has been mostly removed
   set( WORKDIR ${CMAKE_CURRENT_BINARY_DIR}/test_workdir/${ARG_NAME})
   file( MAKE_DIRECTORY ${WORKDIR} )
   foreach(DIRNAME data_generated data_static testinput testoutput testref)
@@ -268,9 +299,13 @@ function(soca_add_test)
       ${WORKDIR}/data_static/workdir/${FILENAME}
       ${WORKDIR}/${FILENAME} )
   endforeach()
+
   # setup output directory
   file( MAKE_DIRECTORY ${WORKDIR}/data_generated/${ARG_NAME})
-
+  execute_process( COMMAND ${CMAKE_COMMAND} -E create_symlink
+    ${WORKDIR}/data_generated/${ARG_NAME}
+    ${WORKDIR}/data_output
+  )
 
   # Are we building a unit test / or running a soca executable?
   if ( ARG_SRC )
@@ -285,7 +320,7 @@ function(soca_add_test)
                       TEST_DEPENDS ${ARG_TEST_DEPENDS})
     set( EXE ./test_soca_${ARG_NAME})
 
-  else()
+  elseif ( ARG_EXE)
     # running a soca executable.
     set( EXE ${CMAKE_BINARY_DIR}/bin/${ARG_EXE})
     ecbuild_add_test( TARGET  test_soca_${ARG_NAME}
@@ -297,8 +332,17 @@ function(soca_add_test)
                               ${TRAPFPE_ENV}
                       DEPENDS ${ARG_EXE}
                       TEST_DEPENDS ${ARG_TEST_DEPENDS})
-
-
+  elseif ( ARG_SCRIPT )
+    # running a test specific script, right now this is only for the mom6solo forecast
+    ecbuild_add_test( TARGET  test_soca_${ARG_NAME}
+                      COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/${ARG_SCRIPT}
+                      WORKING_DIRECTORY ${WORKDIR}
+                      ARGS ${CONFIG_FILE}
+                      DEPENDS mom6solo
+                      ENVIRONMENT "BIN_DIR=${CMAKE_BINARY_DIR}/bin"
+		                  "MPIEXE=${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} ${MPI}"
+                      TEST_DEPENDS ${ARG_TEST_DEPENDS}
+                      )
   endif()
 
   # optional valgrind tests
@@ -322,6 +366,7 @@ endfunction()
 #---------------------------------------------------------------------------------------------------
 
 soca_add_test( NAME gridgen
+               NOTRAPFPE
                EXE  soca_gridgen.x )
 
 
@@ -350,11 +395,6 @@ soca_add_test( NAME increment
                SRC  TestIncrement.cc
                TEST_DEPENDS test_soca_gridgen )
 
-soca_add_test( NAME model
-               SRC  TestModel.cc
-               NOTRAPFPE
-               TEST_DEPENDS test_soca_gridgen )
-
 soca_add_test( NAME modelaux
                SRC  TestModelAuxControl.cc
                CFG  model.yml
@@ -364,17 +404,9 @@ soca_add_test( NAME getvalues
                SRC  TestGetValues.cc
                TEST_DEPENDS test_soca_gridgen )
 
-soca_add_test( NAME errorcovariance
-               SRC  TestErrorCovariance.cc
-               TEST_DEPENDS test_soca_gridgen
-                            test_soca_static_socaerror_init )
-
-soca_add_test( NAME linearmodel
-               SRC  TestLinearModel.cc
-              #  NOTRAPFPE
-               TEST_DEPENDS test_soca_gridgen
-                            test_soca_static_socaerror_init )
-
+soca_add_test( NAME oceanSmoother
+               SRC  TestOceanSmoother.cc
+               TEST_DEPENDS test_soca_gridgen )
 
 # Variable changes
 #---------------------------------------------------------------------------------------------------
@@ -391,31 +423,6 @@ soca_add_test( NAME varchange_balance_TSSSH
                SRC  TestVariableChange.cc
                TEST_DEPENDS test_soca_gridgen )
 
-soca_add_test( NAME varchange_bkgerrfilt
-               SRC TestVariableChange.cc
-               TEST_DEPENDS test_soca_gridgen )
-
-soca_add_test( NAME varchange_horizfilt
-               SRC TestVariableChange.cc
-               NOTRAPFPE
-               TEST_DEPENDS test_soca_gridgen )
-
-soca_add_test( NAME varchange_bkgerrsoca
-               SRC  TestVariableChange.cc
-               TEST_DEPENDS test_soca_gridgen )
-
-soca_add_test( NAME varchange_bkgerrsoca_stddev
-               SRC  TestVariableChange.cc
-               TEST_DEPENDS test_soca_gridgen )
-
-soca_add_test( NAME varchange_bkgerrgodas
-               SRC  TestVariableChange.cc
-               TEST_DEPENDS test_soca_gridgen )
-
-soca_add_test( NAME varchange_vertconv
-               SRC  TestVariableChange.cc
-               TEST_DEPENDS test_soca_gridgen )
-
 
 # Observation localization methods
 #---------------------------------------------------------------------------------------------------
@@ -423,8 +430,11 @@ soca_add_test( NAME obslocalization
                SRC  TestObsLocalization.cc
                TEST_DEPENDS test_soca_gridgen )
 
-soca_add_test( NAME obslocalization_vertical
-               SRC  TestObsLocalization.cc )
+## vertical localization is not working right now. h was removed from the
+## geometry (it is part of the state), so we need to rethink how the
+## geometryiterator works in the vertical
+# soca_add_test( NAME obslocalization_vertical
+#                SRC  TestObsLocalization.cc )
 
 soca_add_test( NAME obslocalizations
                SRC  TestObsLocalizations.cc )
@@ -439,25 +449,21 @@ soca_add_test( NAME obslocalizations
 # model forecasts
 #---------------------------------------------------------------------------------------------------
 
-# Test of read/write restart for MOM6&ICE, model advance = Id
 soca_add_test( NAME forecast_identity
                EXE  soca_forecast.x
-              #  NOTRAPFPE
                TEST_DEPENDS test_soca_gridgen)
 
-# Test mom6 forecast
+# Test mom6solo forecast
 soca_add_test( NAME forecast_mom6
-               EXE  soca_forecast.x
-               NOTRAPFPE
-               TEST_DEPENDS test_soca_gridgen )
+               SCRIPT mom6solo.py )
 
-# Test mom6_bgc forecast (optional)
-if ( ENABLE_OCEAN_BGC )
-soca_add_test( NAME forecast_mom6_bgc
-               EXE  soca_forecast.x
-               NOTRAPFPE
-               TEST_DEPENDS test_soca_gridgen )
-endif()
+# # Test mom6_bgc forecast (optional)
+# if ( ENABLE_OCEAN_BGC )
+# soca_add_test( NAME forecast_mom6_bgc
+#                EXE  soca_forecast.x
+#                NOTRAPFPE
+#                TEST_DEPENDS test_soca_gridgen )
+# endif()
 
 # Test PseudoModel forecast
 soca_add_test( NAME forecast_pseudo
@@ -465,33 +471,23 @@ soca_add_test( NAME forecast_pseudo
                TEST_DEPENDS test_soca_gridgen
                             test_soca_forecast_mom6 )
 
+# create ensemble forecast from mom6solo
 soca_add_test( NAME forecast_mom6_ens1
-               EXE  soca_forecast.x
-               NOTRAPFPE
-               TEST_DEPENDS test_soca_gridgen )
+               SCRIPT mom6solo.py )
+
 soca_add_test( NAME forecast_mom6_ens2
-               EXE  soca_forecast.x
-               NOTRAPFPE
-               TEST_DEPENDS test_soca_gridgen )
+               SCRIPT mom6solo.py )
+
 soca_add_test( NAME forecast_mom6_ens3
-               EXE  soca_forecast.x
-               NOTRAPFPE
+               SCRIPT mom6solo.py )
+
+soca_add_test( NAME linear_oceaniceemulator
+               SRC  TestLinearModel.cc
+               CFG  linearmodel_oceaniceemulator.yml
                TEST_DEPENDS test_soca_gridgen )
-
-
 
 # background error
 #---------------------------------------------------------------------------------------------------
-
-soca_add_test( NAME static_socaerror_init
-               EXE  soca_error_covariance_toolbox.x
-               #  NOTRAPFPE
-               TEST_DEPENDS test_soca_gridgen )
-
-soca_add_test( NAME static_socaerrorlowres_init
-               EXE  soca_error_covariance_toolbox.x
-               #  NOTRAPFPE
-               TEST_DEPENDS test_soca_gridgen )
 
 soca_add_test( NAME setcorscales
                EXE  soca_setcorscales.x
@@ -517,6 +513,14 @@ soca_add_test( NAME parameters_bump_cov
                EXE  soca_error_covariance_toolbox.x
                NOTRAPFPE )
 
+soca_add_test( NAME parameters_diffusion
+               EXE  soca_error_covariance_toolbox.x
+               TEST_DEPENDS test_soca_gridgen
+                            test_soca_setcorscales)
+
+soca_add_test( NAME parameters_diffusion_lowres
+               EXE  soca_error_covariance_toolbox.x)
+
 
 # Misc applications
 #---------------------------------------------------------------------------------------------------
@@ -526,12 +530,17 @@ soca_add_test( NAME enspert
                EXE  soca_enspert.x
                NOTRAPFPE
                TEST_DEPENDS test_soca_gridgen
-                            test_soca_static_socaerror_init )
+                            test_soca_parameters_diffusion )
 
 # Remapping MOM6 (horiz+vertical intterpolation)
 soca_add_test( NAME convertstate
                EXE  soca_convertstate.x
               #  NOTRAPFPE
+               TEST_DEPENDS test_soca_gridgen )
+
+# Convert to Gaussian grid
+soca_add_test( NAME converttogauss
+               EXE  soca_converttostructuredgrid.x
                TEST_DEPENDS test_soca_gridgen )
 
 # Apply a nonlinear change of variable to an ensemble of states
@@ -540,21 +549,24 @@ soca_add_test( NAME convertstate_changevar
               #  NOTRAPFPE
                TEST_DEPENDS test_soca_gridgen )
 
-soca_add_test( NAME ensvariance
-               EXE  soca_ensvariance.x
-               TEST_DEPENDS test_soca_gridgen )
-
 soca_add_test( NAME ensmeanandvariance
                EXE  soca_ensmeanandvariance.x
                TEST_DEPENDS test_soca_gridgen )
 
-soca_add_test( NAME parametric_stddev
-               EXE  soca_convertincrement.x
-              #  NOTRAPFPE
-               TEST_DEPENDS test_soca_gridgen )
-
 soca_add_test( NAME ensrecenter
                EXE  soca_ensrecenter.x
+               TEST_DEPENDS test_soca_gridgen )
+
+file(COPY ${CMAKE_CURRENT_BINARY_DIR}/data_static/72x35x25/restarts/iced.2018-04-15-00000.nc
+     DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/data_generated/ensanpproc/mem.1 )
+file(COPY ${CMAKE_CURRENT_BINARY_DIR}/data_static/72x35x25/restarts/iced.2018-04-15-00000.nc
+     DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/data_generated/ensanpproc/mem.2 )
+file(COPY ${CMAKE_CURRENT_BINARY_DIR}/data_static/72x35x25/restarts/iced.2018-04-15-00000.nc
+     DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/data_generated/ensanpproc/mem.3 )
+file(COPY ${CMAKE_CURRENT_BINARY_DIR}/data_static/72x35x25/restarts/iced.2018-04-15-00000.nc
+     DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/data_generated/ensanpproc/mem.4 )
+soca_add_test( NAME ensanpproc
+               EXE  soca_anpproc.x
                TEST_DEPENDS test_soca_gridgen )
 
 soca_add_test( NAME hybridgain
@@ -566,12 +578,28 @@ soca_add_test( NAME sqrtvertloc
                EXE  soca_sqrtvertloc.x
                NOTRAPFPE
                TEST_DEPENDS test_soca_gridgen
-                           test_soca_static_socaerror_init )
+                            test_soca_parameters_diffusion )
 
 soca_add_test( NAME diffstates
                EXE  soca_diffstates.x
                TEST_DEPENDS test_soca_gridgen )
 
+# Compute HTLM coefficients
+soca_add_test( NAME gen_hybrid_linear_model_coeffs
+               EXE  soca_gen_hybrid_linear_model_coeffs.x
+               TEST_DEPENDS test_soca_gridgen
+                            test_soca_forecast_mom6
+                            test_soca_forecast_mom6_ens1
+                            test_soca_forecast_mom6_ens2
+                            test_soca_forecast_mom6_ens3 )
+
+soca_add_test( NAME linearization_error
+               EXE  soca_linearization_error.x
+               TEST_DEPENDS test_soca_gridgen
+                            test_soca_forecast_mom6
+                            test_soca_forecast_mom6_ens1
+                            test_soca_forecast_mom6_ens2
+                            test_soca_forecast_mom6_ens3 )
 
 # Dirac tests
 #---------------------------------------------------------------------------------------------------
@@ -579,36 +607,42 @@ soca_add_test( NAME diffstates
 soca_add_test( NAME dirac_soca_cor_nicas_scales
                EXE  soca_error_covariance_toolbox.x
                TEST_DEPENDS test_soca_gridgen
-                            parameters_bump_cor_nicas_scales)
+                            test_soca_parameters_bump_cor_nicas_scales)
 
 soca_add_test( NAME dirac_soca_cov
                EXE  soca_error_covariance_toolbox.x
                TEST_DEPENDS test_soca_gridgen
-                            test_soca_static_socaerror_init)
+                            test_soca_parameters_diffusion  )
 
 soca_add_test( NAME dirac_socahyb_cov
                EXE  soca_error_covariance_toolbox.x
                TEST_DEPENDS test_soca_gridgen
-                            test_soca_static_socaerror_init
-                            test_soca_parameters_bump_loc)
+                            test_soca_parameters_bump_loc
+                            test_soca_parameters_diffusion )
 
-soca_add_test( NAME dirac_horizfilt
-               EXE  soca_error_covariance_toolbox.x
+# NOTE the following tests throws a FPE only on clang
+soca_add_test( NAME dirac_diffusion
+               EXE soca_error_covariance_toolbox.x
                TEST_DEPENDS test_soca_gridgen
-                            test_soca_static_socaerror_init)
+                            test_soca_parameters_diffusion )
 
-soca_add_test( NAME dirac_soca_mask
-               EXE  soca_error_covariance_toolbox.x
-               NOTRAPFPE
-               TEST_DEPENDS test_soca_gridgen
-                            test_soca_static_socaerror_init)
+soca_add_test( NAME dirac_parametric_ocean_stddev
+                EXE soca_error_covariance_toolbox.x
+                TEST_DEPENDS test_soca_gridgen )
 
-soca_add_test( NAME dirac_soca_nomask
-               EXE  soca_error_covariance_toolbox.x
-               NOTRAPFPE
-               TEST_DEPENDS test_soca_gridgen
-                            test_soca_static_socaerror_init)
+soca_add_test( NAME dirac_diffusion_lowres
+               EXE soca_error_covariance_toolbox.x
+               TEST_DEPENDS test_soca_parameters_diffusion_lowres )
 
+
+if( Torch_FOUND )
+  soca_add_test( NAME train_mlbalance
+                 EXE soca_ice_emulator.x)
+
+  soca_add_test( NAME dirac_mlbalance
+                 EXE soca_error_covariance_toolbox.x
+                 TEST_DEPENDS test_soca_train_mlbalance )
+endif()
 
 # h(x) executables
 #---------------------------------------------------------------------------------------------------
@@ -622,9 +656,8 @@ soca_add_test( NAME hofx_3d
                EXE  soca_hofx3d.x
                TEST_DEPENDS test_soca_gridgen )
 
-soca_add_test( NAME hofx_4d
+soca_add_test( NAME hofx_4d_oceaniceemulator
                EXE  soca_hofx.x
-               NOTRAPFPE
                TEST_DEPENDS test_soca_gridgen )
 
 soca_add_test( NAME hofx_4d_pseudo
@@ -632,15 +665,23 @@ soca_add_test( NAME hofx_4d_pseudo
                TEST_DEPENDS test_soca_gridgen
                             test_soca_forecast_mom6 )
 
-  # TODO Re-enable the comparison once that's fixed
-soca_add_test( NAME enshofx
-               EXE  soca_enshofx.x
-               MPI 3
-               NOTRAPFPE
-               TEST_DEPENDS test_soca_gridgen )
+# NOTE, enshofx is disabled because MOM6 always writes out some diagnostic
+# netcdf files (which can't be disabled). This is normally not a problem, except
+# with enshofx, because multiple instances of MOM6 are started under separate
+# MPI_COMMs, causing problems when they all try to write to the same file at the
+# same time. We'll need to take a closer look at MOM6 output when we start
+# dealing with in-core MOM6
+
+# soca_add_test( NAME enshofx
+#                EXE  soca_enshofx.x
+#                MPI 3
+#                NOTRAPFPE
+#                TEST_DEPENDS test_soca_gridgen )
 
 
 # variational methods
+# (unless specifically specified, it is assumed that correlation uses
+#  EXPLICIT_DIFFUSION, and localization uses BUMP_NICAS )
 #---------------------------------------------------------------------------------------------------
 
 # # Following test does not work yet. IODA crashes
@@ -653,56 +694,61 @@ soca_add_test( NAME enshofx
 # soca_add_test( NAME 3dvar_single_ob
 #                EXE  soca_var.x
 #                NOTRAPFPE
-#                TEST_DEPENDS test_soca_gridgen
-#                             test_soca_static_socaerror_init )
+#                TEST_DEPENDS test_soca_gridgen )
 
-soca_add_test( NAME 3dvar_soca
+soca_add_test( NAME 3dvar
                EXE  soca_var.x
-               NOTRAPFPE
                TEST_DEPENDS test_soca_gridgen
-                            test_soca_static_socaerror_init )
+                            test_soca_parameters_diffusion )
 
-soca_add_test( NAME 3dvarbump
+ soca_add_test( NAME 3dvar_moreice
+                EXE  soca_var.x
+                TEST_DEPENDS test_soca_gridgen
+                             test_soca_parameters_diffusion )
+
+soca_add_test( NAME 3dvar_nicas
                EXE  soca_var.x
               #  NOTRAPFPE
-               TEST_DEPENDS test_soca_gridgen
-                            test_soca_parameters_bump_cor_nicas )
+               TEST_DEPENDS test_soca_parameters_bump_cor_nicas )
 
-soca_add_test( NAME 3dvar_godas
-               EXE  soca_var.x
-               TEST_DEPENDS test_soca_gridgen
-                            test_soca_static_socaerror_init )
 
-soca_add_test( NAME 3dvarlowres_soca
-               EXE  soca_var.x
-               NOTRAPFPE
-               TEST_DEPENDS test_soca_gridgen
-                            test_soca_static_socaerrorlowres_init )
+if( Torch_FOUND )
+  soca_add_test( NAME 3dvar_diffmlb
+                 EXE  soca_var.x
+                 TEST_DEPENDS test_soca_gridgen
+                              test_soca_parameters_diffusion
+                              test_soca_train_mlbalance)
+endif()
 
-soca_add_test( NAME 3dvarfgat
+soca_add_test( NAME 3dvar_lowres
                EXE  soca_var.x
                NOTRAPFPE
                TEST_DEPENDS test_soca_gridgen
-                            test_soca_static_socaerror_init )
+                            test_soca_parameters_diffusion_lowres )
 
 soca_add_test( NAME 3dvarfgat_pseudo
                EXE  soca_var.x
                TEST_DEPENDS test_soca_gridgen
                             test_soca_forecast_mom6
-                            test_soca_static_socaerror_init )
+                            test_socs_parameters_diffusion )
 
 soca_add_test( NAME 3dhyb
                EXE  soca_var.x
                TEST_DEPENDS test_soca_gridgen
-                            test_soca_static_socaerror_init
-                            test_soca_parameters_bump_loc )
+                            test_soca_parameters_bump_loc
+                            test_socs_parameters_diffusion )
 
-soca_add_test( NAME 3dhybfgat
+soca_add_test( NAME 3dhyb_diffusion
+               EXE  soca_var.x
+               TEST_DEPENDS test_soca_gridgen
+                            test_soca_parameters_diffusion)
+
+soca_add_test( NAME 3dhybfgat_pseudo
                EXE  soca_var.x
                NOTRAPFPE
                TEST_DEPENDS test_soca_gridgen
-                            test_soca_static_socaerror_init
-                            test_soca_parameters_bump_loc )
+                            test_soca_parameters_bump_loc
+                            test_socs_parameters_diffusion )
 
 soca_add_test( NAME 4denvar
                EXE soca_var.x
@@ -714,15 +760,41 @@ soca_add_test( NAME 4denvar
 soca_add_test( NAME 4dhybenvar
                EXE soca_var.x
                TEST_DEPENDS test_soca_gridgen
-                            test_soca_static_socaerror_init
+                            test_socs_parameters_diffusion
+                            test_soca_forecast_mom6
                             test_soca_forecast_mom6_ens1
                             test_soca_forecast_mom6_ens2
                             test_soca_forecast_mom6_ens3 )
 
+soca_add_test( NAME 4dvar_identity
+               EXE soca_var.x
+               TEST_DEPENDS test_soca_gridgen
+                            test_soca_parameters_bump_loc
+                            test_socs_parameters_diffusion
+                            test_soca_forecast_mom6 )
+
+soca_add_test( NAME 4dvar_htlm
+               EXE soca_var.x
+               TEST_DEPENDS test_soca_gridgen
+                            test_socs_parameters_diffusion
+                            test_soca_forecast_mom6
+                            test_soca_forecast_mom6_ens1
+                            test_soca_forecast_mom6_ens2
+                            test_soca_forecast_mom6_ens3
+                            test_soca_gen_hybrid_linear_model_coeffs )
+
+soca_add_test( NAME 4dvar_oceaniceemulator
+               EXE soca_var.x
+               TEST_DEPENDS test_soca_gridgen )
 # LETKF
 #---------------------------------------------------------------------------------------------------
 
 soca_add_test( NAME letkf
+               EXE  soca_letkf.x
+              #  NOTRAPFPE
+               TEST_DEPENDS test_soca_gridgen )
+
+soca_add_test( NAME letkf3d
                EXE  soca_letkf.x
               #  NOTRAPFPE
                TEST_DEPENDS test_soca_gridgen )
@@ -738,38 +810,34 @@ soca_add_test( NAME letkf_split_solver
                TEST_DEPENDS test_soca_gridgen
                             test_soca_letkf_split_observer )
 
+soca_add_test( NAME getkf
+               EXE  soca_letkf.x
+              #  NOTRAPFPE
+               TEST_DEPENDS test_soca_gridgen )
 
-# other executables that depends on increments from 3dvar_godas run
+# other executables that depends on increments from 3dvar_diffusion run
 #---------------------------------------------------------------------------------------------------
 
 soca_add_test( NAME addincrement
                EXE  soca_addincrement.x
                TEST_DEPENDS test_soca_gridgen
-                            3dvar_godas )
+                            test_soca_3dvar )
 
 # Remapping MOM6 (horiz+vertical interpolation)
 soca_add_test( NAME convertincrement
                EXE  soca_convertincrement.x
                NOTRAPFPE
                TEST_DEPENDS test_soca_gridgen
-                            3dvar_godas )
+                            test_soca_3dvar)
 
-# restart checkpointing
-soca_add_test( NAME checkpointmodel
-               EXE  soca_checkpoint_model.x
-               NOTRAPFPE
-               TEST_DEPENDS test_soca_gridgen
-                            test_soca_3dvar_godas)
 
-if ( BUILD_ICEPACK )
-  # Apply the Soca2Cice nonlinear change of variable
-  # TODO (G): check test dependency
-  file(COPY ${CMAKE_CURRENT_BINARY_DIR}/data_static/72x35x25/restarts/iced.2018-04-15-00000.nc
-       DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/data_generated/convertstate_soca2cice/ )
-     soca_add_test( NAME convertstate_soca2cice
-                    EXE  soca_convertstate.x
-                    MPI 1
-                    NOTRAPFPE
-                    TEST_DEPENDS test_soca_gridgen
-                                 test_soca_3dvar_godas)
-endif()
+# Apply the Soca2Cice nonlinear change of variable
+# TODO (G): check test dependency
+file(COPY ${CMAKE_CURRENT_BINARY_DIR}/data_static/72x35x25/restarts/iced.2018-04-15-00000.nc
+     DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/data_generated/convertstate_soca2cice/ )
+soca_add_test( NAME convertstate_soca2cice
+              EXE  soca_convertstate.x
+              MPI 2
+              NOTRAPFPE
+              TEST_DEPENDS test_soca_gridgen
+                           test_soca_3dvar )

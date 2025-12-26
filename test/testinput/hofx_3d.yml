@@ -10,10 +10,27 @@ state:
     ocn_filename: MOM.res.nc
     ice_filename: cice.res.nc
     sfc_filename: sfc.res.nc
-    state variables: [cicen, hicen, hsnon, socn, tocn, ssh, hocn, uocn, vocn, sw, lhf, shf, lw, us, chl, dummy_atm1]
+    state variables:
+    - sea_ice_area_fraction
+    - sea_ice_thickness
+    - sea_ice_snow_thickness
+    - sea_water_salinity
+    - sea_water_potential_temperature
+    - sea_surface_height_above_geoid
+    - sea_water_cell_thickness
+    - eastward_sea_water_velocity
+    - northward_sea_water_velocity
+    - net_downwelling_shortwave_radiation
+    - upward_latent_heat_flux_in_air
+    - upward_sensible_heat_flux_in_air
+    - net_downwelling_longwave_radiation
+    - friction_velocity_over_water
+    - mass_concentration_of_chlorophyll_in_sea_water
+    - dummy_atm1
 
-window begin: 2018-04-14T00:00:00Z
-window length: P2D
+time window:
+  begin: 2018-04-14T00:00:00Z
+  length: P2D
 
 observations:
   observers:
@@ -22,7 +39,7 @@ observations:
       obsdataout:
         engine:
           type: H5File
-          obsfile: data_generated/hofx_3d/sst_coolskin.hofx_3d.nc
+          obsfile: data_output/sst_coolskin.nc
       obsdatain:
         engine:
           type: H5File
@@ -36,7 +53,7 @@ observations:
       obsdataout:
         engine:
           type: H5File
-          obsfile: data_generated/hofx_3d/sst.hofx_3d.nc
+          obsfile: data_output/sst.nc
       obsdatain:
         engine:
           type: H5File
@@ -51,7 +68,7 @@ observations:
       obsdataout:
         engine:
           type: H5File
-          obsfile: data_generated/hofx_3d/sss.hofx_3d.nc
+          obsfile: data_output/sss.nc
       obsdatain:
         engine:
           type: H5File
@@ -66,7 +83,7 @@ observations:
       obsdataout:
         engine:
           type: H5File
-          obsfile: data_generated/hofx_3d/adt.hofx_3d.nc
+          obsfile: data_output/adt.nc
       obsdatain:
         engine:
           type: H5File
@@ -81,7 +98,7 @@ observations:
       obsdataout:
         engine:
           type: H5File
-          obsfile: data_generated/hofx_3d/prof.hofx_3d.nc
+          obsfile: data_output/prof.nc
       obsdatain:
         engine:
           type: H5File
@@ -103,7 +120,7 @@ observations:
       obsdataout:
         engine:
           type: H5File
-          obsfile: data_generated/hofx_3d/prof_T.hofx_3d.nc
+          obsfile: data_output/prof_T.nc
       obsdatain:
         engine:
           type: H5File
@@ -113,13 +130,13 @@ observations:
       name: VertInterp
       observation alias file: testinput/obsop_name_map.yml
       vertical coordinate: sea_water_depth
-      observation vertical coordinate: depth      
+      observation vertical coordinate: depth
   - obs space:
       name: InsituSalinity
       obsdataout:
         engine:
           type: H5File
-          obsfile: data_generated/hofx_3d/prof_S.hofx_3d.nc
+          obsfile: data_output/prof_S.nc
       obsdatain:
         engine:
           type: H5File
@@ -136,35 +153,38 @@ observations:
       obsdataout:
         engine:
           type: H5File
-          obsfile: data_generated/hofx_3d/icec.hofx_3d.nc
+          obsfile: data_output/icec.nc
       obsdatain:
         engine:
           type: H5File
           obsfile: data_static/obs/icec.nc
       simulated variables: [seaIceFraction]
     obs operator:
-      name: SeaIceFraction
+      name: Identity
+      observation alias file: testinput/obsop_name_map.yml
 
-  - obs space:
-      name: SeaIceFreeboard
-      obsdataout:
-        engine:
-          type: H5File
-          obsfile: data_generated/hofx_3d/icefb.hofx_3d.nc
-      obsdatain:
-        engine:
-          type: H5File
-          obsfile: data_static/obs/icefb.nc
-      simulated variables: [seaIceFreeboard]
-    obs operator:
-      name: SeaIceThickness
+  # don't need freeboard for now. delete this someday
+  # or update UFO to get it working again.
+  # - obs space:
+  #     name: SeaIceFreeboard
+  #     obsdataout:
+  #       engine:
+  #         type: H5File
+  #         obsfile: data_output/icefb.nc
+  #     obsdatain:
+  #       engine:
+  #         type: H5File
+  #         obsfile: data_static/obs/icefb.nc
+  #     simulated variables: [seaIceFreeboard]
+  #   obs operator:
+  #     name: SeaIceThickness
 
   - obs space:
       name: Chlorophyll
       obsdataout:
         engine:
           type: H5File
-          obsfile: data_generated/hofx_3d/chl.hofx_3d.nc
+          obsfile: data_output/chl.nc
       obsdatain:
         engine:
           type: H5File
@@ -203,7 +223,7 @@ observations:
       obsdataout:
         engine:
           type: H5File
-          obsfile: data_generated/hofx_3d/uocn_surface.hofx_3d.nc
+          obsfile: data_output/uocn_surface.nc
       obsdatain:
         engine:
           type: H5File
@@ -218,7 +238,7 @@ observations:
       obsdataout:
         engine:
           type: H5File
-          obsfile: data_generated/hofx_3d/vocn_surface.hofx_3d.nc
+          obsfile: data_output/vocn_surface.nc
       obsdatain:
         engine:
           type: H5File

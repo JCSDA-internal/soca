@@ -45,23 +45,18 @@ ecbuild_add_executable( TARGET  soca_ensmeanandvariance.x
                         LIBS    soca
                       )
 
-ecbuild_add_executable( TARGET  soca_ensvariance.x
-                        SOURCES EnsVariance.cc
-                        LIBS    soca
-                      )
-
 ecbuild_add_executable( TARGET  soca_ensrecenter.x
                         SOURCES EnsRecenter.cc
                         LIBS    soca
                       )
 
-ecbuild_add_executable( TARGET  soca_hybridgain.x
-                        SOURCES HybridGain.cc
+ecbuild_add_executable( TARGET  soca_anpproc.x
+                        SOURCES AnalysisPostproc.cc
                         LIBS    soca
                       )
 
-ecbuild_add_executable( TARGET  soca_checkpoint_model.x
-                        SOURCES CheckpointModel.cc
+ecbuild_add_executable( TARGET  soca_hybridgain.x
+                        SOURCES HybridGain.cc
                         LIBS    soca
                       )
 
@@ -85,6 +80,11 @@ ecbuild_add_executable( TARGET  soca_convertstate.x
                         LIBS    soca
                       )
 
+ecbuild_add_executable( TARGET  soca_converttostructuredgrid.x
+			SOURCES ConvertToStructuredGrid.cc
+                        LIBS    soca
+                      )
+
 ecbuild_add_executable( TARGET  soca_addincrement.x
                         SOURCES AddIncrement.cc
                         LIBS    soca
@@ -99,3 +99,18 @@ ecbuild_add_executable( TARGET  soca_setcorscales.x
                         SOURCES SetCorScales.cc
                         LIBS    soca
                       )
+ecbuild_add_executable( TARGET  soca_gen_hybrid_linear_model_coeffs.x
+                        SOURCES GenHybridLinearModelCoeffs.cc
+                        LIBS    soca
+                      )
+ecbuild_add_executable( TARGET  soca_linearization_error.x
+                        SOURCES LinearizationError.cc
+                        LIBS    soca
+                      )
+
+if(Torch_FOUND)
+  ecbuild_add_executable( TARGET  soca_ice_emulator.x
+                        SOURCES IceEmul.cc
+                        LIBS    soca NetCDF::NetCDF_C
+                      )
+endif()

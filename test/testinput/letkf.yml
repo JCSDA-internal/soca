@@ -3,17 +3,26 @@ geometry:
   mom6_input_nml: data_static/72x35x25/input.nml
   fields metadata: data_static/fields_metadata.yml
 
-window begin: &date 2018-04-14T00:00:00Z
-window length: P2D
+time window:
+  begin: &date 2018-04-14T00:00:00Z
+  length: P2D
 
 background:
   members from template:
     template:
       date: 2018-04-15T00:00:00Z
-      ocn_filename: ocn.enspert.ens.%mem%.2018-04-15T00:00:00Z.PT0S.nc
+      ocn_filename: MOM.res.ens.%mem%.nc
       read_from_file: 1
       basename: data_static/72x35x25/restarts_ens/
-      state variables: [socn, tocn, ssh, uocn, vocn, hocn, chl, biop]
+      state variables:
+      - sea_water_salinity
+      - sea_water_potential_temperature
+      - sea_surface_height_above_geoid
+      - eastward_sea_water_velocity
+      - northward_sea_water_velocity
+      - sea_water_cell_thickness
+      - mass_concentration_of_chlorophyll_in_sea_water
+      - molar_concentration_of_biomass_in_sea_water_in_p_units
     pattern: '%mem%'
     nmembers: 4
 
@@ -23,11 +32,11 @@ observations:
       name: SeaSurfaceTemp
       distribution:
         name: Halo
-        halo size: 5000.0e3
+        halo size: 3500.0e3
       obsdataout:
         engine:
           type: H5File
-          obsfile: data_generated/letkf/sst.letkf.nc
+          obsfile: data_output/sst.nc
       obsdatain:
         engine:
           type: H5File
@@ -55,11 +64,11 @@ observations:
       name: ADT
       distribution:
         name: Halo
-        halo size: 500.0e3
+        halo size: 3500.0e3
       obsdataout:
         engine:
           type: H5File
-          obsfile: data_generated/letkf/adt.letkf.nc
+          obsfile: data_output/adt.nc
       obsdatain:
         engine:
           type: H5File
@@ -80,7 +89,7 @@ observations:
     - filter: Domain Check
       where:
       - variable: {name: GeoVaLs/sea_area_fraction}
-        minvalue: 0.5      
+        minvalue: 0.5
 
 driver:
   do posterior observer: true
@@ -91,38 +100,38 @@ driver:
   save prior variance: true
 
 local ensemble DA:
-  solver: LETKF
+  solver: Deterministic LETKF
   inflation:
     rtps: 0.5
     rtpp: 0.6
     mult: 1.1
 
 output:
-  datadir: data_generated/letkf
+  datadir: data_output/
   date: *date
   exp: letkf
   type: ens
 
 output mean prior:
-  datadir: data_generated/letkf
+  datadir: data_output/
   date: *date
   exp: letkf
   type: fc
 
 output variance prior:
-  datadir: data_generated/letkf
+  datadir: data_output/
   date: *date
   exp: letkf
   type: fc
 
 output variance posterior:
-  datadir: data_generated/letkf
+  datadir: data_output/
   date: *date
   exp: letkf
   type: an
 
 output increment:
-  datadir: data_generated/letkf
+  datadir: data_output/
   date: *date
   exp: letkf.inc
   type: an
@@ -130,3 +139,4 @@ output increment:
 test:
   reference filename: testref/letkf.test
   test output filename: testoutput/letkf.test
+  float relative tolerance: 1e-5

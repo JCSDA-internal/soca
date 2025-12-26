@@ -1,0 +1,13 @@
+gridspec_filename: "./soca_gridspec.nc"
+restart_filename: "./MOM.res.nc"
+mld_filename: "./average_MLD.nc"
+output_filename: "./scales.nc"
+output_variable_vt: "vt"
+output_variable_hz: "hz"
+
+VT_MIN: 1.5
+VT_MAX: 10
+
+HZ_ROSSBY_MULT: 1.0
+HZ_MAX: 200e3
+HZ_MIN_GRID_MULT: 1.0
