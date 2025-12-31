@@ -103,10 +103,6 @@ ecbuild_add_executable( TARGET  soca_gen_hybrid_linear_model_coeffs.x
                         SOURCES GenHybridLinearModelCoeffs.cc
                         LIBS    soca
                       )
-ecbuild_add_executable( TARGET  soca_linearization_error.x
-                        SOURCES LinearizationError.cc
-                        LIBS    soca
-                      )
 
 ecbuild_add_executable( TARGET  soca_tlm_toolbox.x
                         SOURCES TLMToolbox.cc
