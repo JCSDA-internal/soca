@@ -2,7 +2,7 @@ forecast length: PT12H
 time resolution: PT6H
 
 # Linear model (HTLM or TLM)
-linear model geometry: &geom
+geometry: &geom
   geom_grid_file: data_generated/gridgen/soca_gridspec.72x35x25.nc
   mom6_input_nml: data_static/72x35x25/input.nml
   fields metadata: data_static/fields_metadata.yml
@@ -157,25 +157,22 @@ model:
       state variables: *state_vars
       ocn_filename: ocn.fcst_ens1.fc.2018-04-15T00:00:00Z.PT12H.nc
 
-model geometry: *geom
+#model geometry: *geom
 
-model aux increment: {}
-model aux control: {}
-
+model aux increment: null
+model aux control: null
+compute error: true
 output:
-  datadir: data_output/
-  exp: linearization_error
-  type: an
-
-#output on latlon grid:
-#  local interpolator type: oops unstructured grid interpolator
-#  resolution in degrees: 5.0
-#  variables to output: [tocn,socn]
-#  model levels: [1]
-#  datapath: data_output
-#  filename prefix: linearization-error
+  dx:
+    datadir: data_output/
+    exp: linearization_error_dx
+    type: an
+  error:
+    datadir: data_output/
+    exp: linearization_error_error
+    type: an
 
 test:
-  reference filename: testref/linearization_error.test
-  test output filename: testoutput/linearization_error.test
+  reference filename: testref/tlm_toolbox_linearization_error.test
+  test output filename: testoutput/tlm_toolbox_linearization_error.test
   float absolute tolerance: 4e-4

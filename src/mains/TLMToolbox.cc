@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 2024- UCAR.
+ * (C) Copyright 2025- UCAR.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -7,12 +7,12 @@
 
 
 #include "oops/runs/Run.h"
-#include "oops/runs/LinearizationError.h"
+#include "oops/runs/TLMToolbox.h"
 
 #include "soca/Traits.h"
 
 int main(int argc,  char ** argv) {
   oops::Run run(argc, argv);
-  oops::LinearizationError<soca::Traits> linearizationError;
-  return run.execute(linearizationError);
+  oops::TLMToolbox<soca::Traits> tlmToolbox;
+  return run.execute(tlmToolbox);
 }
