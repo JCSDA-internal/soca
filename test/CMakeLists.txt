@@ -76,7 +76,6 @@ set( soca_test_input
   testinput/letkf_split_solver.yml
   testinput/letkf.yml
   testinput/letkf3d.yml
-  testinput/linearization_error.yml
   testinput/linearmodel_oceaniceemulator.yml
   testinput/makeobs.yml
   testinput/model.yml
@@ -94,6 +93,7 @@ set( soca_test_input
   testinput/setcorscales.yml
   testinput/sqrtvertloc.yml
   testinput/state.yml
+  testinput/tlm_toolbox_linearization_error.yml
   testinput/varchange_ana2model.yml
   testinput/varchange_balance_TSSSH.yml
   testinput/varchange_balance.yml
@@ -148,7 +148,6 @@ set( soca_test_ref
   testref/letkf_split_solver.test
   testref/letkf.test
   testref/letkf3d.test
-  testref/linearization_error.test
   testref/makeobs.test
   testref/oceanSmoother.test
   testref/parameters_bump_cor_nicas_scales.test
@@ -157,6 +156,7 @@ set( soca_test_ref
   testref/parameters_bump_loc.test
   testref/setcorscales.test
   testref/sqrtvertloc.test
+  testref/tlm_toolbox_linearization_error.test
 )
 
 # Create directory for test input/output/reference and symlink all files
@@ -593,8 +593,8 @@ soca_add_test( NAME gen_hybrid_linear_model_coeffs
                             test_soca_forecast_mom6_ens2
                             test_soca_forecast_mom6_ens3 )
 
-soca_add_test( NAME linearization_error
-               EXE  soca_linearization_error.x
+soca_add_test( NAME tlm_toolbox_linearization_error
+               EXE  soca_tlm_toolbox.x
                TEST_DEPENDS test_soca_gridgen
                             test_soca_forecast_mom6
                             test_soca_forecast_mom6_ens1
