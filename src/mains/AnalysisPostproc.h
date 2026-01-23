@@ -216,7 +216,7 @@ class AnalysisPostproc : public oops::Application {
         const size_t ensMember = incs.local_ens()[iens];
         oops::Log::info() << "recentering ice state " << ensMember << ":" << ens[iens] << std::endl;
         for (size_t itime = 0; itime < ens.local_time_size(); ++itime) {
-          ens(itime, iens) += incs[itime, iens];
+          ens(itime, iens) += incs(itime, iens);
         }
         oops::Log::info() << "recentered ice state " << ensMember << ":" << ens[iens] << std::endl;
         // set up variable change
