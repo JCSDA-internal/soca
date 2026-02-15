@@ -112,3 +112,4 @@ output:
 test:
   reference filename: testref/letkf3d.test
   test output filename: testoutput/letkf3d.test
+  float relative tolerance: 1.e-5
