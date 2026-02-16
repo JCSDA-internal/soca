@@ -31,7 +31,7 @@ MLBalance::MLBalance(
     const Parameters_ & params,
     const oops::FieldSet3D & xb,
     const oops::FieldSet3D & fg)
-  : saber::SaberOuterBlockBase(params, xb.validTime()),
+  : saber::SaberOuterBlockBase(params, xb.validTime(), outerGeometryData, outerVars),
     params_(params),
     activeVars_(params.mandatoryActiveVars()),
     innerVars_(outerVars),
