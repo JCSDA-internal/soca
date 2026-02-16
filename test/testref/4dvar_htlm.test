@@ -1,17 +1,17 @@
-CostJo   : Nonlinear Jo(SeaSufaceTemp) = 7.5731660125378380e+02, nobs = 90, Jo/n = 8.4146289028198193e+00, err = 3.7274007248048607e-01
+CostJo   : Nonlinear Jo(SeaSufaceTemp) = 7.5731660125377857e+02, nobs = 90, Jo/n = 8.4146289028197625e+00, err = 3.7274007248048607e-01
 CostJb   : Nonlinear Jb = 0.0000000000000000e+00
-CostFunction: Nonlinear J = 7.5731660125378380e+02
-RPCGMinimizer: reduction in residual norm = 1.2269874777692313e-01
+CostFunction: Nonlinear J = 7.5731660125377857e+02
+RPCGMinimizer: reduction in residual norm = 7.0502977836243028e-02
 CostFunction::addIncrement: Analysis: 
   Valid time: 2018-04-15T00:00:00Z
-             sea_water_salinity   min=10.7210460395083924   max=40.4416591897031168   mean=34.5437862918539409
+             sea_water_salinity   min=10.7210460395083924   max=40.4416591897031168   mean=34.5436604795604083
     eastward_sea_water_velocity   min=-0.8581693992488438   max=0.7000954286848975   mean=-0.0002411941155065
    northward_sea_water_velocity   min=-0.7661101215480253   max=1.4377766409421606   mean=0.0020193957336148
-sea_water_potential_temperature   min=-1.8883899372702533   max=31.7004645720658580   mean=6.0183786756706956
- sea_surface_height_above_geoid   min=-1.9244009534418500   max=0.9547999799338502   mean=-0.2782054011933942
+sea_water_potential_temperature   min=-1.8883899372702533   max=31.7004645720658580   mean=6.0180833165635894
+ sea_surface_height_above_geoid   min=-1.9243802319858341   max=0.9495525819023786   mean=-0.2783327657022133
        sea_water_cell_thickness   min=0.0009999999999977   max=1345.6400000000003274   mean=128.6280642064969300
     ocean_mixed_layer_thickness   min=2.2854716757984130   max=4593.1533423819937525   mean=192.4109073940401515
                 sea_water_depth   min=2.2854716757984130   max=5658.3057467114012979   mean=1200.5229536158342398
-CostJo   : Nonlinear Jo(SeaSufaceTemp) = 608.2917122363810449, nobs = 90, Jo/n = 6.7587968026264562, err = 0.3727400724804861
-CostJb   : Nonlinear Jb = 37.6443326387034602
-CostFunction: Nonlinear J = 645.9360448750844625
+CostJo   : Nonlinear Jo(SeaSufaceTemp) = 594.7782934004992512, nobs = 90, Jo/n = 6.6086477044499921, err = 0.3727400724804861
+CostJb   : Nonlinear Jb = 52.6241435560154684
+CostFunction: Nonlinear J = 647.4024369565147481

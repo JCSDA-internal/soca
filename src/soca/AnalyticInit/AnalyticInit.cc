@@ -10,7 +10,7 @@
 
 namespace soca {
 
-  static oops::AnalyticInitMaker<ufo::ObsTraits, AnalyticInit>
+  static ufo::AnalyticInitMaker<AnalyticInit>
     makerAnalyticInit_("soca_ana_init");
 
   void AnalyticInit::fillGeoVaLs(const ufo::SampledLocations & locs,

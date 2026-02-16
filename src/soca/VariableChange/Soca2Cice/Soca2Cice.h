@@ -98,7 +98,7 @@ class Soca2Cice: public VariableChangeBase {
             "minimum allowable ice volume", 0.00001, this, {oops::minConstraint(0.0)}};
   };
 
-  const std::string classname() {return "soca::Soca2Cice";}
+  const std::string classname() override {return "soca::Soca2Cice";}
 
   Soca2Cice(const Geometry &, const eckit::Configuration &);
   ~Soca2Cice();

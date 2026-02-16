@@ -18,6 +18,8 @@
 #include "oops/base/Increment4D.h"
 #include "oops/base/IncrementSet.h"
 #include "oops/base/Increment.h"
+#include "oops/base/InflationBase.h"
+#include "oops/base/instantiateInflationFactory.h"
 #include "oops/base/StateSet.h"
 #include "oops/base/State.h"
 #include "oops/interface/VariableChange.h"
@@ -53,6 +55,8 @@ class AnalysisPostproc : public oops::Application {
   typedef oops::Increment<soca::Traits>      Increment_;
   typedef oops::Increment4D<soca::Traits>    Increment4D_;
   typedef oops::IncrementSet<soca::Traits>   IncrementSet_;
+  typedef oops::InflationBase<soca::Traits>  InflationBase_;
+  typedef oops::InflationFactory<soca::Traits> InflationFactory_;
   typedef oops::StateSet<soca::Traits>       StateSet_;
   typedef oops::VariableChange<soca::Traits> VariableChange_;
 
@@ -60,7 +64,9 @@ class AnalysisPostproc : public oops::Application {
   // -----------------------------------------------------------------------------
 
   explicit AnalysisPostproc(const eckit::mpi::Comm & comm = oops::mpi::world())
-    : Application(comm) {}
+    : Application(comm) {
+      oops::instantiateInflationFactory<soca::Traits>();
+    }
   static const std::string classname() {return "soca::AnalysisPostproc";}
 
   // -----------------------------------------------------------------------------
@@ -114,22 +120,25 @@ class AnalysisPostproc : public oops::Application {
 
     // Setup the  geometry of the ensemble members
     const Geometry_ geometry(geomConfig, commState);
-    // Read all states in parallel
+    // Read all background states in parallel
     const eckit::LocalConfiguration statesConfig(fullConfig, "backgrounds");
     StateSet_ ens(geometry, statesConfig, oops::mpi::myself(), commEns);
-    // Compute ensemble mean as a StateSet (for computing the recentering increment as a difference
-    // between two States)
+    // Compute background ensemble mean as a StateSet (for computing the recentering increment
+    // as a difference between two States)
     StateSet_ ensMean = ens.ens_mean();
-    oops::Log::test() << "Ensemble mean: " << ensMean << std::endl;
-    // Copy the ensemble into an ensemble of increments (it's still states)
+    oops::Log::info() << "Background ensemble mean: " << ensMean << std::endl;
+    oops::Log::test() << "Background ensemble mean: " << ensMean << std::endl;
+
+    // Copy the ensemble into an ensemble of increments (it's still states),
+    // used for computing ensemble statistics and background perturbations
     oops::Variables socaIncrVars(fullConfig, "increment variables");
     IncrementSet_ incs(geometry, socaIncrVars, ens);
-    oops::Log::info() << "Input states: " << incs << std::endl;
-    // Compute ensemble stats, print, save if needed.
-    // ensMeanInc is an IncrementSet (for computing the ensemble increments as difference between
-    // two Increments)
-    auto[ensMeanInc, ensVar] = incs.ens_stats();
-    oops::Log::info() << " Ensemble mean: " << ensMean << std::endl;
+    oops::Log::info() << "Input background states: " << incs << std::endl;
+
+    // Compute background ensemble stats, print, save if needed.
+    // bgEnsMeanInc is an IncrementSet (for computing the ensemble increments as difference
+    // between two Increments)
+    auto[bgEnsMeanInc, bgEnsVar] = incs.ens_stats();
     if ( fullConfig.has("ensemble mean output") && (commEns.rank() == 0) ) {
       const eckit::LocalConfiguration ensMeanOutputConfig(fullConfig, "ensemble mean output");
       ensMean.write(ensMeanOutputConfig);
@@ -137,24 +146,71 @@ class AnalysisPostproc : public oops::Application {
     if ( fullConfig.has("ensemble variance output") && (commEns.rank() == 0) ) {
       const eckit::LocalConfiguration ensVarianceOutputConfig(fullConfig,
                                                               "ensemble variance output");
-      ensVar.write(ensVarianceOutputConfig);
+      bgEnsVar.write(ensVarianceOutputConfig);
     }
     // Compute the standard deviation from the variance in place
-    for (size_t jt = 0; jt < ensVar.local_time_size(); ++jt) {
-      ensVar[jt].sqrt();
+    for (size_t jt = 0; jt < bgEnsVar.local_time_size(); ++jt) {
+      bgEnsVar[jt].sqrt();
     }
-    oops::Log::info() << " Ensemble standard deviation: " << ensVar << std::endl;
-    // Compute ensemble perturbations
-    incs -= ensMeanInc;
-    oops::Log::info() << " Ensemble perturbations: " << incs << std::endl;
-    oops::Log::test() << " Ensemble perturbations: " << incs << std::endl;
+    oops::Log::info() << " Background ensemble standard deviation: " << bgEnsVar << std::endl;
+    oops::Log::test() << " Background ensemble standard deviation: " << bgEnsVar << std::endl;
+    // Compute background ensemble perturbations
+    incs -= bgEnsMeanInc;
+    oops::Log::info() << " Background ensemble perturbations: " << incs << std::endl;
+    oops::Log::test() << " Background ensemble perturbations: " << incs << std::endl;
 
-    // TODO(AS): add support for analysis increments. At the same time oops::Inflation classes
-    // may be used for analysis inflation.
-
-    // Inflate ensemble perturbations if needed
-    if (fullConfig.has("ensemble inflation")) {
+    // Use ensemble DA increments if available
+    if (fullConfig.has("analysis increments")) {
+      // Read analysis increments
+      const eckit::LocalConfiguration analysisIncrConfig(fullConfig, "analysis increments");
+      IncrementSet_ analysisIncrs(geometry, socaIncrVars, incs.times(), analysisIncrConfig,
+                                  oops::mpi::myself(), commEns);
+      oops::Log::info() << "Analysis increments: " << analysisIncrs << std::endl;
+      oops::Log::test() << "Analysis increments: " << analysisIncrs << std::endl;
+      // Inflate analysis ensemble if needed
+      if (fullConfig.has("ensemble inflation")) {
+        const eckit::LocalConfiguration inflConfig(fullConfig, "ensemble inflation");
+        std::unique_ptr<InflationBase_> inflation(InflationFactory_::create(inflConfig,
+                                                  geometry, ens, socaIncrVars));
+        inflation->doInflation(analysisIncrs);
+        oops::Log::info() << "Analysis increments after inflation: "
+                          << analysisIncrs << std::endl;
+        oops::Log::test() << "Analysis increments after inflation: "
+                          << analysisIncrs << std::endl;
+      }
+      // Update ensemble mean
+      ensMean += analysisIncrs.ens_mean();
+      oops::Log::test() << "Analysis ensemble mean: " << ensMean << std::endl;
+      oops::Log::info() << "Analysis ensemble mean: " << ensMean << std::endl;
+      // For statistics, add increments to background perturbations
+      incs += analysisIncrs;
+      // Compute analysis ensemble stats, print, save if needed.
+      IncrementSet_ anEnsVar = incs.ens_var();
+      if ( fullConfig.has("analysis ensemble mean output") && (commEns.rank() == 0) ) {
+        const eckit::LocalConfiguration ensMeanOutputConfig(fullConfig,
+          "analysis ensemble mean output");
+        ensMean.write(ensMeanOutputConfig);
+      }
+      if ( fullConfig.has("analysis ensemble variance output") && (commEns.rank() == 0) ) {
+        const eckit::LocalConfiguration ensVarianceOutputConfig(fullConfig,
+          "analysis ensemble variance output");
+        anEnsVar.write(ensVarianceOutputConfig);
+      }
+      // Compute the standard deviation from the variance in place
+      for (size_t jt = 0; jt < anEnsVar.local_time_size(); ++jt) {
+        anEnsVar[jt].sqrt();
+      }
+      oops::Log::info() << "Analysis ensemble standard deviation: " << anEnsVar << std::endl;
+      oops::Log::test() << "Analysis ensemble standard deviation: " << anEnsVar << std::endl;
+      // Set increments to be analysis increments for the postprocessing below
+      incs = analysisIncrs;
+    // No analysis ensemble increments provided: apply inflation to background
+    // ensemble perturbations directly (Inflation classes operate on analysis
+    // increments, which are not available in this branch)
+    } else if (fullConfig.has("ensemble inflation")) {
+      // Save the original increments for differencing later
       IncrementSet_ origincs(incs);
+      // Multiplicative inflation of the ensemble perturbations
       const eckit::LocalConfiguration inflConfig(fullConfig, "ensemble inflation");
       if (inflConfig.has("value")) {
         const double inflation = inflConfig.getDouble("value");
@@ -174,29 +230,30 @@ class AnalysisPostproc : public oops::Application {
       }
       // Increments that need to be added to the ensemble backgrounds
       incs -= origincs;
-      oops::Log::info() << " Increments after inflation: " << incs << std::endl;
+      oops::Log::info() << "Increments after inflation: " << incs << std::endl;
+      oops::Log::test() << "Increments after inflation: " << incs << std::endl;
     } else {
       // if there's no inflation and no analysis increments, all the increments to
       // ensemble backgrounds are zero
-      // TODO(AS): change when there's support for analysis increments
       incs.zero();
     }
 
-    // Read the state to recenter around
-    const eckit::LocalConfiguration centerConfig(fullConfig, "recentering state");
-    StateSet_ centerState(geometry, centerConfig);
+    // Read the state to recenter around if needed
+    if (fullConfig.has("recentering state")) {
+      const eckit::LocalConfiguration centerConfig(fullConfig, "recentering state");
+      StateSet_ centerState(geometry, centerConfig);
 
-    // Compute the recentering increment as the difference between
-    // the ensemble mean and the deterministic
-    Increment4D_ recenteringIncr(geometry, socaIncrVars,
-                                 centerState.times(), centerState.commTime());
-    recenteringIncr.diff(centerState, ensMean);
-    oops::Log::info() << "Recentering increment: " << recenteringIncr << std::endl;
-    oops::Log::test() << "Recentering increment: " << recenteringIncr << std::endl;
-    incs += recenteringIncr;
-    oops::Log::info() << "Increments after inflation and recentering: " << incs << std::endl;
-    oops::Log::test() << "Increments after inflation and recentering: " << incs << std::endl;
-
+      // Compute the recentering increment as the difference between
+      // the ensemble mean and the deterministic
+      Increment4D_ recenteringIncr(geometry, socaIncrVars,
+                                   centerState.times(), centerState.commTime());
+      recenteringIncr.diff(centerState, ensMean);
+      oops::Log::info() << "Recentering increment: " << recenteringIncr << std::endl;
+      oops::Log::test() << "Recentering increment: " << recenteringIncr << std::endl;
+      incs += recenteringIncr;
+      oops::Log::info() << "Increments after inflation and recentering: " << incs << std::endl;
+      oops::Log::test() << "Increments after inflation and recentering: " << incs << std::endl;
+    }
     if (fullConfig.has("increment postprocessing")) {
       const eckit::LocalConfiguration incPostprocConfig(fullConfig, "increment postprocessing");
       postprocessIncrements(incs, incPostprocConfig);
@@ -214,11 +271,11 @@ class AnalysisPostproc : public oops::Application {
     if (fullConfig.has("analysis postprocessing")) {
       for (size_t iens = 0; iens < incs.local_ens_size(); ++iens) {
         const size_t ensMember = incs.local_ens()[iens];
-        oops::Log::info() << "recentering ice state " << ensMember << ":" << ens[iens] << std::endl;
+        oops::Log::info() << "updating ice state " << ensMember << ":" << ens[iens] << std::endl;
         for (size_t itime = 0; itime < ens.local_time_size(); ++itime) {
-          ens(itime, iens) += incs[itime, iens];
+          ens(itime, iens) += incs(itime, iens);
         }
-        oops::Log::info() << "recentered ice state " << ensMember << ":" << ens[iens] << std::endl;
+        oops::Log::info() << "updated ice state " << ensMember << ":" << ens[iens] << std::endl;
         // set up variable change
         eckit::LocalConfiguration varchangeConfig(fullConfig,
           "analysis postprocessing.sea ice variable change");
