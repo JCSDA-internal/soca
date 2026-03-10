@@ -5,3 +5,6 @@ soca_target_sources(
   readNcAndInterp.h
   soca_utils.F90
 )
+
+# Include increment QC utilities
+add_subdirectory(incrqc)
