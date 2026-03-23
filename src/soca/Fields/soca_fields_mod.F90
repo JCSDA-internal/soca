@@ -23,9 +23,10 @@ use kinds, only: kind_real
 use oops_variables_mod, only: oops_variables
 
 ! MOM6 / FMS modules
-use fms_io_mod, only: register_restart_field, &
-                      restart_file_type, restore_state, free_restart_type, save_restart, &
-                      file_exist, field_exist
+use fms2_io_mod, only: open_file, close_file, &
+                      register_restart_field, FmsNetcdfDomainFile_t, &
+                      read_restart, write_restart, &
+                      variable_exists
 use MOM_remapping, only : remapping_CS, initialize_remapping, remapping_core_h, &
                           end_remapping
 use mpp_domains_mod, only : mpp_update_domains
@@ -470,8 +471,9 @@ subroutine soca_fields_read(self, f_conf, vdate)
   character(len=:), allocatable :: str, basename, filename
   integer :: iread = 0
   real(kind=kind_real), allocatable :: h_common(:,:,:)    !< layer thickness to remap to
-  type(restart_file_type) :: restart
-  integer :: d, f, i, j, k, n, idx, idr
+  type(FmsNetcdfDomainFile_t) :: restart
+  type(FmsNetcdfDomainFile_t) :: check_file
+  integer :: d, f, i, j, k, n, idx
   type(remapping_CS)  :: remapCS
   type(oops_variables) :: seaice_categories_vars
   type(varwrapper), allocatable :: vars(:)
@@ -493,10 +495,11 @@ subroutine soca_fields_read(self, f_conf, vdate)
      h_common = 0.0_kind_real
 
      ! Read common vertical coordinate from file
-     idr = register_restart_field(restart, str, 'h', h_common, &
-          domain=self%geom%Domain%mpp_domain)
-     call restore_state(restart, directory='')
-     call free_restart_type(restart)
+     if (open_file(restart, str, "read", self%geom%Domain%mpp_domain)) then
+       call register_restart_field(restart, 'h', h_common)
+       call read_restart(restart)
+       call close_file(restart)
+     end if
   end if
 
   ! Create unit increment
@@ -532,14 +535,20 @@ subroutine soca_fields_read(self, f_conf, vdate)
     compute_snowthickness = .false.
     if(f_conf%get("ice_filename", str)) then
       filename = trim(basename) // trim(str)
-      field_meta = self%geom%fields_metadata%get("sea_ice_thickness")
-      if ((.not. field_exist(filename, field_meta%io_name))) then
+      if (open_file(check_file, filename, "read", self%geom%Domain%mpp_domain)) then
+        field_meta = self%geom%fields_metadata%get("sea_ice_thickness")
+        if (.not. variable_exists(check_file, field_meta%io_name)) then
+          compute_icethickness = .true.
+        endif
+        field_meta = self%geom%fields_metadata%get("sea_ice_snow_thickness")
+        if (.not. variable_exists(check_file, field_meta%io_name)) then
+          compute_snowthickness = .true.
+        endif
+        call close_file(check_file)
+      else
         compute_icethickness = .true.
-      endif
-      field_meta = self%geom%fields_metadata%get("sea_ice_snow_thickness")
-      if ((.not. field_exist(filename, field_meta%io_name))) then
         compute_snowthickness = .true.
-      endif
+      end if
     endif
 
     ! for each separate domain, check if a filename is provided
@@ -555,6 +564,9 @@ subroutine soca_fields_read(self, f_conf, vdate)
         if (n == 0) cycle
         allocate(vars(n))
 
+        ! open the file for reading
+        if (.not. open_file(restart, filename, "read", self%geom%Domain%mpp_domain)) cycle
+
         ! for each variable, setup to read
         n = 0
         do f=1,size(self%fields)
@@ -563,7 +575,7 @@ subroutine soca_fields_read(self, f_conf, vdate)
               ! check if the file was constructed by soca or comes from the CICE history
               ! The CICE history aggregates the category and level in 1 array
               ! The SOCA io considers categories to be separate variables and will index the naming
-              if(file_exist(filename) .and. field_exist(filename, self%fields(f)%metadata%io_name)) then
+              if(variable_exists(restart, self%fields(f)%metadata%io_name)) then
               else
                 call seaice_categories_vars%push_back(self%fields(f)%name)
                 cycle
@@ -581,30 +593,26 @@ subroutine soca_fields_read(self, f_conf, vdate)
               ! ice concentration are available
               if ((self%fields(f)%metadata%name == "sea_ice_thickness") .and. compute_icethickness) then
                 field_meta = self%geom%fields_metadata%get("sea_ice_volume")
-                idr = register_restart_field(restart, filename, &
-                  field_meta%io_name, vars(n)%data(:,:,1), &
-                  domain=self%geom%Domain%mpp_domain)
+                call register_restart_field(restart, &
+                  field_meta%io_name, vars(n)%data(:,:,1))
               elseif ((self%fields(f)%metadata%name == "sea_ice_snow_thickness") .and. compute_snowthickness) then
                 field_meta = self%geom%fields_metadata%get("sea_ice_snow_volume")
-                idr = register_restart_field(restart, filename, &
-                  field_meta%io_name, vars(n)%data(:,:,1), &
-                  domain=self%geom%Domain%mpp_domain)
+                call register_restart_field(restart, &
+                  field_meta%io_name, vars(n)%data(:,:,1))
               else
-                idr = register_restart_field(restart, filename, &
-                  vars(n)%field%metadata%io_name, vars(n)%data(:,:,1), &
-                  domain=self%geom%Domain%mpp_domain)
+                call register_restart_field(restart, &
+                  vars(n)%field%metadata%io_name, vars(n)%data(:,:,1))
               endif
             else
-              idr = register_restart_field(restart, filename, &
-                vars(n)%field%metadata%io_name, vars(n)%data(:,:,:), &
-                domain=self%geom%Domain%mpp_domain)
+              call register_restart_field(restart, &
+                vars(n)%field%metadata%io_name, vars(n)%data(:,:,:))
             end if
           end if
         end do
 
         ! read
-        call restore_state(restart, directory='')
-        call free_restart_type(restart)
+        call read_restart(restart)
+        call close_file(restart)
 
         ! copy back into atlas fields, filling land with fillvalue
         do n=1,size(vars)
@@ -821,11 +829,11 @@ subroutine soca_fields_read_seaice(self, filename, seaice_categories_vars)
   type(oops_variables), intent(in) :: seaice_categories_vars
 
   type(oops_variables) :: cice_vars_cats, cice_vars_cats_levs
-  type(restart_file_type) :: restart
+  type(FmsNetcdfDomainFile_t) :: restart
   type(atlas_field) :: afield
   real(kind=kind_real), pointer :: adata(:,:)
 
-  integer :: i, j, k, f, ncat, icelevs, snowlevs, idr, cnt, io_index, idx
+  integer :: i, j, k, f, ncat, icelevs, snowlevs, cnt, io_index, idx
   real(kind=kind_real), allocatable :: tmp3d(:,:,:,:), tmp4d(:,:,:,:,:)
 
   ! check what cice variables with category dimension need to be read
@@ -836,12 +844,13 @@ subroutine soca_fields_read_seaice(self, filename, seaice_categories_vars)
   if (cice_vars_cats%nvars() > 0) then
     allocate(tmp3d(self%geom%isd:self%geom%ied,self%geom%jsd:self%geom%jed,ncat,cice_vars_cats%nvars()))
     tmp3d = 0.0_kind_real
-    do i=1,cice_vars_cats%nvars()
-      idr = register_restart_field(restart, filename, cice_vars_cats%variable(i), &
-                         tmp3d(:,:,:,i), domain=self%geom%Domain%mpp_domain)
-    end do
-    call restore_state(restart, directory='')
-    call free_restart_type(restart)
+    if (open_file(restart, filename, "read", self%geom%Domain%mpp_domain)) then
+      do i=1,cice_vars_cats%nvars()
+        call register_restart_field(restart, cice_vars_cats%variable(i), tmp3d(:,:,:,i))
+      end do
+      call read_restart(restart)
+      call close_file(restart)
+    end if
 
     ! copy the variable into the corresponding field
     cnt = 1
@@ -875,12 +884,13 @@ subroutine soca_fields_read_seaice(self, filename, seaice_categories_vars)
     allocate(tmp4d(self%geom%isd:self%geom%ied,self%geom%jsd:self%geom%jed,icelevs,&
     &ncat,cice_vars_cats_levs%nvars()))
     tmp4d = 0.0_kind_real
-    do i=1,cice_vars_cats_levs%nvars()
-      idr = register_restart_field(restart, filename, cice_vars_cats_levs%variable(i), &
-                         tmp4d(:,:,:,:,i), domain=self%geom%Domain%mpp_domain)
-    end do
-    call restore_state(restart, directory='')
-    call free_restart_type(restart)
+    if (open_file(restart, filename, "read", self%geom%Domain%mpp_domain)) then
+      do i=1,cice_vars_cats_levs%nvars()
+        call register_restart_field(restart, cice_vars_cats_levs%variable(i), tmp4d(:,:,:,:,i))
+      end do
+      call read_restart(restart)
+      call close_file(restart)
+    end if
 
     ! copy the variable into the corresponding field
     cnt = 1
@@ -919,8 +929,8 @@ subroutine soca_fields_write_rst(self, f_conf, vdate)
   type(datetime),             intent(inout) :: vdate    !< DateTime
 
   integer, parameter :: max_string_length=800
-    type(restart_file_type) :: restart
-  integer :: idr, i, j, k, idx, d, f, n
+  type(FmsNetcdfDomainFile_t) :: restart
+  integer :: i, j, k, idx, d, f, n
   type(soca_field), pointer :: field
   logical :: date_cols
 
@@ -972,22 +982,27 @@ subroutine soca_fields_write_rst(self, f_conf, vdate)
             vars(n)%data(i,j,:) = vars(n)%adata(:, idx)
         end do
       end do
-
-      ! register with restart write
-      if (vars(n)%afield%shape(1) == 1) then
-        idr = register_restart_field(restart, domain_filename, self%fields(f)%metadata%io_name, &
-            vars(n)%data(:,:,1), domain=self%geom%Domain%mpp_domain)
-      else
-        idr = register_restart_field(restart, domain_filename, self%fields(f)%metadata%io_name, &
-            vars(n)%data(:,:,:), domain=self%geom%Domain%mpp_domain)
-      end if
     end do
 
-    ! write the file
-    call save_restart(restart, directory='')
+    ! open file, register fields, write, and close
+    if (open_file(restart, domain_filename, "overwrite", self%geom%Domain%mpp_domain)) then
+      n=0
+      do f=1,size(self%fields)
+        if (self%fields(f)%metadata%io_file /= domains(d)) cycle
+        n = n + 1
+        if (vars(n)%afield%shape(1) == 1) then
+          call register_restart_field(restart, self%fields(f)%metadata%io_name, &
+              vars(n)%data(:,:,1))
+        else
+          call register_restart_field(restart, self%fields(f)%metadata%io_name, &
+              vars(n)%data(:,:,:))
+        end if
+      end do
 
-    ! cleanup
-    call free_restart_type(restart)
+      ! write the file
+      call write_restart(restart)
+      call close_file(restart)
+    end if
     do n=1,size(vars)
       deallocate(vars(n)%data)
       call vars(n)%afield%final()

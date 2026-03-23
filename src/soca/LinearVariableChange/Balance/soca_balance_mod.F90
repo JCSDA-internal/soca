@@ -6,7 +6,7 @@
 module soca_balance_mod
 
 use fckit_configuration_module, only: fckit_configuration
-use fms_mod, only: read_data
+use fms2_io_mod, only: open_file, close_file, read_data, FmsNetcdfDomainFile_t
 use kinds, only: kind_real
 use atlas_module, only: atlas_field
 
@@ -100,6 +100,7 @@ subroutine soca_balance_setup(self, f_conf, traj, geom)
   ! declarations related to the sea-ice Jacobian
   character(len=:), allocatable :: kct_name
   real(kind=kind_real), allocatable :: kct(:,:) !> dc/dT
+  type(FmsNetcdfDomainFile_t) :: fileobj
 
   self%geom => geom
 
@@ -201,7 +202,10 @@ subroutine soca_balance_setup(self, f_conf, traj, geom)
     if ( f_conf%has("dcdt") ) then
       call f_conf%get_or_die("dcdt.filename", filename)
       call f_conf%get_or_die("dcdt.name", kct_name)
-      call read_data(filename, kct_name, kct, domain=geom%Domain%mpp_domain)
+      if (open_file(fileobj, filename, "read", geom%Domain%mpp_domain)) then
+        call read_data(fileobj, kct_name, kct)
+        call close_file(fileobj)
+      end if
     end if
     allocate(self%kct(isc:iec,jsc:jec))
     self%kct = 0.0_kind_real
