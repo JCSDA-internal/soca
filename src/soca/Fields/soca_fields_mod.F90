@@ -539,17 +539,17 @@ subroutine soca_fields_read(self, f_conf, vdate)
         field_meta = self%geom%fields_metadata%get("sea_ice_thickness")
         if (.not. variable_exists(check_file, field_meta%io_name)) then
           compute_icethickness = .true.
-        endif
+        end if
         field_meta = self%geom%fields_metadata%get("sea_ice_snow_thickness")
         if (.not. variable_exists(check_file, field_meta%io_name)) then
           compute_snowthickness = .true.
-        endif
+        end if
         call close_file(check_file)
       else
         compute_icethickness = .true.
         compute_snowthickness = .true.
       end if
-    endif
+    end if
 
     ! for each separate domain, check if a filename is provided
     do d=1, size(domains)
