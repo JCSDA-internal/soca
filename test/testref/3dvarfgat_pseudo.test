@@ -6,13 +6,13 @@ CostJo   : Nonlinear Jo(InsituSalinity) = 3.4895676887828688e+02, nobs = 218, Jo
 CostJb   : Nonlinear Jb = 0.0000000000000000e+00
 CostFunction: Nonlinear J = 2.5418077792699351e+03
 RPCGMinimizer: reduction in residual norm = 3.3056809004091298e-01
-CostFunction::addIncrement: Analysis: 
+CostFunction::addIncrement: Analysis:
   Valid time: 2018-04-15T12:00:00Z
              sea_water_salinity   min=10.7132817362146326   max=40.4415405959888474   mean=34.5494877391536193
 sea_water_potential_temperature   min=-2.3574941959480404   max=31.8539272915280733   mean=6.0049179458345963
  sea_surface_height_above_geoid   min=-2.6984061510982964   max=0.8904728887277241   mean=-0.3024175997648210
        sea_water_cell_thickness   min=0.0009999999999977   max=1345.6400000000003274   mean=128.6278664059154266
-    eastward_sea_water_velocity   min=-0.8217266202857787   max=0.6741132580315298   mean=-0.0001265330623350
+    eastward_sea_water_velocity   min=-0.8217266202861658   max=0.6741132581398557   mean=-0.0001266767460984
    northward_sea_water_velocity   min=-0.7150726445485753   max=0.8318230642524267   mean=0.0002345795287567
     ocean_mixed_layer_thickness   min=2.2813178084061341   max=4593.1766618052424747   mean=190.6540382333281798
                 sea_water_depth   min=2.2813178084061341   max=5658.2956094113160361   mean=1210.8412378177554274

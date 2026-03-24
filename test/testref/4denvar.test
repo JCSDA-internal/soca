@@ -2,7 +2,7 @@ CostJo   : Nonlinear Jo(SeaSufaceTemp) = 1.8768534434806625e+03, nobs = 199, Jo/
 CostJb   : Nonlinear Jb = 0.0000000000000000e+00
 CostFunction: Nonlinear J = 1.8768534434806625e+03
 RPCGMinimizer: reduction in residual norm = 1.2679190100581311e-01
-CostFunction::addIncrement: Analysis: 
+CostFunction::addIncrement: Analysis:
   Valid time: 2018-04-15T00:00:00Z
              sea_water_salinity   min=10.7210460395083924   max=40.4416591897031168   mean=34.5443897261525663
 sea_water_potential_temperature   min=-4.2306339364188927   max=31.7004645720658580   mean=6.0168448360940037
@@ -43,6 +43,6 @@ sea_water_potential_temperature   min=-1.8873518533878435   max=32.0053669409463
  sea_surface_height_above_geoid   min=-1.8807951113098680   max=0.9204630980548257   mean=-0.2913599022336393
        sea_water_cell_thickness   min=0.0009999999999970   max=1345.6400000000005548   mean=128.6274736666555043
                 sea_water_depth   min=2.2725518375471032   max=5658.3096257522192900   mean=1210.8216883241207142
-CostJo   : Nonlinear Jo(SeaSufaceTemp) = 500.2618957377561628, nobs = 199, Jo/n = 2.5138788730540509, err = 0.3641999199702058
+CostJo   : Nonlinear Jo(SeaSufaceTemp) = 500.2607133263549031, nobs = 199, Jo/n = 2.5138729312882155, err = 0.3641999199702058
 CostJb   : Nonlinear Jb = 270.3115206880750065
 CostFunction: Nonlinear J = 770.5734164258311694
