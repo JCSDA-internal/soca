@@ -746,8 +746,9 @@ subroutine soca_fields_read(self, f_conf, vdate)
           do i=self%geom%isc, self%geom%iec
             idx = self%geom%atlas_ij2idx(i,j)
             remap_this_point = .not. associated(self%fields(n)%mask)
-            if (associated(self%fields(n)%mask)) &
+            if (associated(self%fields(n)%mask)) then
               remap_this_point = self%fields(n)%mask(i,j) .gt. 0.0
+            end if
             if (remap_this_point) then
               h_common_ij(:) = h_common(i,j,:)
               hocn_ij(:) = adata1(:, idx)
