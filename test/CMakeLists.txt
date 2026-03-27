@@ -20,8 +20,6 @@ set( soca_test_input
   testinput/3dvar_moreice.yml
   testinput/3dvar_lowres.yml
   testinput/3dvar_nicas.yml
-  testinput/3dvar_single_ob.yml
-  testinput/3dvar_zero_ob.yml
   testinput/3dvar.yml
   testinput/3dvar_diffmlb.yml
   testinput/3dvarfgat_pseudo.yml
@@ -47,10 +45,6 @@ set( soca_test_input
   testinput/dirac_socahyb_cov.yml
   testinput/ensanpproc.yml
   testinput/ensanpproc_ensda.yml
-  testinput/enshofx_1.yml
-  testinput/enshofx_2.yml
-  testinput/enshofx_3.yml
-  testinput/enshofx.yml
   testinput/ensmeanandvariance.yml
   testinput/enspert.yml
   testinput/ensrecenter.yml
@@ -80,7 +74,6 @@ set( soca_test_input
   testinput/linearmodel_oceaniceemulator.yml
   testinput/makeobs.yml
   testinput/model.yml
-  testinput/obslocalization_vertical.yml
   testinput/obslocalization.yml
   testinput/obslocalizations.yml
   testinput/obsop_name_map.yml
@@ -107,8 +100,6 @@ set( soca_test_ref
   testref/3dvar_diffmlb.test
   testref/3dvar_lowres.test
   testref/3dvar_nicas.test
-  testref/3dvar_single_ob.test
-  testref/3dvar_zero_ob.test
   testref/3dvar.test
   testref/3dvar_moreice.test
   testref/3dvarfgat_pseudo.test
@@ -133,7 +124,6 @@ set( soca_test_ref
   testref/dirac_socahyb_cov.test
   testref/ensanpproc.test
   testref/ensanpproc_ensda.test
-  testref/enshofx.test
   testref/ensmeanandvariance.test
   testref/enspert.test
   testref/ensrecenter.test
@@ -432,12 +422,6 @@ soca_add_test( NAME obslocalization
                SRC  TestObsLocalization.cc
                TEST_DEPENDS test_soca_gridgen )
 
-## vertical localization is not working right now. h was removed from the
-## geometry (it is part of the state), so we need to rethink how the
-## geometryiterator works in the vertical
-# soca_add_test( NAME obslocalization_vertical
-#                SRC  TestObsLocalization.cc )
-
 soca_add_test( NAME obslocalizations
                SRC  TestObsLocalizations.cc )
 
@@ -460,12 +444,12 @@ soca_add_test( NAME forecast_mom6
                SCRIPT mom6solo.py )
 
 # # Test mom6_bgc forecast (optional)
-# if ( ENABLE_OCEAN_BGC )
-# soca_add_test( NAME forecast_mom6_bgc
-#                EXE  soca_forecast.x
-#                NOTRAPFPE
-#                TEST_DEPENDS test_soca_gridgen )
-# endif()
+if ( ENABLE_OCEAN_BGC )
+ soca_add_test( NAME forecast_mom6_bgc
+                EXE  soca_forecast.x
+                NOTRAPFPE
+                TEST_DEPENDS test_soca_gridgen )
+endif()
 
 # Test PseudoModel forecast
 soca_add_test( NAME forecast_pseudo
@@ -671,46 +655,20 @@ soca_add_test( NAME hofx_4d_pseudo
                TEST_DEPENDS test_soca_gridgen
                             test_soca_forecast_mom6 )
 
-# NOTE, enshofx is disabled because MOM6 always writes out some diagnostic
-# netcdf files (which can't be disabled). This is normally not a problem, except
-# with enshofx, because multiple instances of MOM6 are started under separate
-# MPI_COMMs, causing problems when they all try to write to the same file at the
-# same time. We'll need to take a closer look at MOM6 output when we start
-# dealing with in-core MOM6
-
-# soca_add_test( NAME enshofx
-#                EXE  soca_enshofx.x
-#                MPI 3
-#                NOTRAPFPE
-#                TEST_DEPENDS test_soca_gridgen )
-
-
 # variational methods
 # (unless specifically specified, it is assumed that correlation uses
 #  EXPLICIT_DIFFUSION, and localization uses BUMP_NICAS )
 #---------------------------------------------------------------------------------------------------
-
-# # Following test does not work yet. IODA crashes
-# soca_add_test( NAME 3dvar_zero_ob
-#                EXE  soca_var.x
-#                NOTRAPFPE
-#                TEST_DEPENDS test_soca_static_socaerror_init )
-
-# # Following test is breaking on intel 2022, beyond 1 iteration solver produces NaNs
-# soca_add_test( NAME 3dvar_single_ob
-#                EXE  soca_var.x
-#                NOTRAPFPE
-#                TEST_DEPENDS test_soca_gridgen )
 
 soca_add_test( NAME 3dvar
                EXE  soca_var.x
                TEST_DEPENDS test_soca_gridgen
                             test_soca_parameters_diffusion )
 
- soca_add_test( NAME 3dvar_moreice
-                EXE  soca_var.x
-                TEST_DEPENDS test_soca_gridgen
-                             test_soca_parameters_diffusion )
+soca_add_test( NAME 3dvar_moreice
+               EXE  soca_var.x
+               TEST_DEPENDS test_soca_gridgen
+                            test_soca_parameters_diffusion )
 
 soca_add_test( NAME 3dvar_nicas
                EXE  soca_var.x
