@@ -42,7 +42,7 @@ jobs:
         with:
           container_version: 'latest'
           unittest_tag: 'soca'
-          unittest_dependencies: gsw ioda ioda-data oasim oops saber ufo ufo-data vader jedi-model-data
+          test_dependencies: gsw ioda ioda-data oasim oops saber ufo ufo-data vader jedi-model-data
           test_script: run_tests.sh
           target_repo_dir: target_repository
           bundle_branch: develop

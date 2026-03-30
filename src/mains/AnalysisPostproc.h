@@ -31,6 +31,7 @@
 
 #include "soca/Geometry/FmsInput.h"
 #include "soca/Traits.h"
+#include "soca/Utils/incrqc/include/soca_incr_qc.h"
 
 namespace soca {
 
@@ -256,7 +257,7 @@ class AnalysisPostproc : public oops::Application {
     }
     if (fullConfig.has("increment postprocessing")) {
       const eckit::LocalConfiguration incPostprocConfig(fullConfig, "increment postprocessing");
-      postprocessIncrements(incs, incPostprocConfig);
+      postprocessIncrements(ens, incs, incPostprocConfig);
       oops::Log::info() << "Increments after inflation and recentering and postprocessing: "
                         << incs << std::endl;
       oops::Log::test() << "Increments after inflation and recentering and postprocessing: "
@@ -293,7 +294,8 @@ class AnalysisPostproc : public oops::Application {
   }
 
  private:
-  void postprocessIncrements(IncrementSet_ & incs,
+  void postprocessIncrements(StateSet_ & ens,
+                             IncrementSet_ & incs,
                              const eckit::Configuration & incPostprocConfig) const {
     // Add vertical geometry for MOM6 IAU
     if (incPostprocConfig.has("append vertical geometry")) {
@@ -347,6 +349,20 @@ class AnalysisPostproc : public oops::Application {
           }
         }
         incs[jj].synchronizeFields();
+      }
+    }
+    // Keep the increments within specified bounds if needed
+    if (incPostprocConfig.has("bounds check")) {
+      const eckit::LocalConfiguration boundsConfig(incPostprocConfig, "bounds check");
+
+      // Apply QC to each ensemble member's increment
+      for (size_t iens = 0; iens < incs.local_ens_size(); ++iens) {
+        for (size_t itime = 0; itime < incs.local_time_size(); ++itime) {
+          oops::Log::info() << "Applying increment QC to ensemble member "
+                            << incs.local_ens()[iens] << " at time " << itime << std::endl;
+          soca::incrqc::qcIncrement(ens(itime, iens).state(), incs(itime, iens).increment(),
+                                     boundsConfig, incs.geometry().geometry());
+        }
       }
     }
   }
