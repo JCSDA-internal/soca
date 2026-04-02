@@ -52,6 +52,7 @@ cost function:
     - sea_water_depth
 
   background error:
+    full inverse: true
     covariance model: SABER
     saber central block:
       saber block name: diffusion

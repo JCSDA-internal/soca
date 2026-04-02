@@ -21,5 +21,5 @@ CostJo   : Nonlinear Jo(SeaSurfaceSalinity) = 46.9330495529855583, nobs = 50, Jo
 CostJo   : Nonlinear Jo(ADT) = 82.2554700491828896, nobs = 94, Jo/n = 0.8750581920125839, err = 0.1000000014901161
 CostJo   : Nonlinear Jo(InsituTemperature) = 364.1365038607749511, nobs = 206, Jo/n = 1.7676529313629852, err = 0.8991441572394548
 CostJo   : Nonlinear Jo(InsituSalinity) = 58.4283558070863904, nobs = 218, Jo/n = 0.2680199807664513, err = 0.6081969954577753
-CostJb   : Nonlinear Jb = 28.9887911055684242
-CostFunction: Nonlinear J = 1070.9592406972394656
+CostJb   : Nonlinear Jb = 29.0442063676153452
+CostFunction: Nonlinear J = 1071.0149672573315911
