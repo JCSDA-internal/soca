@@ -985,10 +985,10 @@ subroutine soca_fields_write_rst(self, f_conf, vdate)
         n = n + 1
         if (vars(n)%afield%shape(1) == 1) then
           call register_restart_field(restart, self%fields(f)%metadata%io_name, &
-              vars(n)%data(:,:,1))
+              vars(n)%data(:,:,1), ["xaxis_1", "yaxis_1"])
         else
           call register_restart_field(restart, self%fields(f)%metadata%io_name, &
-              vars(n)%data(:,:,:))
+              vars(n)%data(:,:,:), ["xaxis_1", "yaxis_1", "zaxis_1"])
         end if
       end do
 
