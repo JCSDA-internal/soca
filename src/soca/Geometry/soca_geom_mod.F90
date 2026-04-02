@@ -17,9 +17,9 @@ use type_fieldset, only: fieldset_type
 
 ! mom6 / fms modules
 use fms_mod, only : fms_init, fms_end
-use fms2_io_mod, only : open_file, close_file, &
+use fms2_io_mod, only : open_file, close_file, read_data, &
                        register_restart_field, FmsNetcdfDomainFile_t, &
-                       read_restart, write_restart
+                       write_restart
 use MOM, only : MOM_control_struct, initialize_MOM, MOM_end, get_MOM_state_elements
 use MOM_restart, only :MOM_restart_CS ! NOTE remove this when updating MOM6
 use MOM_domains, only : MOM_domain_type, MOM_domains_init, MOM_infra_init, MOM_infra_end
@@ -233,25 +233,24 @@ subroutine soca_geom_init(self, f_conf, f_comm, gen)
     ! once the altas FunctionSpace has been created.
     if (.not. f_conf%get("geom_grid_file", str)) str = "soca_gridspec.nc"
     if (open_file(geom_restart, str, "read", self%Domain%mpp_domain)) then
-      call register_restart_field(geom_restart, "lonh",    self%lonh)
-      call register_restart_field(geom_restart, "lath",    self%lath)
-      call register_restart_field(geom_restart, "lonq",    self%lonq)
-      call register_restart_field(geom_restart, "latq",    self%latq)
-      call register_restart_field(geom_restart, "lon",     self%lon)
-      call register_restart_field(geom_restart, "lat",     self%lat)
-      call register_restart_field(geom_restart, "lonu",    self%lonu)
-      call register_restart_field(geom_restart, "latu",    self%latu)
-      call register_restart_field(geom_restart, "lonv",    self%lonv)
-      call register_restart_field(geom_restart, "latv",    self%latv)
-      call register_restart_field(geom_restart, "sin_rot", self%sin_rot)
-      call register_restart_field(geom_restart, "cos_rot", self%cos_rot)
-      call register_restart_field(geom_restart, "dx",      self%dx)
-      call register_restart_field(geom_restart, "dy",      self%dy)
-      call register_restart_field(geom_restart, "area",    self%cell_area)
-      call register_restart_field(geom_restart, "mask2d",  self%mask2d)
-      call register_restart_field(geom_restart, "mask2du", self%mask2du)
-      call register_restart_field(geom_restart, "mask2dv", self%mask2dv)
-      call read_restart(geom_restart)
+      call read_data(geom_restart, "lonh",    self%lonh)
+      call read_data(geom_restart, "lath",    self%lath)
+      call read_data(geom_restart, "lonq",    self%lonq)
+      call read_data(geom_restart, "latq",    self%latq)
+      call read_data(geom_restart, "lon",     self%lon)
+      call read_data(geom_restart, "lat",     self%lat)
+      call read_data(geom_restart, "lonu",    self%lonu)
+      call read_data(geom_restart, "latu",    self%latu)
+      call read_data(geom_restart, "lonv",    self%lonv)
+      call read_data(geom_restart, "latv",    self%latv)
+      call read_data(geom_restart, "sin_rot", self%sin_rot)
+      call read_data(geom_restart, "cos_rot", self%cos_rot)
+      call read_data(geom_restart, "dx",      self%dx)
+      call read_data(geom_restart, "dy",      self%dy)
+      call read_data(geom_restart, "area",    self%cell_area)
+      call read_data(geom_restart, "mask2d",  self%mask2d)
+      call read_data(geom_restart, "mask2du", self%mask2du)
+      call read_data(geom_restart, "mask2dv", self%mask2dv)
       call close_file(geom_restart)
     end if
   endif
@@ -436,9 +435,8 @@ subroutine soca_geom_init_fieldset(self, f_conf, gen)
     ! read in from gridspec file
     if (open_file(geom_restart, str, "read", self%Domain%mpp_domain)) then
       do v = 1, size(atlasVars)
-        call register_restart_field(geom_restart, atlasVars(v), fieldDataVars(:,:,v))
+        call read_data(geom_restart, atlasVars(v), fieldDataVars(:,:,v))
       end do
-      call read_restart(geom_restart)
       call close_file(geom_restart)
     end if
 
@@ -639,7 +637,7 @@ subroutine soca_geom_write(self, f_conf)
     end do
   end do
 
-  if (open_file(geom_restart, str, "overwrite", self%Domain%mpp_domain)) then
+  if (open_file(geom_restart, str, "overwrite", self%Domain%mpp_domain, is_restart=.true.)) then
     call register_restart_field(geom_restart, "lonh",    self%lonh)
     call register_restart_field(geom_restart, "lath",    self%lath)
     call register_restart_field(geom_restart, "lonq",    self%lonq)

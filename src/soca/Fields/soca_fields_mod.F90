@@ -23,10 +23,9 @@ use kinds, only: kind_real
 use oops_variables_mod, only: oops_variables
 
 ! MOM6 / FMS modules
-use fms2_io_mod, only: open_file, close_file, &
+use fms2_io_mod, only: open_file, close_file, read_data, &
                       register_restart_field, FmsNetcdfDomainFile_t, &
-                      read_restart, write_restart, &
-                      variable_exists
+                      write_restart, variable_exists
 use MOM_remapping, only : remapping_CS, initialize_remapping, remapping_core_h, &
                           end_remapping
 use mpp_domains_mod, only : mpp_update_domains
@@ -496,8 +495,7 @@ subroutine soca_fields_read(self, f_conf, vdate)
 
      ! Read common vertical coordinate from file
      if (open_file(restart, str, "read", self%geom%Domain%mpp_domain)) then
-       call register_restart_field(restart, 'h', h_common)
-       call read_restart(restart)
+       call read_data(restart, 'h', h_common)
        call close_file(restart)
      end if
   end if
@@ -567,7 +565,7 @@ subroutine soca_fields_read(self, f_conf, vdate)
         ! open the file for reading
         if (.not. open_file(restart, filename, "read", self%geom%Domain%mpp_domain)) cycle
 
-        ! for each variable, setup to read
+        ! for each variable, read data
         n = 0
         do f=1,size(self%fields)
           if (self%fields(f)%metadata%io_file == domains(d)) then
@@ -593,25 +591,22 @@ subroutine soca_fields_read(self, f_conf, vdate)
               ! ice concentration are available
               if ((self%fields(f)%metadata%name == "sea_ice_thickness") .and. compute_icethickness) then
                 field_meta = self%geom%fields_metadata%get("sea_ice_volume")
-                call register_restart_field(restart, &
-                  field_meta%io_name, vars(n)%data(:,:,1))
+                call read_data(restart, field_meta%io_name, vars(n)%data(:,:,1))
               elseif ((self%fields(f)%metadata%name == "sea_ice_snow_thickness") .and. compute_snowthickness) then
                 field_meta = self%geom%fields_metadata%get("sea_ice_snow_volume")
-                call register_restart_field(restart, &
-                  field_meta%io_name, vars(n)%data(:,:,1))
+                call read_data(restart, field_meta%io_name, vars(n)%data(:,:,1))
               else
-                call register_restart_field(restart, &
+                call read_data(restart, &
                   vars(n)%field%metadata%io_name, vars(n)%data(:,:,1))
-              endif
+              end if
             else
-              call register_restart_field(restart, &
+              call read_data(restart, &
                 vars(n)%field%metadata%io_name, vars(n)%data(:,:,:))
             end if
           end if
         end do
 
-        ! read
-        call read_restart(restart)
+        ! close file
         call close_file(restart)
 
         ! copy back into atlas fields, filling land with fillvalue
@@ -846,9 +841,8 @@ subroutine soca_fields_read_seaice(self, filename, seaice_categories_vars)
     tmp3d = 0.0_kind_real
     if (open_file(restart, filename, "read", self%geom%Domain%mpp_domain)) then
       do i=1,cice_vars_cats%nvars()
-        call register_restart_field(restart, cice_vars_cats%variable(i), tmp3d(:,:,:,i))
+        call read_data(restart, cice_vars_cats%variable(i), tmp3d(:,:,:,i))
       end do
-      call read_restart(restart)
       call close_file(restart)
     end if
 
@@ -886,9 +880,8 @@ subroutine soca_fields_read_seaice(self, filename, seaice_categories_vars)
     tmp4d = 0.0_kind_real
     if (open_file(restart, filename, "read", self%geom%Domain%mpp_domain)) then
       do i=1,cice_vars_cats_levs%nvars()
-        call register_restart_field(restart, cice_vars_cats_levs%variable(i), tmp4d(:,:,:,:,i))
+        call read_data(restart, cice_vars_cats_levs%variable(i), tmp4d(:,:,:,:,i))
       end do
-      call read_restart(restart)
       call close_file(restart)
     end if
 
@@ -985,7 +978,7 @@ subroutine soca_fields_write_rst(self, f_conf, vdate)
     end do
 
     ! open file, register fields, write, and close
-    if (open_file(restart, domain_filename, "overwrite", self%geom%Domain%mpp_domain)) then
+    if (open_file(restart, domain_filename, "overwrite", self%geom%Domain%mpp_domain, is_restart=.true.)) then
       n=0
       do f=1,size(self%fields)
         if (self%fields(f)%metadata%io_file /= domains(d)) cycle
