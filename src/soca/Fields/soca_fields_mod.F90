@@ -478,7 +478,7 @@ subroutine soca_fields_read(self, f_conf, vdate)
   type(atlas_field) :: afield1, afield2, afield3, afield4
   real(kind=kind_real), pointer :: adata1(:,:), adata2(:,:), adata3(:,:), adata4(:,:)
   real(kind=kind_real), allocatable :: h_common_ij(:), hocn_ij(:), varocn_ij(:), varocn2_ij(:)
-  logical :: compute_icethickness, compute_snowthickness
+  logical :: compute_icethickness, compute_snowthickness, remap_this_point
 
   character(len=3), dimension(5) :: domains
   type(soca_field_metadata) :: field_meta
@@ -613,8 +613,12 @@ subroutine soca_fields_read(self, f_conf, vdate)
           do j=self%geom%jsc, self%geom%jec
             do i=self%geom%isc, self%geom%iec
               idx = self%geom%atlas_ij2idx(i,j)
-              if( associated(vars(n)%field%mask) .and. vars(n)%field%mask(i,j) == 0 ) then
-                vars(n)%adata(:, idx) = vars(n)%field%metadata%fillvalue
+              if (associated(vars(n)%field%mask)) then
+                if (vars(n)%field%mask(i,j) == 0) then
+                  vars(n)%adata(:, idx) = vars(n)%field%metadata%fillvalue
+                else
+                  vars(n)%adata(:, idx) = vars(n)%data(i,j,:)
+                end if
               else
                 vars(n)%adata(:, idx) = vars(n)%data(i,j,:)
               end if
@@ -741,7 +745,11 @@ subroutine soca_fields_read(self, f_conf, vdate)
         do j=self%geom%jsc, self%geom%jec
           do i=self%geom%isc, self%geom%iec
             idx = self%geom%atlas_ij2idx(i,j)
-            if (.not. associated(self%fields(n)%mask) .or. self%fields(n)%mask(i,j) .gt. 0.0) then
+            remap_this_point = .not. associated(self%fields(n)%mask)
+            if (associated(self%fields(n)%mask)) then
+              remap_this_point = self%fields(n)%mask(i,j) .gt. 0.0
+            end if
+            if (remap_this_point) then
               h_common_ij(:) = h_common(i,j,:)
               hocn_ij(:) = adata1(:, idx)
               varocn_ij(:) = adata2(:, idx)
@@ -968,8 +976,10 @@ subroutine soca_fields_write_rst(self, f_conf, vdate)
       do j=self%geom%jsc, self%geom%jec
         do i=self%geom%isc, self%geom%iec
           idx = self%geom%atlas_ij2idx(i,j)
-          if (associated(self%fields(f)%mask) .and. self%fields(f)%mask(i,j) == 0) cycle
-            vars(n)%data(i,j,:) = vars(n)%adata(:, idx)
+          if (associated(self%fields(f)%mask)) then
+            if (self%fields(f)%mask(i,j) == 0) cycle
+          end if
+          vars(n)%data(i,j,:) = vars(n)%adata(:, idx)
         end do
       end do
 
