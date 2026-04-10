@@ -109,27 +109,6 @@ void LinearVariableChange::changeVarTL(Increment & dx,
 
 // -----------------------------------------------------------------------------
 
-void LinearVariableChange::changeVarInverseTL(Increment & dx,
-                                              const oops::Variables & vars) const {
-  Log::trace() << "LinearVariableChange::multiplyInverse starting"
-               << vars << std::endl;
-
-  // Create output state
-  Increment dxout(dx.geometry(), vars, dx.validTime());
-
-  // Call variable change(s)
-  for (ircst_ it = linVarChas_.rbegin(); it != linVarChas_.rend(); ++it) {
-    dxout.zero();
-    it->multiplyInverse(dx, dxout);
-    dx.updateFields(vars);
-    dx = dxout;
-  }
-
-  Log::trace() << "LinearVariableChange::multiplyInverse done" << std::endl;
-}
-
-// -----------------------------------------------------------------------------
-
 void LinearVariableChange::changeVarAD(Increment & dx,
                                        const oops::Variables & vars) const {
   Log::trace() << "LinearVariableChange::multiplyAD starting" << std::endl;
@@ -144,27 +123,6 @@ void LinearVariableChange::changeVarAD(Increment & dx,
   }
 
   Log::trace() << "LinearVariableChange::multiplyAD done" << std::endl;
-}
-
-// -----------------------------------------------------------------------------
-
-void LinearVariableChange::changeVarInverseAD(Increment & dx,
-                                              const oops::Variables & vars) const {
-  Log::trace() << "LinearVariableChange::multiplyInverseAD starting"
-               << std::endl;
-
-  // Create output state
-  Increment dxout(dx.geometry(), vars, dx.validTime());
-
-  // Call variable change(s)
-  for (icst_ it = linVarChas_.begin(); it != linVarChas_.end(); ++it) {
-    dxout.zero();
-    it->multiplyInverseAD(dx, dxout);
-    dx.updateFields(vars);
-    dx = dxout;
-  }
-
-  Log::trace() << "LinearVariableChange::multiplyInverseAD done" << std::endl;
 }
 
 // -----------------------------------------------------------------------------

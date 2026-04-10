@@ -58,9 +58,7 @@ class LinearVariableChangeBase : public util::Printable,
   LinearVariableChangeBase() {}
   virtual ~LinearVariableChangeBase() {}
   virtual void multiply(const Increment &, Increment &) const = 0;
-  virtual void multiplyInverse(const Increment &, Increment &) const = 0;
   virtual void multiplyAD(const Increment &, Increment &) const = 0;
-  virtual void multiplyInverseAD(const Increment &, Increment &) const = 0;
 
  private:
   virtual void print(std::ostream &) const = 0;

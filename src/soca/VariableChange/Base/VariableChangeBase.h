@@ -56,7 +56,6 @@ class VariableChangeBase : public util::Printable, private boost::noncopyable {
   virtual ~VariableChangeBase() {}
 
   virtual void changeVar(const State &, State &) const = 0;
-  virtual void changeVarInverse(const State &, State &) const = 0;
 
   virtual const std::string classname() = 0;
 
