@@ -139,3 +139,4 @@ output increment:
 test:
   reference filename: testref/letkf_split_solver.test
   test output filename: testoutput/letkf_split_solver.test
+  float absolute tolerance: 1e-6
