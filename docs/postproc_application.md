@@ -57,7 +57,7 @@ analysis increments:
       ocn_filename: <incr>.%mem%.nc
 ```
 
-### Inflation in Regime 2 (detailed)
+### Inflation in Regime 2
 
 When `analysis increments` and `ensemble inflation` are present, inflation is
 applied directly to those increments before recentering/postprocessing,
@@ -174,14 +174,14 @@ analysis postprocessing:
 
 1. **Recenter + postprocess ensemble backgrounds**
    - Use Regimes 1 + 3 + 4 + 5.
-   - Omit `analysis increments`.
+   - Omit `analysis increments`, include `recentering state`.
 
 2. **Recenter + postprocess ensemble analyses**
    - Use Regimes 2 + 3 + 4 + 5.
-   - Include `analysis increments`.
+   - Include `analysis increments` and `recentering state`.
 
 3. **Postprocess ensemble analyses only**
-   - Use Regimes 2 + 5 (and optionally 4).
+   - Use Regimes 2 + 3 + 5.
    - Omit `recentering state`.
 
 ## Run
