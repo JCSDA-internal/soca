@@ -126,6 +126,9 @@ What the code does (in this order):
 3. `change precision`: rounds selected variables to configured precision.
 4. `bounds check`: runs `soca::incrqc::qcIncrement` member-by-member.
 
+For details of `bounds check` options and behavior, see
+[`soca::incrqc` documentation](../src/soca/Utils/incrqc/README.md).
+
 A sample yaml:
 
 ```yaml
@@ -135,13 +138,24 @@ increment postprocessing:
     vertical geometry:
       basename: <geom_dir>/
       ocn_filename: MOM.res.nc
-  set increment variables to zero: [eastward_sea_water_velocity]
+  set increment variables to zero:
+  - eastward_sea_water_velocity
+  - northward_sea_water_velocity
   change precision:
     variables: [sea_water_salinity]
     precision: 1.0e-5
+  # Keep the analysis within physical bounds
   bounds check:
     state bounds:
+      sea_water_potential_temperature: [-2.5, 36.0]
       sea_water_salinity: [0.0, 44.0]
+    absolute steric increment max: 0.5
+    steric variable change:
+      linear variable changes:
+      - linear variable change name: BalanceSOCA
+    coastal increment filter:
+      min distance: 0.0       # [m] zero increments at the coast
+      max distance: 200000.0  # [m] full increments beyond 200 km from coast
 ```
 
 ## Regime 5: analysis sea-ice postprocessing regime

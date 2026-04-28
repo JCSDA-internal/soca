@@ -24,14 +24,9 @@ See the [JEDI Documentation](https://jointcenterforsatellitedataassimilation-jed
 
 ## Documentation
 
-- [README.md](README.md): build/setup overview for SOCA.
 - [docs/postproc_application.md](docs/postproc_application.md): YAML setup for `soca_anpproc.x`
-	and `soca_postproc.x` post-processing workflows.
-- [RELEASE_NOTES.md](RELEASE_NOTES.md): SOCA release notes.
-- [.github/contributing.md](.github/contributing.md): development and contribution guidance.
-- [external/README.md](external/README.md): notes on MOM6/Icepack external dependencies.
+	ensemble post-processing workflow.
 - [src/soca/VariableChange/Soca2Cice/README.md](src/soca/VariableChange/Soca2Cice/README.md):
 	sea-ice analysis post-processing details for CICE.
 - [src/soca/Utils/incrqc/README.md](src/soca/Utils/incrqc/README.md): increment quality-control
 	algorithm and configuration details.
-- [src/soca/SaberBlocks/README.md](src/soca/SaberBlocks/README.md): notes on SOCA SABER blocks.
