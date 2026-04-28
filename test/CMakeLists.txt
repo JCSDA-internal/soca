@@ -816,3 +816,34 @@ soca_add_test( NAME soca2cice_new
               NOTRAPFPE
               TEST_DEPENDS test_soca_gridgen
                            test_soca_3dvar )
+
+file(COPY ${CMAKE_CURRENT_BINARY_DIR}/data_static/72x35x25/restarts/iced.2018-04-15-00000.nc
+     DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/data_generated/soca2cice_new_rebin/ )
+soca_add_test( NAME soca2cice_new_rebin
+              EXE  soca_postproc.x
+              MPI 2
+              NOTRAPFPE
+              TEST_DEPENDS test_soca_gridgen
+                           test_soca_3dvar )
+
+file(COPY ${CMAKE_CURRENT_BINARY_DIR}/data_static/72x35x25/restarts/iced.2018-04-15-00000.nc
+     DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/data_generated/soca2cice_new_freeboard/ )
+soca_add_test( NAME soca2cice_new_freeboard
+              EXE  soca_postproc.x
+              MPI 2
+              NOTRAPFPE
+              TEST_DEPENDS test_soca_gridgen
+                           test_soca_3dvar )
+
+# Pure-C++ unit test for the per-column ice physics helpers
+# (adjustThicknessCategories, enforceFreeboard). No YAML / MPI / Geometry needed.
+ecbuild_add_test( TARGET  test_soca_icephysics
+                  SOURCES executables/TestIcePhysics.cc
+                  LIBS    soca )
+
+# CiceRestartIO unit tests (round-trip, selective overwrite, ncat mismatch).
+soca_add_test( NAME cice_restart_io
+              SRC  TestCiceRestartIO.cc
+              MPI 2
+              NOTRAPFPE
+              TEST_DEPENDS test_soca_gridgen )

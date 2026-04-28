@@ -9,6 +9,7 @@
 
 #include <memory>
 #include <string>
+#include <vector>
 
 #include "atlas/array.h"
 #include "atlas/util/KDTree.h"
@@ -61,6 +62,44 @@ class PostProcessIce: public util::Printable {
   };
 
   // ---------------------------------------------------------------------------
+  /// @brief Parameters for re-binning the ice thickness distribution after
+  /// rescale, so that each category's mean thickness is inside its bin.
+  class ITDParameters : public oops::Parameters {
+    OOPS_CONCRETE_PARAMETERS(ITDParameters, oops::Parameters)
+   public:
+    oops::Parameter<bool> rebin{"rebin",
+      "If true, re-bin ice thickness categories so that hin = vicen/aicen "
+      "is inside [hicat[k], hicat[k+1]] for every category.", false, this};
+    oops::Parameter<std::vector<double>> hicat{"category bounds",
+      "Lower edges of CICE thickness categories plus the upper edge of the "
+      "thickest category. Length must equal ncat+1.",
+      {0.0, 0.6445072, 1.391433, 2.470179, 4.567288, 9.333887}, this};
+    oops::Parameter<double> dhiMin{"min thickness gap",
+      "Minimum gap from category bounds enforced during re-binning (m).",
+      0.01, this, {oops::minConstraint(0.0)}};
+  };
+
+  // ---------------------------------------------------------------------------
+  /// @brief Parameters for the snow / ice freeboard enforcement step. After
+  /// snow has been redistributed, each category should satisfy the hydrostatic
+  /// balance rho_ice*hi + rho_snow*hs <= rho_ocean*(hi+hs). Snow is first
+  /// redistributed across categories; if any cat is still flooded, ice volume
+  /// is grown to lift the snow-ice interface back to sea level.
+  class FreeboardParameters : public oops::Parameters {
+    OOPS_CONCRETE_PARAMETERS(FreeboardParameters, oops::Parameters)
+   public:
+    oops::Parameter<bool> enforce{"enforce",
+      "If true, run the freeboard enforcement pass after the ITD rebin.",
+      false, this};
+    oops::Parameter<double> rhoIce{"rho ice",
+      "Sea ice density (kg/m^3)", 917.0, this, {oops::minConstraint(0.0)}};
+    oops::Parameter<double> rhoSnow{"rho snow",
+      "Snow density (kg/m^3)",   330.0, this, {oops::minConstraint(0.0)}};
+    oops::Parameter<double> rhoOcean{"rho ocean",
+      "Ocean density (kg/m^3)", 1025.0, this, {oops::minConstraint(0.0)}};
+  };
+
+  // ---------------------------------------------------------------------------
   /// @brief Parameters for adding soca increment to CICE restart files
   class Parameters : public oops::Parameters {
     OOPS_CONCRETE_PARAMETERS(Parameters, oops::Parameters)
@@ -70,6 +109,9 @@ class PostProcessIce: public util::Printable {
     oops::RequiredParameter<int> sno_lev{"sno_lev", this, {oops::minConstraint(1)}};
     oops::RequiredParameter<RedistributionParameters> arctic{"arctic", this};
     oops::RequiredParameter<RedistributionParameters> antarctic{"antarctic", this};
+    oops::Parameter<ITDParameters> itd{"itd", "ITD re-bin options", {}, this};
+    oops::Parameter<FreeboardParameters> freeboard{"freeboard",
+      "Freeboard enforcement options", {}, this};
     oops::Parameter<float> icepackTstep{"icepack time step",
             "icepack time step used for thickness categories rebinning", 300, this};
     oops::Parameter<int> shuffleStencilSize{"shuffle stencil depth",

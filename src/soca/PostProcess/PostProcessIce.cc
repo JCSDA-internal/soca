@@ -7,6 +7,10 @@
 
 #include "soca/PostProcess/PostProcessIce.h"
 
+#include <algorithm>
+#include <limits>
+#include <vector>
+
 #include "atlas/array.h"
 #include "atlas/field.h"
 #include "atlas/functionspace.h"
@@ -20,6 +24,7 @@
 #include "oops/util/Logger.h"
 
 #include "soca/Geometry/Geometry.h"
+#include "soca/PostProcess/IcePhysics.h"
 #include "soca/State/State.h"
 
 namespace soca {
@@ -88,8 +93,10 @@ void PostProcessIce::postProcess(State & pproc,
     bg_vsno_cat.push_back(atlas::array::make_view<double, 2>(bgfields.field(varname)));
     new_vsno_cat.push_back(atlas::array::make_view<double, 2>(newfields.field(varname)));
   }
-  auto bg_tocn = atlas::array::make_view<double, 2>(bgfields.field("sea_water_potential_temperature"));
-  auto bg_socn = atlas::array::make_view<double, 2>(bgfields.field("sea_water_salinity"));
+  auto bg_tocn = atlas::array::make_view<double, 2>(
+      bgfields.field("sea_water_potential_temperature"));
+  auto bg_socn = atlas::array::make_view<double, 2>(
+      bgfields.field("sea_water_salinity"));
   // Create field and view for total ice concentration in restarts
   atlas::Field bg_aice_field = fs.createField<double>(
     atlas::option::name("sea_ice_area_fraction") | atlas::option::levels(1));
@@ -118,12 +125,35 @@ void PostProcessIce::postProcess(State & pproc,
   auto a_aice = atlas::array::make_view<double, 2>(anfields.field("sea_ice_area_fraction"));
   auto a_hice = atlas::array::make_view<double, 2>(anfields.field("sea_ice_thickness"));
   auto a_hsno = atlas::array::make_view<double, 2>(anfields.field("sea_ice_snow_thickness"));
-  
+
   // parameters
   const auto & arctic = params_.arctic.value();
   const auto & antarctic = params_.antarctic.value();
   const double min_aice = params_.minAice.value();
   const double min_vice = params_.minVice.value();
+  const auto & itd = params_.itd.value();
+  const bool do_rebin = itd.rebin.value();
+  const std::vector<double> hicat = itd.hicat.value();
+  const double dhi_min = itd.dhiMin.value();
+  if (do_rebin && hicat.size() != ncat_ + 1) {
+    throw eckit::UserError(
+      "PostProcessIce: itd.category bounds must have length ncat+1", Here());
+  }
+  // Per-cell scratch buffers for the ITD rebin.
+  std::vector<double> rebin_aicen(ncat_, 0.0);
+  std::vector<double> rebin_vicen(ncat_, 0.0);
+  size_t rebin_failures = 0;
+
+  const auto & fbParams = params_.freeboard.value();
+  const bool do_freeboard = fbParams.enforce.value();
+  const double rho_ice   = fbParams.rhoIce.value();
+  const double rho_snow  = fbParams.rhoSnow.value();
+  const double rho_ocean = fbParams.rhoOcean.value();
+  // Per-cell scratch buffers for freeboard.
+  std::vector<double> fb_aicen(ncat_, 0.0);
+  std::vector<double> fb_vicen(ncat_, 0.0);
+  std::vector<double> fb_vsnon(ncat_, 0.0);
+  size_t freeboard_failures = 0;
 
   // Loop over all grid points to update ice fields
   for (size_t jnode = 0; jnode < field_size; ++jnode) {
@@ -167,7 +197,7 @@ void PostProcessIce::postProcess(State & pproc,
       size_t bestJ = jnode;
       for (auto element : list) {
         const size_t jp = element.payload();
-        if (mask_(jp, 0) == 0) continue; // skip land
+        if (mask_(jp, 0) == 0) continue;  // skip land
         const double diff = std::abs(bg_aice(jp, 0) - a_aice(jnode, 0));
         if (diff < bestDiff) { bestDiff = diff; bestJ = jp; }
       }
@@ -207,6 +237,58 @@ void PostProcessIce::postProcess(State & pproc,
         }
       }
     }
+    // Re-bin the ice thickness distribution so each category's mean thickness
+    // is inside its bin. Keeps the per-cell totals (sum aicen, sum vicen) the
+    // same; only redistributes mass across categories to satisfy the bounds.
+    if (do_rebin && (mask_(jnode, 0) > 0.0)) {
+      double aice_sum = 0.0;
+      double vice_sum = 0.0;
+      for (size_t icat = 0; icat < ncat_; ++icat) {
+        rebin_aicen[icat] = new_aice_cat[icat](jnode, 0);
+        rebin_vicen[icat] = new_vice_cat[icat](jnode, 0);
+        aice_sum += rebin_aicen[icat];
+        vice_sum += rebin_vicen[icat];
+      }
+      if (aice_sum > 0.0 && vice_sum > 0.0) {
+        const bool ok = icephysics::adjustThicknessCategories(
+            rebin_aicen, rebin_vicen, vice_sum, hicat, dhi_min);
+        if (ok) {
+          for (size_t icat = 0; icat < ncat_; ++icat) {
+            new_vice_cat[icat](jnode, 0) = rebin_vicen[icat];
+          }
+        } else {
+          ++rebin_failures;
+        }
+      }
+    }
+
+    // Enforce hydrostatic snow/ice balance: rho_ice*hi + rho_snow*hs <=
+    // rho_ocean*(hi+hs) per category. Snow is first redistributed across
+    // cats; if any cat is still flooded, ice volume grows to lift the snow-
+    // ice interface back to sea level. Per-cell, no neighbour search needed.
+    if (do_freeboard && (mask_(jnode, 0) > 0.0)) {
+      bool anyIce = false;
+      for (size_t icat = 0; icat < ncat_; ++icat) {
+        fb_aicen[icat] = new_aice_cat[icat](jnode, 0);
+        fb_vicen[icat] = new_vice_cat[icat](jnode, 0);
+        fb_vsnon[icat] = new_vsno_cat[icat](jnode, 0);
+        if (fb_aicen[icat] > 0.0) anyIce = true;
+      }
+      if (anyIce) {
+        const bool ok = icephysics::enforceFreeboard(
+            fb_aicen, fb_vicen, fb_vsnon, rho_ice, rho_snow, rho_ocean);
+        if (ok) {
+          for (size_t icat = 0; icat < ncat_; ++icat) {
+            new_aice_cat[icat](jnode, 0) = fb_aicen[icat];
+            new_vice_cat[icat](jnode, 0) = fb_vicen[icat];
+            new_vsno_cat[icat](jnode, 0) = fb_vsnon[icat];
+          }
+        } else {
+          ++freeboard_failures;
+        }
+      }
+    }
+
     // Zero-out ice categories with tiny volumes
     for (size_t icat = 0; icat < ncat_; ++icat) {
       if (new_aice_cat[icat](jnode, 0) > 0.0 && new_vice_cat[icat](jnode, 0) < min_vice) {
@@ -219,6 +301,16 @@ void PostProcessIce::postProcess(State & pproc,
     new_aice(jnode, 0) = totalAice(new_aice_cat, jnode);
     new_hice(jnode, 0) = meanHice(new_vice_cat, new_aice(jnode, 0), jnode);
     new_hsno(jnode, 0) = meanHsno(new_vsno_cat, new_aice(jnode, 0), jnode);
+  }
+  if (do_rebin && rebin_failures > 0) {
+    oops::Log::warning() << "PostProcessIce: ITD rebin failed at "
+                         << rebin_failures << " cells (target outside the "
+                         << "feasible envelope); left untouched." << std::endl;
+  }
+  if (do_freeboard && freeboard_failures > 0) {
+    oops::Log::warning() << "PostProcessIce: freeboard enforcement failed at "
+                         << freeboard_failures << " cells; left untouched."
+                         << std::endl;
   }
   oops::Log::info() << " after pp restart: " << restart << std::endl;
 }
