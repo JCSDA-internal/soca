@@ -12,7 +12,6 @@
 #include "eckit/config/LocalConfiguration.h"
 
 #include "soca/Geometry/Geometry.h"
-#include "soca/PostProcess/CiceRestartIO.h"
 #include "soca/PostProcess/PostProcessIce.h"
 #include "soca/State/State.h"
 #include "oops/mpi/mpi.h"
@@ -44,17 +43,6 @@ class Postproc : public oops::Application {
     if (fullConfig.has("restart output")) {
       const eckit::LocalConfiguration restartOutputConfig(fullConfig, "restart output");
       pproc.write(restartOutputConfig);
-    }
-    if (fullConfig.has("cice restart output")) {
-      const eckit::LocalConfiguration ciceCfg(fullConfig, "cice restart output");
-      const eckit::LocalConfiguration restartCfg(fullConfig, "restart");
-      const std::string inputFile  = restartCfg.getString("basename")
-                                   + restartCfg.getString("ice_filename");
-      const std::string outputFile = ciceCfg.getString("filename");
-      const std::size_t ncat = static_cast<std::size_t>(
-          fullConfig.getSubConfiguration("postprocess ice").getInt("ncat"));
-      CiceRestartIO ciceIO(geom, inputFile, outputFile);
-      ciceIO.write(pproc.fieldSet(), ncat);
     }
     return 0;
   }

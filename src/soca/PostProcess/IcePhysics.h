@@ -18,6 +18,15 @@ struct Constants {
   static constexpr double rho_ice    = 917.0;
   static constexpr double rho_snow   = 330.0;
   static constexpr double rho_ocean  = 1025.0;
+  static constexpr double cp_ice     = 2106.0;     // J/kg/K
+  static constexpr double cp_ocn     = 4218.0;     // J/kg/K
+  static constexpr double Lfresh     = 0.334e6;    // Lsub - Lvap (J/kg)
+  static constexpr double mu_ice     = 0.054;      // K/ppt; Tmlt = -mu_ice*S
+  static constexpr double saltmax    = 3.2;        // ppt; BL99 base salinity
+  static constexpr double nsal       = 0.407;      // BZ99 profile shape
+  static constexpr double msal       = 0.573;      // BZ99 profile shape
+  static constexpr double Tmin       = -100.0;     // floor on internal T (C)
+  static constexpr double Tfrz       = -1.86243522;  // sea-water freezing pt (C)
 };
 
 // ---------------------------------------------------------------------------
@@ -67,6 +76,36 @@ std::vector<double> snowIceFreeboard(const std::vector<double> & aicen,
                                      double rhoIce   = Constants::rho_ice,
                                      double rhoSnow  = Constants::rho_snow,
                                      double rhoOcean = Constants::rho_ocean);
+
+// ---------------------------------------------------------------------------
+// BL99 ice enthalpy (J/m^3) at temperature T (deg C) and bulk salinity S (ppt).
+// Formula matches icepack_init_enthalpy with ktherm != 2:
+//   qin = -rho_ice * (cp_ice*(Tmlt - T) + Lfresh*(1 - Tmlt/T) - cp_ocn*Tmlt)
+// where Tmlt = -mu_ice * S is the layer melting temperature.
+// T must be < 0; the caller is responsible for ensuring T < Tmlt.
+// ---------------------------------------------------------------------------
+double iceEnthalpyBL99(double T, double S);
+
+// ---------------------------------------------------------------------------
+// BZ99 (Bitz-Lipscomb) ice salinity profile (ppt) at layer index k (1-based)
+// out of nlyr layers. Reproduces icepack_salinity_profile:
+//   zn = (k - 0.5) / nlyr
+//   S  = (saltmax/2) * (1 - cos(pi * zn^(nsal/(msal+zn))))
+// ---------------------------------------------------------------------------
+double siceLayerCice4(int k, int nlyr);
+
+// ---------------------------------------------------------------------------
+// Snow enthalpy (J/m^3) at surface temperature Tsfc (deg C):
+//   qsn = -rho_snow * (Lfresh - cp_ice * min(0, Tsfc))
+// ---------------------------------------------------------------------------
+double snowEnthalpy(double Tsfc, double rhoSnow = Constants::rho_snow);
+
+// ---------------------------------------------------------------------------
+// Inverse: snow surface temperature (deg C) implied by snow enthalpy qsn:
+//   Tsfc = (qsn + rho_snow * Lfresh) / (cp_ice * rho_snow)
+// Result is clamped to <= 0.
+// ---------------------------------------------------------------------------
+double snowEnthalpyToTsfc(double qsn, double rhoSnow = Constants::rho_snow);
 
 }  // namespace icephysics
 }  // namespace soca

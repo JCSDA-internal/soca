@@ -153,6 +153,63 @@ void testFreeboard_RedistributeSnow() {
   EXPECT(nearEq(vicen[1], 1.00, 1.0e-12));
 }
 
+// ---------------------------------------------------------------------------
+// thermo helpers
+// ---------------------------------------------------------------------------
+void testIceEnthalpyBL99_RoundTripSign() {
+  // qin must be negative (energy required to melt ice is "missing energy"
+  // by sign convention). Hold S fixed, sweep T.
+  const double S = 3.0;
+  for (double T = -20.0; T < -0.5; T += 1.0) {
+    const double q = soca::icephysics::iceEnthalpyBL99(T, S);
+    EXPECT(q < 0.0);
+  }
+}
+
+void testIceEnthalpyBL99_KnownValue() {
+  // Reference numerics (computed offline):
+  //   T = -10 C, S = 3 ppt, Tmlt = -0.054*3 = -0.162 C
+  //   q = -917 * ( 2106*(Tmlt - T) + Lfresh*(1 - Tmlt/T) - 4218*Tmlt )
+  //     = -917 * ( 2106*9.838 + 0.334e6*(1 - 0.0162) - 4218*(-0.162) )
+  //     ~ -3.224e8 J/m^3
+  const double q = soca::icephysics::iceEnthalpyBL99(-10.0, 3.0);
+  EXPECT(q < -3.20e8);
+  EXPECT(q > -3.30e8);
+}
+
+void testSiceLayerCice4_BoundsAndShape() {
+  // Profile must be monotone non-decreasing for the standard 7-layer case
+  // (ice gets saltier with depth) and bounded above by saltmax.
+  const int nlyr = 7;
+  double prev = 0.0;
+  for (int k = 1; k <= nlyr; ++k) {
+    const double S = soca::icephysics::siceLayerCice4(k, nlyr);
+    EXPECT(S >= 0.0);
+    EXPECT(S <= soca::icephysics::Constants::saltmax + 1.0e-12);
+    if (k > 1) EXPECT(S >= prev - 1.0e-12);
+    prev = S;
+  }
+  // Out-of-range indices return 0 cleanly.
+  EXPECT(soca::icephysics::siceLayerCice4(0, 7) == 0.0);
+  EXPECT(soca::icephysics::siceLayerCice4(8, 7) == 0.0);
+  EXPECT(soca::icephysics::siceLayerCice4(1, 0) == 0.0);
+}
+
+void testSnowEnthalpy_RoundTrip() {
+  // Tsfc -> qsn -> Tsfc must round-trip for Tsfc < 0.
+  for (double Tin = -30.0; Tin < -0.1; Tin += 1.0) {
+    const double q = soca::icephysics::snowEnthalpy(Tin);
+    const double Tback = soca::icephysics::snowEnthalpyToTsfc(q);
+    EXPECT(nearEq(Tback, Tin, 1.0e-9));
+  }
+  // Tsfc = 0 must give qsn = -rho_snow*Lfresh exactly.
+  const double q0 = soca::icephysics::snowEnthalpy(0.0);
+  EXPECT(nearEq(q0,
+                -soca::icephysics::Constants::rho_snow
+                * soca::icephysics::Constants::Lfresh,
+                1.0e-6));
+}
+
 void testFreeboard_GrowIce() {
   // Single-category column, deeply flooded -> can't redistribute snow,
   // so ice volume must grow to restore freeboard.
@@ -179,6 +236,10 @@ int main() {
   testFreeboard_AlreadyOk();
   testFreeboard_RedistributeSnow();
   testFreeboard_GrowIce();
+  testIceEnthalpyBL99_RoundTripSign();
+  testIceEnthalpyBL99_KnownValue();
+  testSiceLayerCice4_BoundsAndShape();
+  testSnowEnthalpy_RoundTrip();
 
   if (gFailures == 0) {
     std::printf("TestIcePhysics: all checks passed\n");

@@ -10,7 +10,6 @@ restart:
   ocn_filename: MOM.res.nc
   date: 2018-04-15T00:00:00Z
   state variables:
-   # ice category variables
   - sea_ice_category1_area_fraction
   - sea_ice_category2_area_fraction
   - sea_ice_category3_area_fraction
@@ -26,13 +25,12 @@ restart:
   - sea_ice_snow_category3_volume
   - sea_ice_snow_category4_volume
   - sea_ice_snow_category5_volume
-    # ocean variables
   - sea_water_potential_temperature
   - sea_water_salinity
 
 restart output:
   datadir: data_output
-  exp: cice_restart_postproc
+  exp: cice_restart_postproc_thermo
   type: an
 
 analysis:
@@ -55,7 +53,7 @@ postprocess ice:
   sno_lev: 1
   cice restart:
     input:  data_static/72x35x25/restarts/iced.2018-04-15-00000.nc
-    output: data_output/iced.postproc.nc
+    output: data_output/iced.postproc.thermo.nc
   arctic:
     rescale prior:
       rescale: true
@@ -70,11 +68,20 @@ postprocess ice:
       min hsno: 0.1
   itd:
     rebin: true
-    # CICE5 kcatbound=0 default for ncat=5
     category bounds: [0.0, 0.6445072, 1.391433, 2.470179, 4.567288, 9.333887]
     min thickness gap: 0.01
+  freeboard:
+    enforce: true
+    rho ice:   917.0
+    rho snow:  330.0
+    rho ocean: 1025.0
+  thermo:
+    update snow thermo: true
+    reset ponds: true
+    max Tsfc: -1.0
+    min Tsfc: -100.0
 
 test:
-  reference filename: testref/soca2cice_new_rebin.test
-  test output filename: testoutput/soca2cice_new_rebin.test
+  reference filename: testref/soca2cice_new_thermo.test
+  test output filename: testoutput/soca2cice_new_thermo.test
   float relative tolerance: 1e-4

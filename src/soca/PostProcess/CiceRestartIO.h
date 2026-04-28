@@ -45,6 +45,59 @@ class CiceRestartIO {
   /// `sea_ice_snow_categoryK_volume` for K = 1..ncat.
   void write(const atlas::FieldSet & fset, std::size_t ncat) const;
 
+  // -------------------------------------------------------------------------
+  /// @brief Per-rank container for the CICE restart variables that don't
+  /// flow through the soca State / atlas FieldSet (thermo + ponds).
+  ///
+  /// Each variable is held as a vector of doubles indexed by
+  /// `node * ncat + k` (or `node * ncat * nlyr + k * nlyr + l` for layered).
+  /// Only "owned" (non-ghost) atlas nodes are stored, in the order they appear
+  /// in the geometry's NodeColumns function space. Ranks load only their own
+  /// nodes via a root-side read + scatter; root reassembles globally on flush.
+  // -------------------------------------------------------------------------
+  struct ThermoFrame {
+    std::size_t ncat   = 0;
+    std::size_t iceLev = 0;
+    std::size_t snoLev = 0;
+    std::size_t nOwnedNodes = 0;
+    std::vector<double> Tsfcn;  // [node, k]
+    std::vector<double> qice;   // [node, k, l] over iceLev
+    std::vector<double> sice;   // [node, k, l] over iceLev
+    std::vector<double> qsno;   // [node, k, l] over snoLev
+    std::vector<double> apnd;   // [node, k]
+    std::vector<double> hpnd;   // [node, k]
+    std::vector<double> ipnd;   // [node, k]
+
+    // Convenience accessors.
+    double & at2(std::vector<double> & a,
+                 std::size_t node, std::size_t k) const {
+      return a[node * ncat + k];
+    }
+    double at2(const std::vector<double> & a,
+               std::size_t node, std::size_t k) const {
+      return a[node * ncat + k];
+    }
+    double & at3(std::vector<double> & a, std::size_t nlyr,
+                 std::size_t node, std::size_t k, std::size_t l) const {
+      return a[(node * ncat + k) * nlyr + l];
+    }
+    double at3(const std::vector<double> & a, std::size_t nlyr,
+               std::size_t node, std::size_t k, std::size_t l) const {
+      return a[(node * ncat + k) * nlyr + l];
+    }
+  };
+
+  /// Read the thermo + pond variables from the input restart on root, scatter
+  /// to all ranks. `ncat`, `iceLev`, `snoLev` must match the input file.
+  ThermoFrame readThermo(std::size_t ncat,
+                         std::size_t iceLev,
+                         std::size_t snoLev) const;
+
+  /// Gather the modified thermo + pond data to root and overwrite the
+  /// corresponding variables in the output restart (which must already exist
+  /// from a prior `write()` of the FieldSet).
+  void flushThermo(const ThermoFrame & frame) const;
+
  private:
   const Geometry & geom_;
   std::string inputFile_;
@@ -59,6 +112,10 @@ class CiceRestartIO {
 
   /// Discover (ncat, nj, ni) from the input file (root reads, then bcasts).
   void readDims(std::size_t & ncat, std::size_t & nj, std::size_t & ni) const;
+
+  /// Build the list of owned (gidx) for the local rank. Returns sorted
+  /// vector of 1-based global indices in node-iteration order.
+  std::vector<atlas::gidx_t> ownedGlobalIndices() const;
 };
 
 }  // namespace soca

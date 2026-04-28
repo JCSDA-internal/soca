@@ -835,6 +835,24 @@ soca_add_test( NAME soca2cice_new_freeboard
               TEST_DEPENDS test_soca_gridgen
                            test_soca_3dvar )
 
+file(COPY ${CMAKE_CURRENT_BINARY_DIR}/data_static/72x35x25/restarts/iced.2018-04-15-00000.nc
+     DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/data_generated/soca2cice_new_thermo/ )
+soca_add_test( NAME soca2cice_new_thermo
+              EXE  soca_postproc.x
+              MPI 2
+              NOTRAPFPE
+              TEST_DEPENDS test_soca_gridgen
+                           test_soca_3dvar )
+
+file(COPY ${CMAKE_CURRENT_BINARY_DIR}/data_static/72x35x25/restarts/iced.2018-04-15-00000.nc
+     DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/data_generated/soca2cice_new_seed/ )
+soca_add_test( NAME soca2cice_new_seed
+              EXE  soca_postproc.x
+              MPI 2
+              NOTRAPFPE
+              TEST_DEPENDS test_soca_gridgen
+                           test_soca_3dvar )
+
 # Pure-C++ unit test for the per-column ice physics helpers
 # (adjustThicknessCategories, enforceFreeboard). No YAML / MPI / Geometry needed.
 ecbuild_add_test( TARGET  test_soca_icephysics
@@ -847,3 +865,17 @@ soca_add_test( NAME cice_restart_io
               MPI 2
               NOTRAPFPE
               TEST_DEPENDS test_soca_gridgen )
+
+# Regression test: legacy Fortran Soca2Cice path vs new C++ PostProcessIce
+# path on the same inputs. Compares the two output CICE restarts and accepts
+# a small bounded number of differing cells (marginal-zone shuffle picks
+# different donors between the two implementations).
+ecbuild_add_test(
+    TARGET test_soca_postprocice_vs_soca2cice
+    COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/postprocice_vs_soca2cice.sh
+    ARGS
+      ${CMAKE_CURRENT_BINARY_DIR}/test_workdir/convertstate_soca2cice/data_output/iced.2018-04-15-00000.nc
+      ${CMAKE_CURRENT_BINARY_DIR}/test_workdir/soca2cice_new/data_output/iced.postproc.nc
+      1e-10
+      2
+    TEST_DEPENDS test_soca_convertstate_soca2cice test_soca_soca2cice_new )

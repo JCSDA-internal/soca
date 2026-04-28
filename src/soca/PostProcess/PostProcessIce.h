@@ -7,18 +7,23 @@
 
 #pragma once
 
+#include <cstdint>
 #include <memory>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 #include "atlas/array.h"
+#include "atlas/field/FieldSet.h"
 #include "atlas/util/KDTree.h"
+#include "atlas/util/ObjectHandle.h"
 #include "eckit/config/Configuration.h"
 #include "oops/util/Printable.h"
 #include "oops/util/parameters/NumericConstraints.h"
 #include "oops/util/parameters/Parameter.h"
 #include "oops/util/parameters/Parameters.h"
 #include "oops/util/parameters/RequiredParameter.h"
+#include "soca/PostProcess/CiceRestartIO.h"
 
 namespace soca {
 
@@ -80,6 +85,28 @@ class PostProcessIce: public util::Printable {
   };
 
   // ---------------------------------------------------------------------------
+  /// @brief Parameters for the post-rescale snow refinement step. After the
+  /// per-category rescale has matched the analysis hsno aggregate, optionally:
+  ///   - drop snow on any category whose hsn = vsnon/aicen falls below
+  ///     `min snow thickness` (avoids unphysical thin snow that would force
+  ///     CICE into a bad state on cycle-restart);
+  ///   - redistribute the per-cell snow volume by aicen-area weight rather
+  ///     than preserving the background snow shape (matches the Python
+  ///     reference scripts).
+  class SnowParameters : public oops::Parameters {
+    OOPS_CONCRETE_PARAMETERS(SnowParameters, oops::Parameters)
+   public:
+    oops::Parameter<double> hsnowMin{"min snow thickness",
+      "Floor on per-category snow thickness (m). Categories with vsnon/aicen "
+      "below this are zeroed after rescale. Set to 0 to disable.",
+      0.0, this, {oops::minConstraint(0.0)}};
+    oops::Parameter<bool> redistributeByArea{"redistribute by area",
+      "If true, distribute the per-cell snow volume by aicen area weight "
+      "instead of preserving the background per-category snow shape.",
+      false, this};
+  };
+
+  // ---------------------------------------------------------------------------
   /// @brief Parameters for the snow / ice freeboard enforcement step. After
   /// snow has been redistributed, each category should satisfy the hydrostatic
   /// balance rho_ice*hi + rho_snow*hs <= rho_ocean*(hi+hs). Snow is first
@@ -100,9 +127,57 @@ class PostProcessIce: public util::Printable {
   };
 
   // ---------------------------------------------------------------------------
+  /// @brief Parameters for the Stage C thermo / pond pass. Operates on the CICE
+  /// restart's per-layer enthalpy, surface temperature, and melt-pond fields
+  /// (read directly via CiceRestartIO::readThermo, since these variables are
+  /// not part of the soca State / FieldSet pipeline).
+  class ThermoParameters : public oops::Parameters {
+    OOPS_CONCRETE_PARAMETERS(ThermoParameters, oops::Parameters)
+
+   public:
+    oops::Parameter<bool> updateSnowThermo{"update snow thermo",
+      "Clip snow enthalpy into [snowEnthalpy(min Tsfc), snowEnthalpy(max Tsfc)] "
+      "and back-derive Tsfcn from qsno on cats with snow. Also caps the surface "
+      "ice layer enthalpy by iceEnthalpyBL99(Tsfcn, sice).",
+      false, this};
+    oops::Parameter<bool> resetPonds{"reset ponds",
+      "Set apnd, hpnd, ipnd to zero on every category with aicen > 0.",
+      false, this};
+    oops::Parameter<double> maxTsfc{"max Tsfc",
+      "Upper bound on Tsfcn (deg C). Snow enthalpy is clipped accordingly.",
+      -1.0, this};
+    oops::Parameter<double> minTsfc{"min Tsfc",
+      "Lower bound on Tsfcn (deg C). Snow enthalpy is clipped accordingly.",
+      -100.0, this};
+    oops::Parameter<bool> seedNewIce{"seed new ice",
+      "Seed Tsfcn/qsno/sice/qice for cats that went from aicen=0 in background "
+      "to aicen>0 after Stage A/B (excluding shuffle, whose donor already "
+      "supplies thermo). Donor Tsfc from a global lat/lon nearest neighbor "
+      "with any ice; sub-surface profile from CICE physics.",
+      false, this};
+    oops::Parameter<int> seedSearchK{"seed search neighbors",
+      "Number of nearest KDTree neighbors to scan for a donor with any ice "
+      "before falling back to Tfrz seeding.",
+      64, this, {oops::minConstraint(1)}};
+  };
+
+  // ---------------------------------------------------------------------------
+  /// @brief Input/output paths for the CICE restart that this postprocess pass
+  /// reads from and writes to. Both required.
+  class CiceRestartParameters : public oops::Parameters {
+    OOPS_CONCRETE_PARAMETERS(CiceRestartParameters, oops::Parameters)
+   public:
+    oops::RequiredParameter<std::string> input{"input",
+      "Path to the input CICE restart NetCDF file.", this};
+    oops::RequiredParameter<std::string> output{"output",
+      "Path to the output CICE restart NetCDF file (will be overwritten).", this};
+  };
+
+  // ---------------------------------------------------------------------------
   /// @brief Parameters for adding soca increment to CICE restart files
   class Parameters : public oops::Parameters {
     OOPS_CONCRETE_PARAMETERS(Parameters, oops::Parameters)
+
    public:
     oops::RequiredParameter<int> ncat{"ncat", this, {oops::minConstraint(1)}};
     oops::RequiredParameter<int> ice_lev{"ice_lev", this, {oops::minConstraint(1)}};
@@ -110,8 +185,15 @@ class PostProcessIce: public util::Printable {
     oops::RequiredParameter<RedistributionParameters> arctic{"arctic", this};
     oops::RequiredParameter<RedistributionParameters> antarctic{"antarctic", this};
     oops::Parameter<ITDParameters> itd{"itd", "ITD re-bin options", {}, this};
+    oops::Parameter<SnowParameters> snow{"snow",
+      "Post-rescale snow refinement options", {}, this};
     oops::Parameter<FreeboardParameters> freeboard{"freeboard",
       "Freeboard enforcement options", {}, this};
+    oops::Parameter<ThermoParameters> thermo{"thermo",
+      "Stage C thermo / pond options", {}, this};
+    oops::RequiredParameter<CiceRestartParameters> ciceRestart{"cice restart",
+      "Input/output paths for the CICE restart this pass reads and writes.",
+      this};
     oops::Parameter<float> icepackTstep{"icepack time step",
             "icepack time step used for thickness categories rebinning", 300, this};
     oops::Parameter<int> shuffleStencilSize{"shuffle stencil depth",
@@ -132,14 +214,92 @@ class PostProcessIce: public util::Printable {
   void postProcess(State & pproc, const State & restart,
                    const State & analysis) const;
 
+  /// Stage C thermo / pond pass. Mutates `frame` in place using the per-cat
+  /// aicen / vsnon fields from `fset`. Owned-node ordering must match the
+  /// CiceRestartIO traversal (ghost == 0 && global_index > 0). No-op when
+  /// neither `update snow thermo` nor `reset ponds` is enabled.
+  void applyThermoStage(CiceRestartIO::ThermoFrame & frame,
+                        const atlas::FieldSet & fset) const;
+
+  /// @brief Per-cell donor record assembled by the sparse halo exchange. Holds
+  /// the donor cell's per-category ice and thermo values so consumers (shuffle,
+  /// seedNewIce) can copy them into the local cell or frame slot directly.
+  ///
+  /// All four arrays are flat, sized in terms of `ncat`, `iceLev`, `snoLev`
+  /// from `params_`. Layout:
+  ///   aicen, vicen, vsnon, Tsfcn: indexed [k]
+  ///   qice, sice:                 indexed [k * iceLev + l]
+  ///   qsno:                       indexed [k * snoLev + l]
+  struct CatRecord {
+    std::vector<double> aicen;       // ncat
+    std::vector<double> vicen;       // ncat
+    std::vector<double> vsnon;       // ncat
+    std::vector<double> Tsfcn;       // ncat
+    std::vector<double> qice;        // ncat * iceLev
+    std::vector<double> sice;        // ncat * iceLev
+    std::vector<double> qsno;        // ncat * snoLev
+    double mask;
+  };
+
  private:
   const Geometry & geom_;
   Parameters params_;
   size_t ncat_;
+  // Global lat/lon KDTree. Payload is the 1-based atlas global_index (gidx).
+  // Built at construction by all-gathering owned-cell (lon, lat, gidx) triples
+  // across all ranks and building one tree on each rank.
   atlas::util::IndexKDTree kdTree_;
+  // Owner rank for each gidx in the global cell set, derived from the per-rank
+  // counts during the kdTree allGatherv. Used to route donor-data requests in
+  // the sparse halo exchange.
+  std::unordered_map<std::int64_t, int> gidxToOwnerRank_;
+  // Local-rank only: owned-node atlas jnode for each owned gidx. Used when
+  // packing reply records for donor-data requests received from other ranks.
+  std::unordered_map<std::int64_t, std::size_t> gidxToLocalJnode_;
 
   atlas::array::ArrayView<double, 2> lonlat_;
   atlas::array::ArrayView<double, 2> mask_;
+
+  /// @brief Mask of (ownedNode, k) cells that transitioned from
+  /// `bg_aicen[k] == 0` to `new_aicen[k] > 0` after Stages A/B and were *not*
+  /// thermo-seeded by the shuffle path. Indexed `ownedNode * ncat + k`.
+  struct NewIceMask {
+    std::size_t ncat = 0;
+    std::size_t nOwnedNodes = 0;
+    std::vector<std::uint8_t> data;
+    bool at(std::size_t ownedNode, std::size_t k) const {
+      return data[ownedNode * ncat + k] != 0;
+    }
+  };
+
+  /// Phase A+B+C of the sparse halo exchange. For every owned cell, run
+  /// `kdTree_.closestPoints(target, K)` to identify the global gidx of K
+  /// nearest neighbors; deduplicate into a per-rank "wanted" set; sparse
+  /// allToAllv to request donor data; pack reply records from local FieldSet
+  /// views and the local thermo frame; sparse allToAllv to receive replies.
+  /// Returns a map keyed by gidx with the donor's full CatRecord.
+  std::unordered_map<std::int64_t, CatRecord> gatherDonorHalo(
+      std::size_t K,
+      const std::vector<atlas::array::ArrayView<double, 2>> & bg_aice_cat,
+      const std::vector<atlas::array::ArrayView<double, 2>> & bg_vice_cat,
+      const std::vector<atlas::array::ArrayView<double, 2>> & bg_vsno_cat,
+      const CiceRestartIO::ThermoFrame & frame,
+      const std::vector<std::int64_t> & ownedNodeOf,
+      std::size_t ice_lev,
+      std::size_t sno_lev) const;
+
+  /// Stage C noice→ice seeding. For each (ownedNode, k) flagged in `mask`,
+  /// pick the global lat/lon nearest cell with any ice from `donorCache` and
+  /// seed Tsfcn from its area-weighted mean Tsfc; synthesize qsno/qice/sice
+  /// from CICE physics (snowEnthalpy, iceEnthalpyBL99, siceLayerCice4).
+  /// Falls back to Tfrz physics seed when no donor is found within K.
+  /// Returns the count of fall-back cells for logging.
+  std::size_t seedNewIce(CiceRestartIO::ThermoFrame & frame,
+                         const NewIceMask & mask,
+                         const std::unordered_map<std::int64_t, CatRecord> & donorCache,
+                         const std::vector<std::int64_t> & ownedNodeOf,
+                         std::size_t ice_lev,
+                         std::size_t sno_lev) const;
 
   // Helpers to compute totals and mean thicknesses from category fields
   double totalAice(const std::vector<atlas::array::ArrayView<double, 2>> & aiceCat,

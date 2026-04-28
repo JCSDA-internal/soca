@@ -223,5 +223,52 @@ bool enforceFreeboard(std::vector<double> & aicen,
   return true;
 }
 
+// ---------------------------------------------------------------------------
+// iceEnthalpyBL99
+//
+// qin = -rho_ice * (cp_ice*(Tmlt - T) + Lfresh*(1 - Tmlt/T) - cp_ocn*Tmlt)
+// with Tmlt = -mu_ice * S. T must be strictly negative for the (1 - Tmlt/T)
+// term to be defined; callers seeding new ice should pass T = Tmlt - 0.01
+// (Python convention) or otherwise sub-melting.
+// ---------------------------------------------------------------------------
+double iceEnthalpyBL99(double T, double S) {
+  const double Tmlt = -Constants::mu_ice * S;
+  // Guard: avoid division by zero if T is exactly 0; nudge T below Tmlt.
+  double Tsafe = T;
+  if (Tsafe > Tmlt - 1.0e-6) Tsafe = Tmlt - 1.0e-6;
+  if (Tsafe < Constants::Tmin) Tsafe = Constants::Tmin;
+  return -Constants::rho_ice
+       * (Constants::cp_ice * (Tmlt - Tsafe)
+          + Constants::Lfresh * (1.0 - Tmlt / Tsafe)
+          - Constants::cp_ocn * Tmlt);
+}
+
+// ---------------------------------------------------------------------------
+// siceLayerCice4
+// ---------------------------------------------------------------------------
+double siceLayerCice4(int k, int nlyr) {
+  if (nlyr <= 0 || k < 1 || k > nlyr) return 0.0;
+  const double zn = (static_cast<double>(k) - 0.5) / static_cast<double>(nlyr);
+  const double exponent = Constants::nsal / (Constants::msal + zn);
+  const double M_PI_LOCAL = 3.14159265358979323846;
+  const double S = (Constants::saltmax * 0.5)
+                 * (1.0 - std::cos(M_PI_LOCAL * std::pow(zn, exponent)));
+  return std::max(S, 0.0);
+}
+
+// ---------------------------------------------------------------------------
+// snowEnthalpy / snowEnthalpyToTsfc
+// ---------------------------------------------------------------------------
+double snowEnthalpy(double Tsfc, double rhoSnow) {
+  const double Ti = std::min(0.0, Tsfc);
+  return -rhoSnow * (Constants::Lfresh - Constants::cp_ice * Ti);
+}
+
+double snowEnthalpyToTsfc(double qsn, double rhoSnow) {
+  const double T = (qsn + rhoSnow * Constants::Lfresh)
+                 / (Constants::cp_ice * rhoSnow);
+  return std::min(T, 0.0);
+}
+
 }  // namespace icephysics
 }  // namespace soca
