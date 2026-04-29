@@ -38,6 +38,9 @@ class ObsLocRossby: public ufo::ObsHorLocGC99<GeometryIterator> {
     const GeometryIterator &,
     ioda::ObsVector & locfactor) const override;
 
+  double computeLocalization(const eckit::geometry::Point3 &,
+                             const eckit::geometry::Point3 &) const override;
+
  private:
   ObsLocRossbyParameters options_;
   mutable ioda::ObsVector cacheVector_;
