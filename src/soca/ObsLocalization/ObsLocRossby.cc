@@ -66,4 +66,11 @@ void ObsLocRossby::computeLocalization(
 
 // -----------------------------------------------------------------------------
 
+double ObsLocRossby::computeLocalization(const eckit::geometry::Point3 & p1,
+                                         const eckit::geometry::Point3 & p2) const {
+  ABORT("ObsLocRossby::computeLocalization(Point3, Point3) is not implemented");
+}
+
+// -----------------------------------------------------------------------------
+
 }  // namespace soca
