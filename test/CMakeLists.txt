@@ -43,6 +43,7 @@ set( soca_test_input
   testinput/dirac_soca_cor_nicas_scales.yml
   testinput/dirac_soca_cov.yml
   testinput/dirac_socahyb_cov.yml
+  testinput/eakf.yml
   testinput/ensanpproc.yml
   testinput/ensanpproc_ensda.yml
   testinput/ensmeanandvariance.yml
@@ -122,6 +123,7 @@ set( soca_test_ref
   testref/dirac_soca_cor_nicas_scales.test
   testref/dirac_soca_cov.test
   testref/dirac_socahyb_cov.test
+  testref/eakf.test
   testref/ensanpproc.test
   testref/ensanpproc_ensda.test
   testref/ensmeanandvariance.test
@@ -777,6 +779,10 @@ soca_add_test( NAME letkf_split_solver
 soca_add_test( NAME getkf
                EXE  soca_letkf.x
               #  NOTRAPFPE
+               TEST_DEPENDS test_soca_gridgen )
+
+soca_add_test( NAME eakf
+               EXE  soca_letkf.x
                TEST_DEPENDS test_soca_gridgen )
 
 # other executables that depends on increments from 3dvar_diffusion run
