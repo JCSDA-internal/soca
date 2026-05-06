@@ -33,6 +33,7 @@ _: &land_mask
   where:
   - variable: {name: GeoVaLs/sea_area_fraction}
     minvalue: 0.5
+  apply at iterations: 0,1
 
 observations:
   observers:
