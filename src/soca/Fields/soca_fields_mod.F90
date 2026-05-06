@@ -789,7 +789,9 @@ subroutine get_cice_vars(self, cice_vars, ncat, nlev, cice_vars_type)
   type(soca_fields), intent(inout) :: self
   type(oops_variables), intent(in) :: cice_vars
   integer, intent(out) :: ncat, nlev
-  character(len=5), intent(in) :: cice_vars_type
+  ! Must be assumed-length (len=*): a fixed len (e.g. len=5) pads with an undefined 5th char,
+  ! causing trim() to return the wrong length and SELECT CASE to silently miss every branch.
+  character(len=*), intent(in) :: cice_vars_type
 
   integer :: i, levels
 
@@ -811,12 +813,7 @@ subroutine get_cice_vars(self, cice_vars, ncat, nlev, cice_vars_type)
     case ("snow")
       ! get ice category variables with an explicit 1-level dimension (e.g. Tsnz_h)
       nlev = 1
-      write(0,*) "DEBUG snow case size(fields)=", size(self%fields)
       do i=1,size(self%fields)
-        write(0,*) "DEBUG snow i=", i, " io_file=", trim(self%fields(i)%metadata%io_file), &
-          " levels=", trim(self%fields(i)%metadata%levels), &
-          " cat=", self%fields(i)%metadata%categories, &
-          " has_ld=", self%fields(i)%metadata%has_levels_dim
         if (self%fields(i)%metadata%io_file == "ice" .and.&
             & .not. cice_vars%has(self%fields(i)%metadata%io_sup_name)) then
           if (self%fields(i)%metadata%levels == '1' .and. &
@@ -946,26 +943,18 @@ subroutine soca_fields_read_seaice(self, filename, seaice_categories_vars)
   ! These have shape (time, nc, nksnow=1, nj, ni) in the file and need a 4D buffer, not 3D
   cice_vars_snow = oops_variables()
   call get_cice_vars(self, cice_vars_snow, ncat, snowlevs, "snow")
-  write(0,*) "DEBUG snow: nvars=", cice_vars_snow%nvars(), " ncat=", ncat, " snowlevs=", snowlevs
   if (cice_vars_snow%nvars() > 0) then
     if (allocated(tmp4d)) deallocate(tmp4d)
     ! dim order (snowlevs, ncat) mirrors therm pattern: innermost non-spatial first (nksnow), then nc
     allocate(tmp4d(self%geom%isd:self%geom%ied,self%geom%jsd:self%geom%jed,snowlevs,&
     &ncat,cice_vars_snow%nvars()))
     tmp4d = 0.0_kind_real
-    write(0,*) "DEBUG snow: varname=", cice_vars_snow%variable(1)
-    write(0,*) "DEBUG snow: about to open_file for ", trim(filename)
     if (open_file(restart, filename, "read", self%geom%Domain%mpp_domain)) then
-      write(0,*) "DEBUG snow: open_file succeeded, registering axes"
       call soca_register_domain_axes(restart, self%geom%ieg-self%geom%isg+1, self%geom%jeg-self%geom%jsg+1)
       do i=1,cice_vars_snow%nvars()
-        write(0,*) "DEBUG snow: calling read_data for ", cice_vars_snow%variable(i)
         call read_data(restart, cice_vars_snow%variable(i), tmp4d(:,:,:,:,i))
-        write(0,*) "DEBUG snow: after read, tmp4d(1,1,1,1,1)=", tmp4d(self%geom%isc,self%geom%jsc,1,1,i)
       end do
       call close_file(restart)
-    else
-      write(0,*) "DEBUG snow: open_file FAILED"
     end if
     do f = 1, size(self%fields)
       if (self%fields(f)%metadata%io_file == "ice" .and.&
