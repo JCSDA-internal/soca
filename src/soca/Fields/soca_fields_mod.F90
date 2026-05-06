@@ -956,6 +956,10 @@ subroutine soca_fields_read_seaice(self, filename, seaice_categories_vars)
       end do
       call close_file(restart)
     end if
+    ! Filter: has_levels_dim distinguishes snow fields (YAML has explicit "levels: 1",
+    ! so nksnow appears in the file) from dynam fields (no "levels:" key, nz=1, no
+    ! levels dim in file). nz==1 further excludes therm fields which also have
+    ! has_levels_dim=T but carry multiple vertical ice levels (nz>1).
     do f = 1, size(self%fields)
       if (self%fields(f)%metadata%io_file == "ice" .and.&
          &self%fields(f)%metadata%has_levels_dim .and. self%fields(f)%nz == 1 .and.&
@@ -1051,7 +1055,10 @@ subroutine soca_fields_write_rst(self, f_conf, vdate)
                   dont_add_res_to_filename=.true.)) then
       call register_axis(restart, 'xaxis_1', 'x')
       call register_axis(restart, 'yaxis_1', 'y')
-      ! pre-scan to find z-size for 3D fields and register zaxis_1 once
+      ! FMS2 requires axes to be registered before fields that reference them,
+      ! so pre-scan to find the z-size for 3D fields and register zaxis_1 first.
+      ! Assumes all 3D fields in one domain file share the same nz (true for
+      ! SOCA's current field set: ocn=25, ice thermodynamics=7).
       nz_domain = 0
       n = 0
       do f = 1, size(self%fields)
