@@ -25,7 +25,7 @@ use oops_variables_mod, only: oops_variables
 ! MOM6 / FMS modules
 use fms2_io_mod, only: open_file, close_file, read_data, &
                       register_restart_field, FmsNetcdfDomainFile_t, &
-                      write_restart, variable_exists
+                      write_restart, variable_exists, register_axis
 use MOM_remapping, only : remapping_CS, initialize_remapping, remapping_core_h, &
                           end_remapping
 use mpp_domains_mod, only : mpp_update_domains
@@ -33,7 +33,7 @@ use mpp_domains_mod, only : mpp_update_domains
 ! SOCA modules
 use soca_fields_metadata_mod, only : soca_field_metadata
 use soca_geom_mod, only : soca_geom
-use soca_utils, only: soca_mld
+use soca_utils, only: soca_mld, soca_register_domain_axes
 use soca_utils, only: soca_stencil_interp, soca_stencil_neighbors
 
 implicit none
@@ -495,6 +495,7 @@ subroutine soca_fields_read(self, f_conf, vdate)
 
      ! Read common vertical coordinate from file
      if (open_file(restart, str, "read", self%geom%Domain%mpp_domain)) then
+       call soca_register_domain_axes(restart, self%geom%ieg-self%geom%isg+1, self%geom%jeg-self%geom%jsg+1)
        call read_data(restart, 'h', h_common)
        call close_file(restart)
      end if
@@ -564,6 +565,7 @@ subroutine soca_fields_read(self, f_conf, vdate)
 
         ! open the file for reading
         if (.not. open_file(restart, filename, "read", self%geom%Domain%mpp_domain)) cycle
+        call soca_register_domain_axes(restart, self%geom%ieg-self%geom%isg+1, self%geom%jeg-self%geom%jsg+1)
 
         ! for each variable, read data
         n = 0
@@ -793,15 +795,36 @@ subroutine get_cice_vars(self, cice_vars, ncat, nlev, cice_vars_type)
 
   select case (trim(cice_vars_type))
     case ("dynam")
-      ! get the variables with a category dimension only (dynamic variables)
+      ! get the variables with a category dimension only (dynamic variables, no level dim)
       nlev = 1
       do i=1,size(self%fields)
         if (self%fields(i)%metadata%io_file == "ice" .and.&
             & .not. cice_vars%has(self%fields(i)%metadata%io_sup_name)) then
-          if (self%fields(i)%metadata%levels == '1' .and. self%fields(i)%metadata%categories > 0) then
+          if (self%fields(i)%metadata%levels == '1' .and. &
+              & .not. self%fields(i)%metadata%has_levels_dim .and. &
+              & self%fields(i)%metadata%categories > 0) then
             call cice_vars%push_back(self%fields(i)%metadata%io_sup_name)
           end if
           ncat = self%fields(i)%metadata%categories
+        end if
+      end do
+    case ("snow")
+      ! get ice category variables with an explicit 1-level dimension (e.g. Tsnz_h)
+      nlev = 1
+      write(0,*) "DEBUG snow case size(fields)=", size(self%fields)
+      do i=1,size(self%fields)
+        write(0,*) "DEBUG snow i=", i, " io_file=", trim(self%fields(i)%metadata%io_file), &
+          " levels=", trim(self%fields(i)%metadata%levels), &
+          " cat=", self%fields(i)%metadata%categories, &
+          " has_ld=", self%fields(i)%metadata%has_levels_dim
+        if (self%fields(i)%metadata%io_file == "ice" .and.&
+            & .not. cice_vars%has(self%fields(i)%metadata%io_sup_name)) then
+          if (self%fields(i)%metadata%levels == '1' .and. &
+              & self%fields(i)%metadata%has_levels_dim .and. &
+              & self%fields(i)%metadata%categories > 0) then
+            call cice_vars%push_back(self%fields(i)%metadata%io_sup_name)
+            ncat = self%fields(i)%metadata%categories
+          end if
         end if
       end do
     case ("therm")
@@ -831,7 +854,7 @@ subroutine soca_fields_read_seaice(self, filename, seaice_categories_vars)
   character(len=*), intent(in) :: filename
   type(oops_variables), intent(in) :: seaice_categories_vars
 
-  type(oops_variables) :: cice_vars_cats, cice_vars_cats_levs
+  type(oops_variables) :: cice_vars_cats, cice_vars_cats_levs, cice_vars_snow
   type(FmsNetcdfDomainFile_t) :: restart
   type(atlas_field) :: afield
   real(kind=kind_real), pointer :: adata(:,:)
@@ -848,6 +871,7 @@ subroutine soca_fields_read_seaice(self, filename, seaice_categories_vars)
     allocate(tmp3d(self%geom%isd:self%geom%ied,self%geom%jsd:self%geom%jed,ncat,cice_vars_cats%nvars()))
     tmp3d = 0.0_kind_real
     if (open_file(restart, filename, "read", self%geom%Domain%mpp_domain)) then
+      call soca_register_domain_axes(restart, self%geom%ieg-self%geom%isg+1, self%geom%jeg-self%geom%jsg+1)
       do i=1,cice_vars_cats%nvars()
         call read_data(restart, cice_vars_cats%variable(i), tmp3d(:,:,:,i))
       end do
@@ -859,6 +883,7 @@ subroutine soca_fields_read_seaice(self, filename, seaice_categories_vars)
     do f = 1, size(self%fields)
       if (self%fields(f)%metadata%io_file == "ice" .and.&
          &self%fields(f)%metadata%levels == '1' .and.&
+         &.not. self%fields(f)%metadata%has_levels_dim .and.&
          &self%fields(f)%metadata%categories > 0) then
 
         ! get the index of cice_vars that correspond to the io_sup_name
@@ -887,6 +912,7 @@ subroutine soca_fields_read_seaice(self, filename, seaice_categories_vars)
     &ncat,cice_vars_cats_levs%nvars()))
     tmp4d = 0.0_kind_real
     if (open_file(restart, filename, "read", self%geom%Domain%mpp_domain)) then
+      call soca_register_domain_axes(restart, self%geom%ieg-self%geom%isg+1, self%geom%jeg-self%geom%jsg+1)
       do i=1,cice_vars_cats_levs%nvars()
         call read_data(restart, cice_vars_cats_levs%variable(i), tmp4d(:,:,:,:,i))
       end do
@@ -915,6 +941,50 @@ subroutine soca_fields_read_seaice(self, filename, seaice_categories_vars)
       end if
     end do
   end if
+
+  ! read ice category variables with an explicit 1-level dimension (e.g. Tsnz_h snow temperature)
+  ! These have shape (time, nc, nksnow=1, nj, ni) in the file and need a 4D buffer, not 3D
+  cice_vars_snow = oops_variables()
+  call get_cice_vars(self, cice_vars_snow, ncat, snowlevs, "snow")
+  write(0,*) "DEBUG snow: nvars=", cice_vars_snow%nvars(), " ncat=", ncat, " snowlevs=", snowlevs
+  if (cice_vars_snow%nvars() > 0) then
+    if (allocated(tmp4d)) deallocate(tmp4d)
+    ! dim order (snowlevs, ncat) mirrors therm pattern: innermost non-spatial first (nksnow), then nc
+    allocate(tmp4d(self%geom%isd:self%geom%ied,self%geom%jsd:self%geom%jed,snowlevs,&
+    &ncat,cice_vars_snow%nvars()))
+    tmp4d = 0.0_kind_real
+    write(0,*) "DEBUG snow: varname=", cice_vars_snow%variable(1)
+    write(0,*) "DEBUG snow: about to open_file for ", trim(filename)
+    if (open_file(restart, filename, "read", self%geom%Domain%mpp_domain)) then
+      write(0,*) "DEBUG snow: open_file succeeded, registering axes"
+      call soca_register_domain_axes(restart, self%geom%ieg-self%geom%isg+1, self%geom%jeg-self%geom%jsg+1)
+      do i=1,cice_vars_snow%nvars()
+        write(0,*) "DEBUG snow: calling read_data for ", cice_vars_snow%variable(i)
+        call read_data(restart, cice_vars_snow%variable(i), tmp4d(:,:,:,:,i))
+        write(0,*) "DEBUG snow: after read, tmp4d(1,1,1,1,1)=", tmp4d(self%geom%isc,self%geom%jsc,1,1,i)
+      end do
+      call close_file(restart)
+    else
+      write(0,*) "DEBUG snow: open_file FAILED"
+    end if
+    do f = 1, size(self%fields)
+      if (self%fields(f)%metadata%io_file == "ice" .and.&
+         &self%fields(f)%metadata%has_levels_dim .and. self%fields(f)%nz == 1 .and.&
+         &self%fields(f)%metadata%categories > 0) then
+        io_index = cice_vars_snow%find(self%fields(f)%metadata%io_sup_name)
+        afield = self%afieldset%field(self%fields(f)%name)
+        call afield%data(adata)
+        do j=self%geom%jsc, self%geom%jec
+          do i=self%geom%isc, self%geom%iec
+            idx = self%geom%atlas_ij2idx(i,j)
+            adata(1,idx) = tmp4d(i,j,1,self%fields(f)%metadata%category,io_index)
+          end do
+        end do
+        call afield%set_dirty()
+      end if
+    end do
+  end if
+
   call afield%final()
 end subroutine soca_fields_read_seaice
 
@@ -931,7 +1001,7 @@ subroutine soca_fields_write_rst(self, f_conf, vdate)
 
   integer, parameter :: max_string_length=800
   type(FmsNetcdfDomainFile_t) :: restart
-  integer :: i, j, k, idx, d, f, n
+  integer :: i, j, k, idx, d, f, n, nz_domain
   type(soca_field), pointer :: field
   logical :: date_cols
 
@@ -988,7 +1058,22 @@ subroutine soca_fields_write_rst(self, f_conf, vdate)
     end do
 
     ! open file, register fields, write, and close
-    if (open_file(restart, domain_filename, "overwrite", self%geom%Domain%mpp_domain, is_restart=.true.)) then
+    if (open_file(restart, domain_filename, "overwrite", self%geom%Domain%mpp_domain, is_restart=.true., &
+                  dont_add_res_to_filename=.true.)) then
+      call register_axis(restart, 'xaxis_1', 'x')
+      call register_axis(restart, 'yaxis_1', 'y')
+      ! pre-scan to find z-size for 3D fields and register zaxis_1 once
+      nz_domain = 0
+      n = 0
+      do f = 1, size(self%fields)
+        if (self%fields(f)%metadata%io_file /= domains(d)) cycle
+        n = n + 1
+        if (vars(n)%afield%shape(1) > 1) then
+          nz_domain = vars(n)%afield%shape(1)
+          exit
+        end if
+      end do
+      if (nz_domain > 0) call register_axis(restart, 'zaxis_1', nz_domain)
       n=0
       do f=1,size(self%fields)
         if (self%fields(f)%metadata%io_file /= domains(d)) cycle
@@ -1193,7 +1278,7 @@ function soca_genfilename(f_conf,length,vdate,date_cols,domain_type)
        call duration_to_string(step,sstep)
      endif
      lenfn = lenfn + 1 + LEN_TRIM(referencedate) + 1 + LEN_TRIM(sstep)
-     soca_genfilename = TRIM(prefix) // "." // TRIM(referencedate) // "." // TRIM(sstep)
+     soca_genfilename = TRIM(prefix) // "." // TRIM(referencedate) // "." // TRIM(sstep) // ".nc"
   endif
 
   if (typ=="an" .or. typ=="incr") then
@@ -1203,7 +1288,7 @@ function soca_genfilename(f_conf,length,vdate,date_cols,domain_type)
        call datetime_to_string_io(vdate,validitydate)
      endif
      lenfn = lenfn + 1 + LEN_TRIM(validitydate)
-     soca_genfilename = TRIM(prefix) // "." // TRIM(validitydate)
+     soca_genfilename = TRIM(prefix) // "." // TRIM(validitydate) // ".nc"
   endif
 
   if (lenfn>length) &
@@ -1212,5 +1297,6 @@ function soca_genfilename(f_conf,length,vdate,date_cols,domain_type)
    if ( allocated(str) ) deallocate(str)
 
 end function soca_genfilename
+
 
 end module soca_fields_mod

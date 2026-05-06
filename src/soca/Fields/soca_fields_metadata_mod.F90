@@ -24,6 +24,7 @@ type, public :: soca_field_metadata
   character(len=1)               :: grid     !< "h", "u" or "v"
   logical                        :: masked   !< should use land mask when interpolating
   character(len=:),  allocatable :: levels   !< "1", or "full_ocn"
+  logical                        :: has_levels_dim !< .true. if the field has an explicit levels dimension in the restart file (even if 1)
   character(len=:),  allocatable :: io_file  !< the restart file domain (ocn, sfc, ice). Or if "CONSTANT" use the value in "constant_value"
   character(len=:),  allocatable :: io_name  !< the name use in the restart IO
   character(len=:),  allocatable :: io_sup_name  !< the IO name of the super set variable
@@ -122,7 +123,8 @@ subroutine soca_fields_metadata_create(self, filename)
     if(.not. conf_list(i)%get("masked", bool)) bool = .true.
     metadata_tmp(i)%masked = bool
 
-    if(.not. conf_list(i)%get("levels", str)) str = "1"
+    metadata_tmp(i)%has_levels_dim = conf_list(i)%get("levels", str)
+    if(.not. metadata_tmp(i)%has_levels_dim) str = "1"
     metadata_tmp(i)%levels = str
 
     if(.not. conf_list(i)%get("io name", str)) str = ""

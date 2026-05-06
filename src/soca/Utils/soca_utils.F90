@@ -8,6 +8,8 @@ module soca_utils
 
 use atlas_module, only: atlas_geometry, atlas_indexkdtree
 use fckit_exception_module, only: fckit_exception
+use fms2_io_mod, only: FmsNetcdfDomainFile_t, register_axis, &
+                       get_num_dimensions, get_dimension_names, get_dimension_size
 use gsw_mod_toolbox, only : gsw_rho, gsw_sa_from_sp, gsw_ct_from_pt, gsw_mlp
 use kinds, only: kind_real
 use netcdf
@@ -17,7 +19,8 @@ implicit none
 private
 public :: write2pe, soca_str2int, soca_adjust, &
           soca_rho, soca_diff, soca_mld, nc_check, &
-          soca_stencil_interp, soca_stencil_neighbors
+          soca_stencil_interp, soca_stencil_neighbors, &
+          soca_register_domain_axes
 
 ! ------------------------------------------------------------------------------
 contains
@@ -258,6 +261,28 @@ subroutine soca_stencil_interp(lon_src, lat_src, lon_dst, lat_dst, data, data_ou
   call ageometry%final()
 
 end subroutine soca_stencil_interp
+
+! ------------------------------------------------------------------------------
+!> Register all domain-decomposed x/y axes in a domain file opened for reading.
+!! Discovers dims whose size matches the domain's global nx or ny and registers
+!! them as 'x' or 'y' respectively. Handles files with multiple staggered axes.
+subroutine soca_register_domain_axes(fileobj, nx, ny)
+  type(FmsNetcdfDomainFile_t), intent(inout) :: fileobj
+  integer,                     intent(in)    :: nx, ny
+
+  integer :: ndims, i, dsize
+  character(len=256), allocatable :: dim_names(:)
+
+  ndims = get_num_dimensions(fileobj)
+  allocate(dim_names(ndims))
+  call get_dimension_names(fileobj, dim_names)
+  do i = 1, ndims
+    call get_dimension_size(fileobj, trim(dim_names(i)), dsize)
+    if (dsize == nx) call register_axis(fileobj, trim(dim_names(i)), 'x')
+    if (dsize == ny) call register_axis(fileobj, trim(dim_names(i)), 'y')
+  end do
+  deallocate(dim_names)
+end subroutine soca_register_domain_axes
 
 ! ------------------------------------------------------------------------------
 end module soca_utils

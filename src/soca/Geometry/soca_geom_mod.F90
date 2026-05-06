@@ -33,12 +33,12 @@ use mpp_domains_mod, only : mpp_get_compute_domain, mpp_get_data_domain, &
                             mpp_get_global_domain, mpp_update_domains, &
                             CYCLIC_GLOBAL_DOMAIN, FOLD_NORTH_EDGE
 use mpp_mod,only : mpp_init
-use time_interp_external_mod, only : time_interp_external_init
+use time_interp_external2_mod, only : time_interp_external_init
 use time_manager_mod, only: time_type
 
 ! soca modules
 use soca_fields_metadata_mod, only : soca_fields_metadata
-use soca_utils, only: write2pe
+use soca_utils, only: write2pe, soca_register_domain_axes
 
 implicit none
 private
@@ -233,6 +233,7 @@ subroutine soca_geom_init(self, f_conf, f_comm, gen)
     ! once the altas FunctionSpace has been created.
     if (.not. f_conf%get("geom_grid_file", str)) str = "soca_gridspec.nc"
     if (open_file(geom_restart, str, "read", self%Domain%mpp_domain)) then
+      call soca_register_domain_axes(geom_restart, self%ieg-self%isg+1, self%jeg-self%jsg+1)
       call read_data(geom_restart, "lonh",    self%lonh)
       call read_data(geom_restart, "lath",    self%lath)
       call read_data(geom_restart, "lonq",    self%lonq)
@@ -434,6 +435,7 @@ subroutine soca_geom_init_fieldset(self, f_conf, gen)
 
     ! read in from gridspec file
     if (open_file(geom_restart, str, "read", self%Domain%mpp_domain)) then
+      call soca_register_domain_axes(geom_restart, self%ieg-self%isg+1, self%jeg-self%jsg+1)
       do v = 1, size(atlasVars)
         call read_data(geom_restart, atlasVars(v), fieldDataVars(:,:,v))
       end do
@@ -637,7 +639,8 @@ subroutine soca_geom_write(self, f_conf)
     end do
   end do
 
-  if (open_file(geom_restart, str, "overwrite", self%Domain%mpp_domain, is_restart=.true.)) then
+  if (open_file(geom_restart, str, "overwrite", self%Domain%mpp_domain, is_restart=.true., &
+                dont_add_res_to_filename=.true.)) then
     call register_axis(geom_restart, 'xaxis_1', 'x')
     call register_axis(geom_restart, 'yaxis_1', 'y')
     call register_axis(geom_restart, 'Time', unlimited)

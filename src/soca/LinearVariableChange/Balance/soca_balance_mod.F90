@@ -7,6 +7,7 @@ module soca_balance_mod
 
 use fckit_configuration_module, only: fckit_configuration
 use fms2_io_mod, only: open_file, close_file, read_data, FmsNetcdfDomainFile_t
+use soca_utils, only: soca_register_domain_axes
 use kinds, only: kind_real
 use atlas_module, only: atlas_field
 
@@ -203,6 +204,7 @@ subroutine soca_balance_setup(self, f_conf, traj, geom)
       call f_conf%get_or_die("dcdt.filename", filename)
       call f_conf%get_or_die("dcdt.name", kct_name)
       if (open_file(fileobj, filename, "read", geom%Domain%mpp_domain)) then
+        call soca_register_domain_axes(fileobj, geom%ieg-geom%isg+1, geom%jeg-geom%jsg+1)
         call read_data(fileobj, kct_name, kct)
         call close_file(fileobj)
       end if
