@@ -95,6 +95,34 @@ In `make_yamls.py`:
 - `BKG_RESTART_HHMMSS`, `BKG_DATE`, `AN_VALID` — cycle timestamps
 - the `bkg_cice`, `bkg_mom`, `ice_an`, `ocn_an` path expressions — the GDAS layout
 
+## Comparison plots & reports
+
+After `run_all.sh` finishes, `compare_cycles.py` runs the plotting +
+diff-stats scripts in `scripts/` on every cycle workdir under `<out_root>`
+and drops the artifacts into `postproc_compare/{plots,reports}/<cycle_tag>/`.
+
+```bash
+./compare_cycles.py <out_root>
+# or restrict to specific cycles:
+./compare_cycles.py <out_root> --cycles gdas.20240715 gdas.20250115
+# or override the gridspec (default: <out_root>/_shared/soca_gridspec.nc):
+./compare_cycles.py <out_root> --gridspec /path/to/soca_gridspec.nc
+# or use a specific Python (default: python3 on PATH):
+./compare_cycles.py <out_root> --python /path/to/venv/bin/python
+```
+
+Per-cycle outputs:
+
+```
+postproc_compare/plots/<cycle>/{raw,aggregate}/<var>_{Arctic,Antarctic}.png
+postproc_compare/reports/<cycle>/diff_stats/{summary.csv, <var>_hist.png}
+```
+
+The driver shells out to `scripts/{plot_panels,plot_aggregates,diff_stats}.py`
+with input/output paths passed via env vars
+(`POSTPROC_COMPARE_{FORTRAN,CPP,GRIDSPEC,PLOTS_DIR,REPORTS_DIR}`).
+Python deps: `xarray`, `netCDF4`, `numpy`, `matplotlib`, `cartopy`, `cmocean`.
+
 ## Run a single cycle by hand
 
 ```bash
