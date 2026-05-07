@@ -35,6 +35,8 @@ use soca_fields_metadata_mod, only : soca_field_metadata
 use soca_geom_mod, only : soca_geom
 use soca_utils, only: soca_mld, soca_register_domain_axes
 use soca_utils, only: soca_stencil_interp, soca_stencil_neighbors
+use soca_utils, only: soca_root_nc_open, soca_root_nc_close, &
+                      soca_root_read_var_3d, soca_root_read_var_4d
 
 implicit none
 private
@@ -852,12 +854,15 @@ subroutine soca_fields_read_seaice(self, filename, seaice_categories_vars)
   type(oops_variables), intent(in) :: seaice_categories_vars
 
   type(oops_variables) :: cice_vars_cats, cice_vars_cats_levs, cice_vars_snow
-  type(FmsNetcdfDomainFile_t) :: restart
   type(atlas_field) :: afield
   real(kind=kind_real), pointer :: adata(:,:)
 
   integer :: i, j, k, f, ncat, icelevs, snowlevs, cnt, io_index, idx
+  integer :: ncid, nx_glob, ny_glob
   real(kind=kind_real), allocatable :: tmp3d(:,:,:,:), tmp4d(:,:,:,:,:)
+
+  nx_glob = self%geom%ieg - self%geom%isg + 1
+  ny_glob = self%geom%jeg - self%geom%jsg + 1
 
   ! check what cice variables with category dimension need to be read
   cice_vars_cats = oops_variables()  ! used to store the unique cice io variables with a category dimension
@@ -867,12 +872,13 @@ subroutine soca_fields_read_seaice(self, filename, seaice_categories_vars)
   if (cice_vars_cats%nvars() > 0) then
     allocate(tmp3d(self%geom%isd:self%geom%ied,self%geom%jsd:self%geom%jed,ncat,cice_vars_cats%nvars()))
     tmp3d = 0.0_kind_real
-    if (open_file(restart, filename, "read", self%geom%Domain%mpp_domain)) then
-      call soca_register_domain_axes(restart, self%geom%ieg-self%geom%isg+1, self%geom%jeg-self%geom%jsg+1)
+    if (soca_root_nc_open(filename, ncid)) then
       do i=1,cice_vars_cats%nvars()
-        call read_data(restart, cice_vars_cats%variable(i), tmp3d(:,:,:,i))
+        call soca_root_read_var_3d(ncid, cice_vars_cats%variable(i), nx_glob, ny_glob, &
+             self%geom%isc, self%geom%iec, self%geom%jsc, self%geom%jec, &
+             self%geom%isd, self%geom%jsd, tmp3d(:,:,:,i))
       end do
-      call close_file(restart)
+      call soca_root_nc_close(ncid)
     end if
 
     ! copy the variable into the corresponding field
@@ -908,12 +914,13 @@ subroutine soca_fields_read_seaice(self, filename, seaice_categories_vars)
     allocate(tmp4d(self%geom%isd:self%geom%ied,self%geom%jsd:self%geom%jed,icelevs,&
     &ncat,cice_vars_cats_levs%nvars()))
     tmp4d = 0.0_kind_real
-    if (open_file(restart, filename, "read", self%geom%Domain%mpp_domain)) then
-      call soca_register_domain_axes(restart, self%geom%ieg-self%geom%isg+1, self%geom%jeg-self%geom%jsg+1)
+    if (soca_root_nc_open(filename, ncid)) then
       do i=1,cice_vars_cats_levs%nvars()
-        call read_data(restart, cice_vars_cats_levs%variable(i), tmp4d(:,:,:,:,i))
+        call soca_root_read_var_4d(ncid, cice_vars_cats_levs%variable(i), nx_glob, ny_glob, &
+             self%geom%isc, self%geom%iec, self%geom%jsc, self%geom%jec, &
+             self%geom%isd, self%geom%jsd, tmp4d(:,:,:,:,i))
       end do
-      call close_file(restart)
+      call soca_root_nc_close(ncid)
     end if
 
     ! copy the variable into the corresponding field
@@ -949,12 +956,13 @@ subroutine soca_fields_read_seaice(self, filename, seaice_categories_vars)
     allocate(tmp4d(self%geom%isd:self%geom%ied,self%geom%jsd:self%geom%jed,snowlevs,&
     &ncat,cice_vars_snow%nvars()))
     tmp4d = 0.0_kind_real
-    if (open_file(restart, filename, "read", self%geom%Domain%mpp_domain)) then
-      call soca_register_domain_axes(restart, self%geom%ieg-self%geom%isg+1, self%geom%jeg-self%geom%jsg+1)
+    if (soca_root_nc_open(filename, ncid)) then
       do i=1,cice_vars_snow%nvars()
-        call read_data(restart, cice_vars_snow%variable(i), tmp4d(:,:,:,:,i))
+        call soca_root_read_var_4d(ncid, cice_vars_snow%variable(i), nx_glob, ny_glob, &
+             self%geom%isc, self%geom%iec, self%geom%jsc, self%geom%jec, &
+             self%geom%isd, self%geom%jsd, tmp4d(:,:,:,:,i))
       end do
-      call close_file(restart)
+      call soca_root_nc_close(ncid)
     end if
     ! Filter: has_levels_dim distinguishes snow fields (YAML has explicit "levels: 1",
     ! so nksnow appears in the file) from dynam fields (no "levels:" key, nz=1, no
