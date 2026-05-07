@@ -12,7 +12,6 @@ use fms2_io_mod, only: FmsNetcdfDomainFile_t, register_axis, &
                        get_num_dimensions, get_dimension_names, get_dimension_size
 use gsw_mod_toolbox, only : gsw_rho, gsw_sa_from_sp, gsw_ct_from_pt, gsw_mlp
 use kinds, only: kind_real
-use mpp_mod, only: mpp_pe, mpp_root_pe, mpp_broadcast
 use netcdf
 
 implicit none
@@ -21,9 +20,7 @@ private
 public :: write2pe, soca_str2int, soca_adjust, &
           soca_rho, soca_diff, soca_mld, nc_check, &
           soca_stencil_interp, soca_stencil_neighbors, &
-          soca_register_domain_axes, &
-          soca_root_nc_open, soca_root_nc_close, soca_root_nc_var_exists, &
-          soca_root_read_var_3d, soca_root_read_var_4d
+          soca_register_domain_axes
 
 ! ------------------------------------------------------------------------------
 contains
@@ -286,167 +283,6 @@ subroutine soca_register_domain_axes(fileobj, nx, ny)
   end do
   deallocate(dim_names)
 end subroutine soca_register_domain_axes
-
-! ------------------------------------------------------------------------------
-! Direct-netCDF read helpers used by the seaice path to bypass the slow
-! fms2_io domain_read_4d/5d code path (which does one nf90_get_var per PE).
-! These open on root only, do one bulk nf90_get_var of the global cube, then
-! broadcast and let each PE slice its own compute-domain portion.
-!
-! File-dimension assumption: Fortran-order dim 1 = x, dim 2 = y, dims 3..rank
-! match the buffer's trailing dims, with any extra trailing dim (e.g. unlimited
-! "Time") slabbed at index 1. This matches both SOCA-written restarts and the
-! CICE history files SOCA reads.
-! ------------------------------------------------------------------------------
-
-!> Open a netCDF file for reading on the root PE only. All PEs receive the
-!! same success result. ncid is meaningful only on root; non-root PEs get -1.
-function soca_root_nc_open(filename, ncid) result(success)
-  character(len=*), intent(in)  :: filename
-  integer,          intent(out) :: ncid
-  logical :: success
-
-  integer :: ierr, success_int
-
-  ncid = -1
-  success_int = 0
-  if (mpp_pe() == mpp_root_pe()) then
-    ierr = nf90_open(trim(filename), NF90_NOWRITE, ncid)
-    if (ierr == nf90_noerr) then
-      success_int = 1
-    else
-      ncid = -1
-    end if
-  end if
-  call mpp_broadcast(success_int, mpp_root_pe())
-  success = (success_int == 1)
-end function soca_root_nc_open
-
-!> Close a netCDF file opened with soca_root_nc_open. No-op on non-root.
-subroutine soca_root_nc_close(ncid)
-  integer, intent(inout) :: ncid
-
-  if (mpp_pe() == mpp_root_pe() .and. ncid > 0) then
-    call nc_check(nf90_close(ncid))
-  end if
-  ncid = -1
-end subroutine soca_root_nc_close
-
-!> Test whether varname exists in the file opened with soca_root_nc_open.
-!! Inquired on root, broadcast to all PEs.
-function soca_root_nc_var_exists(ncid, varname) result(found)
-  integer,          intent(in) :: ncid
-  character(len=*), intent(in) :: varname
-  logical :: found
-
-  integer :: varid, ierr, found_int
-
-  found_int = 0
-  if (mpp_pe() == mpp_root_pe()) then
-    ierr = nf90_inq_varid(ncid, trim(varname), varid)
-    if (ierr == nf90_noerr) found_int = 1
-  end if
-  call mpp_broadcast(found_int, mpp_root_pe())
-  found = (found_int == 1)
-end function soca_root_nc_var_exists
-
-!> Read a (x, y, n3) variable. Root reads global cube, broadcasts, each PE
-!! copies its compute-domain slab into buf. Halos in buf are not touched.
-!! buf has Fortran lower bounds (1, 1, 1) inside this routine but is
-!! conventionally allocated by the caller as (isd:ied, jsd:jed, n3).
-subroutine soca_root_read_var_3d(ncid, varname, nx_glob, ny_glob, &
-                                 isc, iec, jsc, jec, isd, jsd, buf)
-  integer,          intent(in)    :: ncid
-  character(len=*), intent(in)    :: varname
-  integer,          intent(in)    :: nx_glob, ny_glob
-  integer,          intent(in)    :: isc, iec, jsc, jec
-  integer,          intent(in)    :: isd, jsd
-  real(kind=kind_real), intent(inout) :: buf(:,:,:)
-
-  integer :: varid, ndims_var, n3, i, j, k
-  integer, allocatable :: start_v(:), count_v(:)
-  real(kind=kind_real), allocatable :: glob(:,:,:)
-
-  n3 = size(buf, 3)
-  allocate(glob(nx_glob, ny_glob, n3))
-
-  if (mpp_pe() == mpp_root_pe()) then
-    call nc_check(nf90_inq_varid(ncid, trim(varname), varid))
-    call nc_check(nf90_inquire_variable(ncid, varid, ndims=ndims_var))
-    allocate(start_v(ndims_var)); start_v = 1
-    allocate(count_v(ndims_var)); count_v = 1
-    count_v(1) = nx_glob
-    count_v(2) = ny_glob
-    if (ndims_var >= 3) count_v(3) = n3
-    ! Trailing dims (e.g. unlimited "Time") stay at count=1, start=1.
-    call nc_check(nf90_get_var(ncid, varid, glob, start=start_v, count=count_v))
-    deallocate(start_v, count_v)
-  end if
-
-  call mpp_broadcast(glob, size(glob), mpp_root_pe())
-
-  ! Each PE copies its compute-domain slab into the correct offset of buf.
-  ! buf is 1-based inside the routine; caller's (i, j) maps to local
-  ! buf(i - isd + 1, j - jsd + 1, :). glob is 1-based on the global grid,
-  ! so caller's (i, j) maps to glob(i - geom%isg + 1, ...) -- but isg is
-  ! always 1 in SOCA, so that simplifies to glob(i, j, :).
-  do k = 1, n3
-    do j = jsc, jec
-      do i = isc, iec
-        buf(i - isd + 1, j - jsd + 1, k) = glob(i, j, k)
-      end do
-    end do
-  end do
-
-  deallocate(glob)
-end subroutine soca_root_read_var_3d
-
-!> Read a (x, y, n3, n4) variable. Same root-read + broadcast + local-slice
-!! pattern as soca_root_read_var_3d.
-subroutine soca_root_read_var_4d(ncid, varname, nx_glob, ny_glob, &
-                                 isc, iec, jsc, jec, isd, jsd, buf)
-  integer,          intent(in)    :: ncid
-  character(len=*), intent(in)    :: varname
-  integer,          intent(in)    :: nx_glob, ny_glob
-  integer,          intent(in)    :: isc, iec, jsc, jec
-  integer,          intent(in)    :: isd, jsd
-  real(kind=kind_real), intent(inout) :: buf(:,:,:,:)
-
-  integer :: varid, ndims_var, n3, n4, i, j, k, l
-  integer, allocatable :: start_v(:), count_v(:)
-  real(kind=kind_real), allocatable :: glob(:,:,:,:)
-
-  n3 = size(buf, 3)
-  n4 = size(buf, 4)
-  allocate(glob(nx_glob, ny_glob, n3, n4))
-
-  if (mpp_pe() == mpp_root_pe()) then
-    call nc_check(nf90_inq_varid(ncid, trim(varname), varid))
-    call nc_check(nf90_inquire_variable(ncid, varid, ndims=ndims_var))
-    allocate(start_v(ndims_var)); start_v = 1
-    allocate(count_v(ndims_var)); count_v = 1
-    count_v(1) = nx_glob
-    count_v(2) = ny_glob
-    if (ndims_var >= 3) count_v(3) = n3
-    if (ndims_var >= 4) count_v(4) = n4
-    call nc_check(nf90_get_var(ncid, varid, glob, start=start_v, count=count_v))
-    deallocate(start_v, count_v)
-  end if
-
-  call mpp_broadcast(glob, size(glob), mpp_root_pe())
-
-  do l = 1, n4
-    do k = 1, n3
-      do j = jsc, jec
-        do i = isc, iec
-          buf(i - isd + 1, j - jsd + 1, k, l) = glob(i, j, k, l)
-        end do
-      end do
-    end do
-  end do
-
-  deallocate(glob)
-end subroutine soca_root_read_var_4d
 
 ! ------------------------------------------------------------------------------
 end module soca_utils
