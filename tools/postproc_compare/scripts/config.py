@@ -5,6 +5,8 @@ paths via env vars. Direct invocation requires the env vars below:
 
 - POSTPROC_COMPARE_FORTRAN     : legacy Fortran output (.nc)
 - POSTPROC_COMPARE_CPP         : new C++ output (.nc)
+- POSTPROC_COMPARE_BACKGROUND  : background CICE restart (.nc)
+- POSTPROC_COMPARE_ANALYSIS    : ice analysis (.nc)
 - POSTPROC_COMPARE_GRIDSPEC    : gridspec (.nc)
 - POSTPROC_COMPARE_PLOTS_DIR   : output base for plots/
 - POSTPROC_COMPARE_REPORTS_DIR : output base for diff_stats/ (defaults to PLOTS_DIR)
@@ -25,6 +27,8 @@ def _required(name):
 
 FORTRAN_OUT = _required("POSTPROC_COMPARE_FORTRAN")
 CPP_OUT     = _required("POSTPROC_COMPARE_CPP")
+BACKGROUND  = _required("POSTPROC_COMPARE_BACKGROUND")
+ANALYSIS    = _required("POSTPROC_COMPARE_ANALYSIS")
 GRIDSPEC    = _required("POSTPROC_COMPARE_GRIDSPEC")
 PLOTS_DIR   = _required("POSTPROC_COMPARE_PLOTS_DIR")
 REPORTS_DIR = Path(os.environ.get("POSTPROC_COMPARE_REPORTS_DIR", PLOTS_DIR))

@@ -49,15 +49,19 @@ def run_cycle(cycle_dir, gridspec, python_bin):
     env = os.environ.copy()
     env["POSTPROC_COMPARE_FORTRAN"]     = str(cycle_dir / "iced.legacy.nc")
     env["POSTPROC_COMPARE_CPP"]         = str(cycle_dir / "iced.new.nc")
+    env["POSTPROC_COMPARE_BACKGROUND"]  = str(cycle_dir / "background.cice.res.nc")
+    env["POSTPROC_COMPARE_ANALYSIS"]    = str(cycle_dir / "analysis.ice.nc")
     env["POSTPROC_COMPARE_GRIDSPEC"]    = str(gridspec)
     env["POSTPROC_COMPARE_PLOTS_DIR"]   = str(plots_dir)
     env["POSTPROC_COMPARE_REPORTS_DIR"] = str(reports_dir)
 
     print(f"\n=== {cycle_tag} ===")
-    print(f"  legacy:   {env['POSTPROC_COMPARE_FORTRAN']}")
-    print(f"  new:      {env['POSTPROC_COMPARE_CPP']}")
-    print(f"  plots:    {plots_dir}")
-    print(f"  reports:  {reports_dir}")
+    print(f"  legacy:     {env['POSTPROC_COMPARE_FORTRAN']}")
+    print(f"  new:        {env['POSTPROC_COMPARE_CPP']}")
+    print(f"  background: {env['POSTPROC_COMPARE_BACKGROUND']}")
+    print(f"  analysis:   {env['POSTPROC_COMPARE_ANALYSIS']}")
+    print(f"  plots:      {plots_dir}")
+    print(f"  reports:    {reports_dir}")
 
     failed = []
     for script in CYCLE_SCRIPTS:
