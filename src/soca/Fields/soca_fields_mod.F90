@@ -1175,8 +1175,8 @@ function soca_genfilename(f_conf,length,vdate,date_cols,domain_type)
        call datetime_diff(vdate,rdate,step)
        call duration_to_string(step,sstep)
      endif
-     lenfn = lenfn + 1 + LEN_TRIM(referencedate) + 1 + LEN_TRIM(sstep)
-     soca_genfilename = TRIM(prefix) // "." // TRIM(referencedate) // "." // TRIM(sstep)
+     lenfn = lenfn + 1 + LEN_TRIM(referencedate) + 1 + LEN_TRIM(sstep) + 3
+     soca_genfilename = TRIM(prefix) // "." // TRIM(referencedate) // "." // TRIM(sstep) // ".nc"
   endif
 
   if (typ=="an" .or. typ=="incr") then
@@ -1185,8 +1185,8 @@ function soca_genfilename(f_conf,length,vdate,date_cols,domain_type)
      else
        call datetime_to_string_io(vdate,validitydate)
      endif
-     lenfn = lenfn + 1 + LEN_TRIM(validitydate)
-     soca_genfilename = TRIM(prefix) // "." // TRIM(validitydate)
+     lenfn = lenfn + 1 + LEN_TRIM(validitydate) + 3
+     soca_genfilename = TRIM(prefix) // "." // TRIM(validitydate) // ".nc"
   endif
 
   if (lenfn>length) &
