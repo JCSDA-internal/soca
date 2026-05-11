@@ -24,9 +24,12 @@
 ! enqueue copies data in so the caller can mutate or free its source
 ! arrays before commit. Failure mode is mpp_error(FATAL).
 !
-! Read path: two implementations selectable via SOCA_IO_READ_MODE env var
+! Read path: two implementations selectable via YAML on the geometry block
 ! (default broadcast; see read_mode docstring below for rationale and
 ! benchmarks):
+!     geometry:
+!       io:
+!         read mode: broadcast | strided
 !   broadcast - PE 0 opens, nf90_get_var the full global field, then
 !               mpp_broadcast to all PEs which slice their compute tile.
 !   strided   - every PE opens NF90_NOWRITE independently and reads only
@@ -51,6 +54,7 @@ use mpp_mod, only: mpp_gather, mpp_broadcast, mpp_pe, mpp_root_pe, mpp_npes, &
 use mpp_domains_mod, only: domain2D, &
                            mpp_get_compute_domain, mpp_get_global_domain, &
                            mpp_get_data_domain
+use fckit_configuration_module, only: fckit_configuration
 
 implicit none
 private
@@ -59,6 +63,7 @@ public :: soca_io_writer
 public :: soca_io_reader
 public :: soca_io_file_exists, soca_io_var_exists
 public :: soca_io_close_all
+public :: soca_io_read_mode_from_config
 
 integer, parameter :: MAX_NAME = 64
 
@@ -92,9 +97,7 @@ type(cached_open), save :: read_cache(MAX_CACHED_OPENS)
 integer, save :: n_read_cached = 0
 
 ! Read strategy: PE-0-only read + mpp_broadcast (default) vs per-PE strided
-! reads (each PE opens + nf90_get_var its tile). Override with
-! SOCA_IO_READ_MODE=strided|broadcast at process start. Latched on first
-! reader_commit.
+! reads. Selected via YAML on geometry init -- see header docstring.
 !
 ! Broadcast is the default because real DA cycling reads files that were
 ! just written (model output, prev-cycle analyses) -- the page cache is
@@ -106,10 +109,10 @@ integer, save :: n_read_cached = 0
 ! the result (strided 3.9 s vs broadcast 13.3 s) but cycling never sees
 ! warm cache. On a parallel filesystem (Lustre/GPFS) or multi-node setup
 ! where the broadcast would have to cross the interconnect, strided may
-! win again -- toggle the env var to test.
+! win again.
 integer, parameter :: READ_MODE_STRIDED   = 1
 integer, parameter :: READ_MODE_BROADCAST = 2
-integer, save :: read_mode = 0   ! 0 = not yet resolved
+integer, save :: read_mode = READ_MODE_BROADCAST
 
 type :: var_entry
   character(len=MAX_NAME) :: name = ''
@@ -585,7 +588,6 @@ end subroutine grow_reader_if_needed
 subroutine reader_commit(self)
   class(soca_io_reader), intent(inout) :: self
 
-  if (read_mode == 0) call resolve_read_mode()
   select case (read_mode)
   case (READ_MODE_STRIDED)
     call commit_reader_strided(self)
@@ -735,29 +737,37 @@ end subroutine commit_reader_broadcast
 
 
 !==============================================================================
-! Latch the read mode from the SOCA_IO_READ_MODE env var on first commit.
-! Default = strided; broadcast available for A/B benchmarking. Unrecognized
-! values abort so typos surface immediately.
+! Set the module-level read_mode from a config block. Looks for:
+!     io:
+!       read mode: broadcast | strided
+! If the `io` block or the `read mode` key is absent, the module-level
+! default (broadcast) is kept. Call once from soca_geom_init with the
+! geometry config; the value applies to every reader_commit afterwards.
+! Unrecognized values abort so typos surface immediately.
 !==============================================================================
-subroutine resolve_read_mode()
-  character(len=32) :: mode_str
-  integer :: status
+subroutine soca_io_read_mode_from_config(f_conf)
+  type(fckit_configuration), intent(in) :: f_conf
+  type(fckit_configuration) :: io_conf
+  character(len=:), allocatable :: str
+  logical :: ok
 
-  call get_environment_variable("SOCA_IO_READ_MODE", mode_str, status=status)
-  if (status /= 0) then
-    read_mode = READ_MODE_BROADCAST
-    return
-  end if
-  select case (trim(mode_str))
-  case ("broadcast", "")
+  if (.not. f_conf%has("io")) return
+  ok = f_conf%get("io", io_conf)
+  if (.not. ok) return
+  if (.not. io_conf%has("read mode")) return
+  ok = io_conf%get("read mode", str)
+  if (.not. ok) return
+  select case (trim(str))
+  case ("broadcast")
     read_mode = READ_MODE_BROADCAST
   case ("strided")
     read_mode = READ_MODE_STRIDED
   case default
-    call mpp_error(FATAL, 'soca_io_mod: SOCA_IO_READ_MODE="'//trim(mode_str)//&
+    call mpp_error(FATAL, &
+        'soca_io_mod: io.read mode="'//trim(str)//&
         '" unrecognized (expected broadcast or strided)')
   end select
-end subroutine resolve_read_mode
+end subroutine soca_io_read_mode_from_config
 
 
 !==============================================================================
