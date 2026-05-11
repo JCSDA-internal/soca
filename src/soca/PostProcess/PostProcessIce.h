@@ -33,36 +33,17 @@ class State;
 class PostProcessIce: public util::Printable {
  public:
   // ---------------------------------------------------------------------------
-  /// @brief Parameters for rescaling CICE analysis in the ice pack
-  class RescaleParameters : public oops::Parameters {
-    OOPS_CONCRETE_PARAMETERS(RescaleParameters, oops::Parameters)
+  /// @brief Parameters for the SST update on ice2noice transitions. When ice
+  /// is removed by the analysis, optionally warm the surface ocean toward the
+  /// freezing temperature so the post-DA SST is consistent with no ice.
+  class SstUpdateParameters : public oops::Parameters {
+    OOPS_CONCRETE_PARAMETERS(SstUpdateParameters, oops::Parameters)
    public:
-    oops::Parameter<bool> rescale{"rescale",
-      "rescale analysis in the ice pack", false, this};
-    oops::Parameter<float> min_hice{"min hice",
-      "min ice thickness to trigger adjusting ice volume", 0.5, this};
-    oops::Parameter<float> min_hsno{"min hsno",
-      "min snow thickness to trigger adjusting snow volume", 0.1, this};
-  };
-
-  /// @brief Parameters for the redistribution of sea ice
-  class RedistributionParameters : public oops::Parameters {
-    OOPS_CONCRETE_PARAMETERS(RedistributionParameters, oops::Parameters)
-   public:
-    oops::Parameter<double> edge{"seaice edge",
-      "Threshold for sea ice edge, used in shuffle and rescale prior options",
-      0.15, this, {oops::minConstraint(0.0), oops::maxConstraint(1.0)}};
-    oops::Parameter<bool> shuffle{"shuffle",
-      "Option to shuffle sea ice in the marginal ice zone (where ice concentration"
-      " < seaice edge)",
-      true, this};
-    oops::Parameter<RescaleParameters> rescale{"rescale prior",
-      "Option to rescale sea ice in the ice pack zone (where ice concentration"
-      " > seaice edge)", {}, this};
     oops::Parameter<bool> adjustSST{"update SST",
-      "Option to update sea surface temperature", true, this};
+      "Warm the surface ocean toward Tfrz on ice2noice transitions.",
+      true, this};
     oops::Parameter<double> sstDiffMax{"max positive SST update",
-      "Maximum update to sea surface temperature (K)", 1.0, this,
+      "Maximum update to sea surface temperature (K).", 1.0, this,
       {oops::minConstraint(0.0)}};
   };
 
@@ -85,14 +66,10 @@ class PostProcessIce: public util::Printable {
   };
 
   // ---------------------------------------------------------------------------
-  /// @brief Parameters for the post-rescale snow refinement step. After the
-  /// per-category rescale has matched the analysis hsno aggregate, optionally:
-  ///   - drop snow on any category whose hsn = vsnon/aicen falls below
-  ///     `min snow thickness` (avoids unphysical thin snow that would force
-  ///     CICE into a bad state on cycle-restart);
-  ///   - redistribute the per-cell snow volume by aicen-area weight rather
-  ///     than preserving the background snow shape (matches the Python
-  ///     reference scripts).
+  /// @brief Parameters controlling the snow-volume distribution. The cell-mean
+  /// snow thickness is clamped to [hsnowMin, hsnowMax] and then distributed
+  /// per category proportional to aicen (matches the Python reference
+  /// scripts' insert_hsnow path).
   class SnowParameters : public oops::Parameters {
     OOPS_CONCRETE_PARAMETERS(SnowParameters, oops::Parameters)
    public:
@@ -105,10 +82,6 @@ class PostProcessIce: public util::Printable {
       "to [min snow thickness / aice, this] before being distributed per cat. "
       "Matches the Python reference scripts. Set very large to disable.",
       5.0, this, {oops::minConstraint(0.0)}};
-    oops::Parameter<bool> redistributeByArea{"redistribute by area",
-      "If true, distribute the per-cell snow volume by aicen area weight "
-      "instead of preserving the background per-category snow shape.",
-      false, this};
   };
 
   // ---------------------------------------------------------------------------
@@ -191,25 +164,18 @@ class PostProcessIce: public util::Printable {
     oops::RequiredParameter<int> ncat{"ncat", this, {oops::minConstraint(1)}};
     oops::RequiredParameter<int> ice_lev{"ice_lev", this, {oops::minConstraint(1)}};
     oops::RequiredParameter<int> sno_lev{"sno_lev", this, {oops::minConstraint(1)}};
-    oops::RequiredParameter<RedistributionParameters> arctic{"arctic", this};
-    oops::RequiredParameter<RedistributionParameters> antarctic{"antarctic", this};
+    oops::Parameter<SstUpdateParameters> sstUpdate{"sst update",
+      "SST adjustment on ice2noice transitions.", {}, this};
     oops::Parameter<ITDParameters> itd{"itd", "ITD re-bin options", {}, this};
     oops::Parameter<SnowParameters> snow{"snow",
-      "Post-rescale snow refinement options", {}, this};
+      "Snow-volume distribution options.", {}, this};
     oops::Parameter<FreeboardParameters> freeboard{"freeboard",
-      "Freeboard enforcement options", {}, this};
+      "Freeboard enforcement options.", {}, this};
     oops::Parameter<ThermoParameters> thermo{"thermo",
-      "Stage C thermo / pond options", {}, this};
+      "Stage C thermo / pond options.", {}, this};
     oops::RequiredParameter<CiceRestartParameters> ciceRestart{"cice restart",
       "Input/output paths for the CICE restart this pass reads and writes.",
       this};
-    oops::Parameter<float> icepackTstep{"icepack time step",
-            "icepack time step used for thickness categories rebinning", 300, this};
-    oops::Parameter<int> shuffleStencilSize{"shuffle stencil depth",
-            "stencil depth used in the shuffle search", 1, this,
-            {oops::minConstraint(1)}};
-    oops::Parameter<std::string> tFrzOption{"icepack tfrz_option",
-            "icepack option to compute freezing temperature", "mushy", this};
     oops::Parameter<double> minAice{"min aice",
             "minimum allowable ice concentration", 0.0, this, {oops::minConstraint(0.0)}};
     oops::Parameter<double> minVice{"min vice",
@@ -243,8 +209,9 @@ class PostProcessIce: public util::Printable {
                         const atlas::FieldSet & fset) const;
 
   /// @brief Per-cell donor record assembled by the sparse halo exchange. Holds
-  /// the donor cell's per-category ice and thermo values so consumers (shuffle,
-  /// seedNewIce) can copy them into the local cell or frame slot directly.
+  /// the donor cell's per-category ice and thermo values so consumers
+  /// (donorMeanIce in the NOICE2ICE branch, seedNewIce in Stage C) can read
+  /// from them directly.
   ///
   /// All four arrays are flat, sized in terms of `ncat`, `iceLev`, `snoLev`
   /// from `params_`. Layout:
@@ -282,8 +249,8 @@ class PostProcessIce: public util::Printable {
   atlas::array::ArrayView<double, 2> mask_;
 
   /// @brief Mask of (ownedNode, k) cells that transitioned from
-  /// `bg_aicen[k] == 0` to `new_aicen[k] > 0` after Stages A/B and were *not*
-  /// thermo-seeded by the shuffle path. Indexed `ownedNode * ncat + k`.
+  /// `bg_aicen[k] == 0` to `new_aicen[k] > 0` after Stages A/B. Indexed
+  /// `ownedNode * ncat + k`.
   struct NewIceMask {
     std::size_t ncat = 0;
     std::size_t nOwnedNodes = 0;

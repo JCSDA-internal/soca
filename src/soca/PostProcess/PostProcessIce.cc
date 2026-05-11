@@ -150,10 +150,6 @@ void PostProcessIce::postProcess(State & pproc,
     bg_vsno_cat.push_back(atlas::array::make_view<double, 2>(bgfields.field(varname)));
     new_vsno_cat.push_back(atlas::array::make_view<double, 2>(newfields.field(varname)));
   }
-  auto bg_tocn = atlas::array::make_view<double, 2>(
-      bgfields.field("sea_water_potential_temperature"));
-  auto bg_socn = atlas::array::make_view<double, 2>(
-      bgfields.field("sea_water_salinity"));
   // Writable view onto pproc's ocean temperature so the SST-adjust step on
   // ice2noice cells can update it (Fortran soca2cice behavior).
   auto new_tocn = atlas::array::make_view<double, 2>(
@@ -188,9 +184,10 @@ void PostProcessIce::postProcess(State & pproc,
   auto a_hsno = atlas::array::make_view<double, 2>(anfields.field("sea_ice_snow_thickness"));
 
   // parameters
-  const auto & arctic = params_.arctic.value();
-  const auto & antarctic = params_.antarctic.value();
-  const double min_aice = params_.minAice.value();
+  const auto & sstUpdateParams = params_.sstUpdate.value();
+  const bool   adjust_sst = sstUpdateParams.adjustSST.value();
+  const double max_dsst   = sstUpdateParams.sstDiffMax.value();
+  const double min_aice   = params_.minAice.value();
   const double min_vice = params_.minVice.value();
   const auto & itd = params_.itd.value();
   const bool do_rebin = itd.rebin.value();
@@ -243,16 +240,12 @@ void PostProcessIce::postProcess(State & pproc,
     ASSERT(on == frame.nOwnedNodes);
   }
 
-  // Sparse halo exchange for donor data (Phases A+B+C). K covers the maximum
-  // of the shuffle stencil and the seed-new-ice search radius so both passes
-  // can read from the same donorCache.
-  const std::size_t halo     = std::max<std::size_t>(1,
-                                 params_.shuffleStencilSize.value());
-  const std::size_t stencilK = (2 * halo + 1) * (2 * halo + 1);
-  const std::size_t seedK    = static_cast<std::size_t>(
+  // Sparse halo exchange for donor data (Phases A+B+C). K is the seed-new-ice
+  // search radius; both donorMeanIce (in the NOICE2ICE branch) and seedNewIce
+  // (Stage C) read from the same donorCache.
+  const std::size_t seedK = static_cast<std::size_t>(
       params_.thermo.value().seedSearchK.value());
-  const std::size_t haloK    = std::max(stencilK, seedK);
-  auto donorCache = gatherDonorHalo(haloK, bg_aice_cat, bg_vice_cat, bg_vsno_cat,
+  auto donorCache = gatherDonorHalo(seedK, bg_aice_cat, bg_vice_cat, bg_vsno_cat,
                                     frame, ownedNodeOf, ice_lev, sno_lev);
 
   // Additional knobs picked up from the top-level parameters. seedK was
@@ -279,10 +272,6 @@ void PostProcessIce::postProcess(State & pproc,
   //   6. freeboard enforcement (when enabled);
   //   7. min-vice cleanup; recompute aggregates.
   for (size_t jnode = 0; jnode < field_size; ++jnode) {
-    const auto & reg = lonlat_(jnode, 1) > 0.0 ? arctic : antarctic;
-    const bool adjust_sst = reg.adjustSST.value();
-    const double max_dsst = reg.sstDiffMax.value();
-
     // Clamp bounds on analysis first.
     if (a_aice(jnode, 0) < min_aice) a_aice(jnode, 0) = 0.0;
     if (a_aice(jnode, 0) > 1.0)      a_aice(jnode, 0) = 1.0;
@@ -641,24 +630,34 @@ void PostProcessIce::applyThermoStage(CiceRestartIO::ThermoFrame & frame,
 
       if (updateSnowThermo) {
         const double vsno = vsnoCat[k](jnode, 0);
+        // Tsfcn from prior stages (preserved from background for ICE2ICE, or
+        // donor-seeded by seedNewIce for NOICE2ICE) is the physically
+        // meaningful quantity here. Rebuild qsno from Tsfcn rather than the
+        // reverse, mirroring the Python reference (qsn_tsfc =
+        // snowEnthalpy(tsf_new) in insert_iconc_ithkn_cice6_restart.py).
+        // The opposite direction (back-deriving Tsfcn from a stale bg qsno
+        // on cats that gained snow via redistribution) produced a +2.6 K
+        // warm bias on the production grid.
+        double & T = frame.at2(frame.Tsfcn, ownedNode, k);
+        T = std::min(maxTsfc, std::max(minTsfc, T));
         if (vsno > 0.0) {
+          const double qsfc = icephysics::snowEnthalpy(T);
+          const double qClipped = std::min(qsnoHi, std::max(qsnoLo, qsfc));
           for (std::size_t l = 0; l < snoLev; ++l) {
-            double & q = frame.at3(frame.qsno, snoLev, ownedNode, k, l);
-            q = std::min(qsnoHi, std::max(qsnoLo, q));
+            frame.at3(frame.qsno, snoLev, ownedNode, k, l) = qClipped;
           }
-          // Use the surface snow layer to back out Tsfcn.
-          const double qsfc = frame.at3(frame.qsno, snoLev, ownedNode, k, 0);
-          const double tsfc = icephysics::snowEnthalpyToTsfc(qsfc);
-          frame.at2(frame.Tsfcn, ownedNode, k) = std::min(maxTsfc, tsfc);
+        } else {
+          // No snow: zero qsno (matches Python; avoids stale-bg leakage).
+          for (std::size_t l = 0; l < snoLev; ++l) {
+            frame.at3(frame.qsno, snoLev, ownedNode, k, l) = 0.0;
+          }
         }
         // Cap the surface ice layer enthalpy by iceEnthalpyBL99(Tsfcn, sice).
-        const double tice = std::min(maxTsfc,
-            frame.at2(frame.Tsfcn, ownedNode, k));
-        if (tice < 0.0) {
+        if (T < 0.0) {
           const double sice = frame.at3(frame.sice, iceLev,
                                          ownedNode, k, lSurf);
           const double sBL  = (sice > 0.0) ? sice : sLayer[lSurf];
-          const double qCap = icephysics::iceEnthalpyBL99(tice, sBL);
+          const double qCap = icephysics::iceEnthalpyBL99(T, sBL);
           double & qIce = frame.at3(frame.qice, iceLev, ownedNode, k, lSurf);
           qIce = std::min(qIce, qCap);
         }

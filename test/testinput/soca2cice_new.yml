@@ -56,18 +56,6 @@ postprocess ice:
   cice restart:
     input:  data_static/72x35x25/restarts/iced.2018-04-15-00000.nc
     output: data_output/iced.postproc.nc
-  arctic:
-    rescale prior:
-      rescale: true
-      min hice: 0.5
-      min hsno: 0.1
-  antarctic:
-    seaice edge: 0.15
-    shuffle: true
-    rescale prior:
-      rescale: true
-      min hice: 0.5
-      min hsno: 0.1
 
 test:
   reference filename: testref/soca2cice_new.test
