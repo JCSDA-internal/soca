@@ -101,12 +101,170 @@ void testAdjustThkncats_InfeasibleTarget() {
   std::vector<double> hicat{0.0, 0.64, 1.39, 2.47, 4.57, 50.0};
   std::vector<double> aicen{0.0, 0.0, 0.0, 0.20, 0.0};   // only cat 3 has area
   std::vector<double> vicen{0.0, 0.0, 0.0, 0.50, 0.0};
-  // cat 3 lower bound = (2.47+0.01)*0.20 = 0.496; target below that.
+  // Legacy form holds aicen fixed; only cat 3 envelope is [0.496, 0.912].
+  // Target = 0.10 is below -> legacy overload must fail.
   const double vTarget = 0.10;
 
   const bool ok = soca::icephysics::adjustThicknessCategories(
       aicen, vicen, vTarget, hicat, 0.01);
   EXPECT(!ok);
+}
+
+// ---------------------------------------------------------------------------
+// Full-form tests: aiceTarget + viceTarget, early-out, Phase 2 (aicen mutation)
+// ---------------------------------------------------------------------------
+void testAdjustThkncats_EarlyOut() {
+  // Distribution already satisfies bin bounds AND totals match the targets.
+  // Result must be bit-equal to input; aicenMutated must remain 0.
+  std::vector<double> hicat{0.0, 0.64, 1.39, 2.47, 4.57, 50.0};
+  std::vector<double> aicen{0.10, 0.20, 0.15, 0.05, 0.00};
+  std::vector<double> vicen{0.03, 0.20, 0.30, 0.18, 0.00};
+  const auto aIn = aicen, vIn = vicen;
+  const double aT = sumv(aicen);
+  const double vT = sumv(vicen);
+  int mutated = -1;
+  double dMax = -1.0;
+
+  const bool ok = soca::icephysics::adjustThicknessCategories(
+      aicen, vicen, aT, vT, hicat, 0.01, 1.0e-8, 1.0e-8, 1.0e-6,
+      &mutated, &dMax);
+  EXPECT(ok);
+  EXPECT(mutated == 0);
+  EXPECT(dMax >= 0.0 && dMax < 1.0e-12);
+  for (size_t k = 0; k < aicen.size(); ++k) {
+    EXPECT(nearEq(aicen[k], aIn[k], 1.0e-12));
+    EXPECT(nearEq(vicen[k], vIn[k], 1.0e-12));
+  }
+}
+
+void testAdjustThkncats_Phase1Only() {
+  // Bins violated (cat 0 too thick) but viceTarget reachable while holding
+  // aicen fixed. Expect Phase 1 to fix it; mutated flag stays 0.
+  std::vector<double> hicat{0.0, 0.64, 1.39, 2.47, 4.57, 50.0};
+  std::vector<double> aicen{0.20, 0.10, 0.10, 0.05, 0.00};
+  std::vector<double> vicen{0.40, 0.10, 0.20, 0.18, 0.00};  // cat 0 h=2.0 out
+  const auto aIn = aicen;
+  const double aT = sumv(aicen);
+  const double vT = 0.60;  // inside the post-clamp envelope
+  int mutated = -1;
+  double dMax = -1.0;
+
+  const bool ok = soca::icephysics::adjustThicknessCategories(
+      aicen, vicen, aT, vT, hicat, 0.01, 1.0e-8, 1.0e-8, 1.0e-6,
+      &mutated, &dMax);
+  EXPECT(ok);
+  EXPECT(mutated == 0);
+  // aicen only mutated by the rescale-to-target (which is a no-op here since
+  // Sum already == aT). Tolerance generous to absorb the cleanup rescale.
+  EXPECT(dMax < 1.0e-9);
+  EXPECT(nearEq(sumv(aicen), aT, 1.0e-12));
+  EXPECT(nearEq(sumv(vicen), vT, 1.0e-9));
+  for (size_t k = 0; k < aicen.size(); ++k) {
+    if (aicen[k] > 1.0e-11) {
+      const double h = vicen[k] / aicen[k];
+      EXPECT(h >= hicat[k]     - 1.0e-9);
+      EXPECT(h <= hicat[k + 1] + 1.0e-9);
+    }
+  }
+  // Per-cat aicen identical to input (no Phase 2).
+  for (size_t k = 0; k < aicen.size(); ++k) {
+    EXPECT(nearEq(aicen[k], aIn[k], 1.0e-9));
+  }
+}
+
+void testAdjustThkncats_Phase2_NoiceToIce() {
+  // Python script: noice->ice cell with placeholder aicen=[a_an, 0,0,0,0]
+  // and a thick donor mean of 2.0 m -> viceTarget = 0.30 * 2.0 = 0.60.
+  // Cat-0 envelope alone is [0.001, ~0.192], so Phase 1 cannot reach 0.60.
+  // Phase 2 must shift aicen into cat 3.
+  std::vector<double> hicat{0.0, 0.64, 1.39, 2.47, 4.57, 50.0};
+  std::vector<double> aicen{0.30, 0.0, 0.0, 0.0, 0.0};
+  std::vector<double> vicen{0.0,  0.0, 0.0, 0.0, 0.0};
+  const double aT = 0.30;
+  const double vT = 0.30 * 2.0;
+  int mutated = -1;
+  double dMax = -1.0;
+
+  const bool ok = soca::icephysics::adjustThicknessCategories(
+      aicen, vicen, aT, vT, hicat, 0.01, 1.0e-8, 1.0e-8, 1.0e-6,
+      &mutated, &dMax);
+  EXPECT(ok);
+  EXPECT(mutated == 1);
+  EXPECT(dMax > 0.0);
+  EXPECT(nearEq(sumv(aicen), aT, 1.0e-9));
+  EXPECT(nearEq(sumv(vicen), vT, 1.0e-9));
+  // Some mass must have left cat 0 (the placeholder) since cat-0's envelope
+  // ceiling 0.30 * 0.63 = 0.189 is below the target 0.60.
+  EXPECT(aicen[0] < 0.30 - 1.0e-6);
+  // All occupied cats must respect bin bounds.
+  for (size_t k = 0; k < aicen.size(); ++k) {
+    if (aicen[k] > 1.0e-11) {
+      const double h = vicen[k] / aicen[k];
+      EXPECT(h >= hicat[k]     - 1.0e-9);
+      EXPECT(h <= hicat[k + 1] + 1.0e-9);
+    }
+  }
+}
+
+void testAdjustThkncats_TinyAice_Diagnostic() {
+  // Reproduces a marginal-ice case from the rebin test grid:
+  //   ai_an = 1.22e-5, hi_an = 2.415 m  -> vtot_target = 2.95e-5
+  // Seed: aicen = [ai_an, 0, 0, 0, 0]; vicen = [vtot_target, 0, 0, 0, 0].
+  // The target lies in cat 3's bin ([2.47, 4.57]); rebin must reshuffle
+  // aicen there.
+  std::vector<double> hicat{0.0, 0.6445072, 1.391433, 2.470179, 4.567288, 9.333887};
+  std::vector<double> aicen{1.22e-5, 0, 0, 0, 0};
+  std::vector<double> vicen{2.95e-5, 0, 0, 0, 0};
+  const double aT = 1.22e-5;
+  const double vT = 2.95e-5;
+  int mut = -1;
+  double dmax = 0.0;
+
+  const bool ok = soca::icephysics::adjustThicknessCategories(
+      aicen, vicen, aT, vT, hicat, 0.01, 1.0e-8, 1.0e-8, 1.0e-6, &mut, &dmax);
+  // Diagnostic dump regardless of pass/fail.
+  double aSum = 0.0, vSum = 0.0;
+  for (size_t k = 0; k < 5; ++k) { aSum += aicen[k]; vSum += vicen[k]; }
+  std::fprintf(stderr,
+      "TinyAice: ok=%d mutated=%d  Sum(aicen)=%.4e (target %.4e)  Sum(vicen)=%.4e (target %.4e)\n",
+      ok, mut, aSum, aT, vSum, vT);
+  for (size_t k = 0; k < 5; ++k) {
+    if (aicen[k] > 0.0) {
+      std::fprintf(stderr, "  cat %zu: a=%.4e v=%.4e h=%.4f (bin [%.4f, %.4f])\n",
+                   k, aicen[k], vicen[k], vicen[k]/aicen[k], hicat[k], hicat[k+1]);
+    }
+  }
+  EXPECT(ok);
+  EXPECT(nearEq(aSum, aT, 1.0e-12));
+  EXPECT(nearEq(vSum, vT, 1.0e-9));
+  for (size_t k = 0; k < 5; ++k) {
+    if (aicen[k] > 1.0e-11) {
+      const double h = vicen[k] / aicen[k];
+      EXPECT(h >= hicat[k]     - 1.0e-9);
+      EXPECT(h <= hicat[k + 1] + 1.0e-9);
+    }
+  }
+}
+
+void testAdjustThkncats_RescaleToAiceTarget() {
+  // Caller supplies aiceTarget != Sum(aicen_in): expect rescale-to-target
+  // (NOT counted as Phase 2 mutation), then redistribute vicen.
+  std::vector<double> hicat{0.0, 0.64, 1.39, 2.47, 4.57, 50.0};
+  std::vector<double> aicen{0.10, 0.20, 0.15, 0.05, 0.00};
+  std::vector<double> vicen{0.03, 0.20, 0.30, 0.18, 0.00};
+  const double aIn = sumv(aicen);
+  const double aT = 0.60;                // bump total aice from 0.50 to 0.60
+  const double vT = sumv(vicen) * (aT / aIn);  // proportional volume scale
+  int mutated = -1;
+  double dMax = -1.0;
+
+  const bool ok = soca::icephysics::adjustThicknessCategories(
+      aicen, vicen, aT, vT, hicat, 0.01, 1.0e-8, 1.0e-8, 1.0e-6,
+      &mutated, &dMax);
+  EXPECT(ok);
+  EXPECT(mutated == 0);  // pure rescale; Phase 1 sees bins OK after scaling
+  EXPECT(nearEq(sumv(aicen), aT, 1.0e-12));
+  EXPECT(nearEq(sumv(vicen), vT, 1.0e-9));
 }
 
 // ---------------------------------------------------------------------------
@@ -233,6 +391,11 @@ int main() {
   testAdjustThkncats_OutOfBoundClamps();
   testAdjustThkncats_HitTarget();
   testAdjustThkncats_InfeasibleTarget();
+  testAdjustThkncats_EarlyOut();
+  testAdjustThkncats_Phase1Only();
+  testAdjustThkncats_Phase2_NoiceToIce();
+  testAdjustThkncats_TinyAice_Diagnostic();
+  testAdjustThkncats_RescaleToAiceTarget();
   testFreeboard_AlreadyOk();
   testFreeboard_RedistributeSnow();
   testFreeboard_GrowIce();

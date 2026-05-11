@@ -33,15 +33,44 @@ struct Constants {
 // adjustThicknessCategories
 //
 // Re-bin per-category area (aicen) and volume (vicen) so that for every
-// category k either aicen[k] == 0 or hicat[k] <= vicen[k]/aicen[k] <= hicat[k+1].
-// Conserves Sum(aicen) = aiceTotal (taken as sum of input aicen) and
-// Sum(vicen) = viceTarget on output. dhiMin enforces a minimum thickness gap
-// from the lower category bound to avoid degenerate bins.
+// category k either aicen[k] == 0 or hicat[k] <= vicen[k]/aicen[k] <= hicat[k+1],
+// while hitting both Sum(aicen) = aiceTarget and Sum(vicen) = viceTarget.
+//
+// Algorithm (port of mc6util.adjust_thkncats_aice without scipy):
+//   0. If aiceTarget <= puny: zero everything, return true.
+//   1. Early-out if every bin already satisfies the bounds and the totals
+//      already match the targets within (aTol, vTol).
+//   2. Phase 1 (vicen-only redistribution): hold aicen fixed, iterate dh per
+//      cat to drive Sum(aicen*h) toward viceTarget. Converges when targets
+//      are reachable with the current aicen shape.
+//   3. Phase 2 (aicen mutation, only if Phase 1 cannot reach viceTarget):
+//      reshuffle aicen between cats so the feasibility envelope
+//      [Sum(aicen*hLo), Sum(aicen*hHi)] contains viceTarget, then re-enter
+//      Phase 1.
+//   4. Normalize Sum(aicen) = aiceTarget; zero cats with aicen < ainMin.
+//
+// Optional outputs:
+//   *aicenMutated   -> 1 iff Phase 2 was entered (aicen distribution changed
+//                      beyond rescale-to-target). Use to track scope.
+//   *maxDeltaAicen  -> max_k |aicen[k] - aicen_input[k]| after the call.
 //
 // hicat must have size aicen.size()+1 and be monotonically increasing.
-// Returns true on success, false if no consistent allocation is possible
-// (e.g. viceTarget is incompatible with aiceTotal and the bounds).
+// Returns true on success, false if no consistent allocation exists.
 // ---------------------------------------------------------------------------
+bool adjustThicknessCategories(std::vector<double> & aicen,
+                               std::vector<double> & vicen,
+                               double aiceTarget,
+                               double viceTarget,
+                               const std::vector<double> & hicat,
+                               double dhiMin = 0.01,
+                               double ainMin = 1.0e-8,
+                               double aTol   = 1.0e-8,
+                               double vTol   = 1.0e-6,
+                               int * aicenMutated   = nullptr,
+                               double * maxDeltaAicen = nullptr);
+
+// Back-compat overload: preserves Sum(aicen) of the input (aiceTarget set to
+// the current sum) and runs the legacy vicen-only path. Calls the full form.
 bool adjustThicknessCategories(std::vector<double> & aicen,
                                std::vector<double> & vicen,
                                double viceTarget,

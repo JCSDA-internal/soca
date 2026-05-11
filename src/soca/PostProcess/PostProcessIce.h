@@ -100,6 +100,11 @@ class PostProcessIce: public util::Printable {
       "Floor on per-category snow thickness (m). Categories with vsnon/aicen "
       "below this are zeroed after rescale. Set to 0 to disable.",
       0.0, this, {oops::minConstraint(0.0)}};
+    oops::Parameter<double> hsnowMax{"max snow thickness",
+      "Cap on the cell-mean snow thickness (m). The analysis hsno is clamped "
+      "to [min snow thickness / aice, this] before being distributed per cat. "
+      "Matches the Python reference scripts. Set very large to disable.",
+      5.0, this, {oops::minConstraint(0.0)}};
     oops::Parameter<bool> redistributeByArea{"redistribute by area",
       "If true, distribute the per-cell snow volume by aicen area weight "
       "instead of preserving the background per-category snow shape.",
@@ -138,11 +143,15 @@ class PostProcessIce: public util::Printable {
     oops::Parameter<bool> updateSnowThermo{"update snow thermo",
       "Clip snow enthalpy into [snowEnthalpy(min Tsfc), snowEnthalpy(max Tsfc)] "
       "and back-derive Tsfcn from qsno on cats with snow. Also caps the surface "
-      "ice layer enthalpy by iceEnthalpyBL99(Tsfcn, sice).",
-      false, this};
+      "ice layer enthalpy by iceEnthalpyBL99(Tsfcn, sice). On by default to "
+      "match the Python reference scripts.",
+      true, this};
     oops::Parameter<bool> resetPonds{"reset ponds",
-      "Set apnd, hpnd, ipnd to zero on every category with aicen > 0.",
-      false, this};
+      "Set apnd, hpnd, ipnd to zero on every category with aicen > 0. On by "
+      "default to match the Python reference scripts, which always zero ponds "
+      "where snow is touched (prevents rapid pond-driven snow melt after "
+      "restart).",
+      true, this};
     oops::Parameter<double> maxTsfc{"max Tsfc",
       "Upper bound on Tsfcn (deg C). Snow enthalpy is clipped accordingly.",
       -1.0, this};
@@ -151,10 +160,10 @@ class PostProcessIce: public util::Printable {
       -100.0, this};
     oops::Parameter<bool> seedNewIce{"seed new ice",
       "Seed Tsfcn/qsno/sice/qice for cats that went from aicen=0 in background "
-      "to aicen>0 after Stage A/B (excluding shuffle, whose donor already "
-      "supplies thermo). Donor Tsfc from a global lat/lon nearest neighbor "
-      "with any ice; sub-surface profile from CICE physics.",
-      false, this};
+      "to aicen>0 after Stage A/B. Donor Tsfc from a global lat/lon nearest "
+      "neighbor with any ice; sub-surface profile from CICE physics "
+      "(BL99/BZ99). On by default to match the Python reference scripts.",
+      true, this};
     oops::Parameter<int> seedSearchK{"seed search neighbors",
       "Number of nearest KDTree neighbors to scan for a donor with any ice "
       "before falling back to Tfrz seeding.",
@@ -205,6 +214,18 @@ class PostProcessIce: public util::Printable {
             "minimum allowable ice concentration", 0.0, this, {oops::minConstraint(0.0)}};
     oops::Parameter<double> minVice{"min vice",
             "minimum allowable ice volume", 0.00001, this, {oops::minConstraint(0.0)}};
+    oops::Parameter<double> minAiceOutput{"min aice output",
+            "Cells where the analysis aice is below this threshold are treated "
+            "as no-ice in the output (all per-cat fields zeroed). Stops "
+            "near-zero aice (and the rebin's resulting micro-vicen) from "
+            "polluting the CICE restart. Set to 0 to disable.",
+            1.0e-4, this, {oops::minConstraint(0.0)}};
+    oops::Parameter<double> hitotMin{"min new ice thickness",
+            "Minimum cell-mean ice thickness (m) used to set the rebin volume "
+            "target when noice->ice transitions occur and no KDTree donor with "
+            "ice can be found within seed-search-neighbors. Mirrors the Python "
+            "reference scripts' hitot_min.",
+            0.1, this, {oops::minConstraint(0.0)}};
   };
 
   const std::string classname() {return "soca::PostProcessIce";}
@@ -287,6 +308,20 @@ class PostProcessIce: public util::Printable {
       const std::vector<std::int64_t> & ownedNodeOf,
       std::size_t ice_lev,
       std::size_t sno_lev) const;
+
+  /// Area-weighted mean Tsfc and mean ice thickness across the K nearest
+  /// KDTree neighbors that carry any ice. Used by the Stage A case-dispatch
+  /// for noice→ice cells to set the rebin's volume target before the per-
+  /// category thermo seeding runs in Stage C.
+  ///
+  /// Returns true if at least one donor with ice was found. Outputs are valid
+  /// only when the return is true; otherwise both are left untouched.
+  bool donorMeanIce(std::size_t jnode,
+                    std::size_t K,
+                    const std::unordered_map<std::int64_t, CatRecord> &
+                        donorCache,
+                    double & Tsfc_mean,
+                    double & hice_mean) const;
 
   /// Stage C noice→ice seeding. For each (ownedNode, k) flagged in `mask`,
   /// pick the global lat/lon nearest cell with any ice from `donorCache` and

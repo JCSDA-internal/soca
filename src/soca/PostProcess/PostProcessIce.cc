@@ -154,6 +154,10 @@ void PostProcessIce::postProcess(State & pproc,
       bgfields.field("sea_water_potential_temperature"));
   auto bg_socn = atlas::array::make_view<double, 2>(
       bgfields.field("sea_water_salinity"));
+  // Writable view onto pproc's ocean temperature so the SST-adjust step on
+  // ice2noice cells can update it (Fortran soca2cice behavior).
+  auto new_tocn = atlas::array::make_view<double, 2>(
+      newfields.field("sea_water_potential_temperature"));
   // Create field and view for total ice concentration in restarts
   atlas::Field bg_aice_field = fs.createField<double>(
     atlas::option::name("sea_ice_area_fraction") | atlas::option::levels(1));
@@ -203,7 +207,6 @@ void PostProcessIce::postProcess(State & pproc,
 
   const auto & snowParams = params_.snow.value();
   const double hsnow_min = snowParams.hsnowMin.value();
-  const bool snow_redistribute_area = snowParams.redistributeByArea.value();
 
   const auto & fbParams = params_.freeboard.value();
   const bool do_freeboard = fbParams.enforce.value();
@@ -252,190 +255,177 @@ void PostProcessIce::postProcess(State & pproc,
   auto donorCache = gatherDonorHalo(haloK, bg_aice_cat, bg_vice_cat, bg_vsno_cat,
                                     frame, ownedNodeOf, ice_lev, sno_lev);
 
-  // Track which cells had their thermo seeded by the shuffle path so that the
-  // post-loop seedNewIce can exclude them (donor consistency rule).
-  std::vector<std::uint8_t> shuffleSeeded(field_size, 0);
+  // Additional knobs picked up from the top-level parameters. seedK was
+  // already computed above for the donor halo gather; reuse it here.
+  const double hsnow_max        = snowParams.hsnowMax.value();
+  const double hitot_min        = params_.hitotMin.value();
+  const double min_aice_output  = params_.minAiceOutput.value();
 
-  // Cache global_index / ghost views for fast lookup in the shuffle branch.
-  const auto ghostView  = atlas::array::make_view<int, 1>(fs.ghost());
-  const auto gindexView = atlas::array::make_view<atlas::gidx_t, 1>(fs.global_index());
+  // Per-cell scratch for the rebin call.
+  int      rebin_aicen_mutated   = 0;
+  double   rebin_max_delta_aicen = 0.0;
+  std::size_t rebin_aicen_mutations  = 0;
+  double   rebin_max_delta_aicen_all = 0.0;
+  size_t rebin_visited = 0;
 
-  // Loop over all grid points to update ice fields
+  // ----------------------------------------------------------------------
+  // Stage A: per-cell case dispatch (port of the Python reference scripts).
+  // For each owned cell:
+  //   1. clamp analysis bounds;
+  //   2. classify (LAND/ICE2NOICE/NOICE2ICE/ICE2ICE);
+  //   3. set seed aicen/vicen and vtot_target accordingly;
+  //   4. ITD rebin (when enabled) drives aicen/vicen to (a_aice, vtot_target);
+  //   5. distribute snow by aicen-weight from clamped cell-mean hsno;
+  //   6. freeboard enforcement (when enabled);
+  //   7. min-vice cleanup; recompute aggregates.
   for (size_t jnode = 0; jnode < field_size; ++jnode) {
     const auto & reg = lonlat_(jnode, 1) > 0.0 ? arctic : antarctic;
-    const double edge = reg.edge.value();
-    const bool do_shuffle = reg.shuffle.value();
-    const bool do_rescale = reg.rescale.value().rescale.value();
-    const double min_hice = reg.rescale.value().min_hice.value();
-    const double min_hsno = reg.rescale.value().min_hsno.value();
     const bool adjust_sst = reg.adjustSST.value();
     const double max_dsst = reg.sstDiffMax.value();
 
-    // Clamp bounds on analysis first
-    // ice concentration bounds
+    // Clamp bounds on analysis first.
     if (a_aice(jnode, 0) < min_aice) a_aice(jnode, 0) = 0.0;
     if (a_aice(jnode, 0) > 1.0)      a_aice(jnode, 0) = 1.0;
-    // non-negative thicknesses
-    if (a_hice(jnode, 0) < 0.0) a_hice(jnode, 0) = 0.0;
-    if (a_hsno(jnode, 0) < 0.0) a_hsno(jnode, 0) = 0.0;
+    if (a_hice(jnode, 0) < 0.0)      a_hice(jnode, 0) = 0.0;
+    if (a_hsno(jnode, 0) < 0.0)      a_hsno(jnode, 0) = 0.0;
+    // Drop output ice on cells where analysis aice is below the noise floor.
+    // The rebin can otherwise produce micro-vicen layouts that show up as
+    // thick-ice-on-edge artifacts after the min_vice cleanup.
+    if (a_aice(jnode, 0) > 0.0 && a_aice(jnode, 0) < min_aice_output) {
+      a_aice(jnode, 0) = 0.0;
+    }
 
-    // Zero out ice if:
-    // - analysis has no ice
-    // - it's a land point
-    if ((mask_(jnode, 0) == 0.0) || (a_aice(jnode, 0) <= 0.0)) {
+    const double ai_bg = bg_aice(jnode, 0);
+    const double ai_an = a_aice(jnode, 0);
+    const bool   isLand = (mask_(jnode, 0) == 0.0);
+
+    // -------------------- Case 1: LAND or ICE2NOICE -----------------------
+    if (isLand || ai_an <= icephysics::Constants::puny) {
+      const bool wasIce = !isLand && (ai_bg > icephysics::Constants::puny);
       for (size_t icat = 0; icat < ncat_; ++icat) {
         new_aice_cat[icat](jnode, 0) = 0.0;
         new_vice_cat[icat](jnode, 0) = 0.0;
         new_vsno_cat[icat](jnode, 0) = 0.0;
       }
-      // TODO(AS): adjust SST if needed
-    } else if ((bg_aice(jnode, 0) <= edge) && do_shuffle) {
-      // Analysis has ice, but background has little ice: "shuffle".
-      // Pick donor among the K nearest neighbors whose total aice is closest
-      // to the analysis aice. Donor data comes from donorCache (sparse halo
-      // exchange) so cross-rank donors work correctly.
-      const std::size_t shuffleK = (2 * halo + 1) * (2 * halo + 1);
-      atlas::PointLonLat target(lonlat_(jnode, 0), lonlat_(jnode, 1));
-      target.normalise();
-      auto list = kdTree_.closestPoints(target, shuffleK);
-      const std::int64_t myG = (gindexView(jnode) > 0)
-          ? static_cast<std::int64_t>(gindexView(jnode)) : -1;
-      double bestDiff = std::numeric_limits<double>::max();
-      const CatRecord * bestRec = nullptr;
-      for (const auto & element : list) {
-        const std::int64_t g = static_cast<std::int64_t>(element.payload());
-        if (g == myG) continue;
-        auto it = donorCache.find(g);
-        if (it == donorCache.end()) continue;
-        const CatRecord & rec = it->second;
-        if (rec.mask == 0.0) continue;  // skip land
-        const double donorAice = std::accumulate(rec.aicen.begin(),
-                                                 rec.aicen.end(), 0.0);
-        const double diff = std::abs(donorAice - a_aice(jnode, 0));
-        if (diff < bestDiff) { bestDiff = diff; bestRec = &rec; }
+      // SST adjustment on ice2noice: warm the surface ocean by up to max_dsst
+      // toward freezing (mirrors the Fortran soca2cice path).
+      if (wasIce && adjust_sst) {
+        const double Tfrz_loc = icephysics::Constants::Tfrz;
+        const double dT = std::min(max_dsst,
+                                   std::max(0.0, Tfrz_loc - new_tocn(jnode, 0)));
+        new_tocn(jnode, 0) += dT;
       }
-      if (bestRec) {
-        // Copy donor ice fields.
-        for (std::size_t k = 0; k < ncat_; ++k) {
-          new_aice_cat[k](jnode, 0) = bestRec->aicen[k];
-          new_vice_cat[k](jnode, 0) = bestRec->vicen[k];
-          new_vsno_cat[k](jnode, 0) = bestRec->vsnon[k];
-        }
-        // Copy donor thermo into the local ThermoFrame slot. Donor consistency
-        // rule: this cell's thermo is now authoritative; seedNewIce will skip
-        // it (shuffleSeeded[jnode] = true).
-        const std::int64_t on64 = ownedNodeOf[jnode];
-        if (on64 >= 0) {
-          const std::size_t on = static_cast<std::size_t>(on64);
-          for (std::size_t k = 0; k < ncat_; ++k) {
-            frame.at2(frame.Tsfcn, on, k) = bestRec->Tsfcn[k];
-            for (std::size_t l = 0; l < ice_lev; ++l) {
-              frame.at3(frame.qice, ice_lev, on, k, l) =
-                  bestRec->qice[k * ice_lev + l];
-              frame.at3(frame.sice, ice_lev, on, k, l) =
-                  bestRec->sice[k * ice_lev + l];
-            }
-            for (std::size_t l = 0; l < sno_lev; ++l) {
-              frame.at3(frame.qsno, sno_lev, on, k, l) =
-                  bestRec->qsno[k * sno_lev + l];
-            }
-          }
-          shuffleSeeded[jnode] = 1;
-        }
-      }
+      new_aice(jnode, 0) = 0.0;
+      new_hice(jnode, 0) = 0.0;
+      new_hsno(jnode, 0) = 0.0;
+      continue;
     }
-    // Rescale ice distribution if needed
-    if ((mask_(jnode, 0) > 0.0) && (a_aice(jnode, 0) > 0.0) && do_rescale) {
-      // Rescale ice concentration
-      double alpha = a_aice(jnode, 0) / bg_aice(jnode, 0);
-      new_aice(jnode, 0) = a_aice(jnode, 0);
-      for (size_t icat = 0; icat < ncat_; ++icat) {
-        new_aice_cat[icat](jnode, 0) = alpha * bg_aice_cat[icat](jnode, 0);
-        new_vice_cat[icat](jnode, 0) = alpha * bg_vice_cat[icat](jnode, 0);
-        new_vsno_cat[icat](jnode, 0) = alpha * bg_vsno_cat[icat](jnode, 0);
+
+    // -------------------- Build seed aicen/vicen --------------------------
+    // Two cases: NOICE2ICE and ICE2ICE.
+    double vtot_target = 0.0;
+    bool   noice2ice   = (ai_bg <= icephysics::Constants::puny);
+
+    if (noice2ice) {
+      // Placeholder all-in-cat-0; the rebin will spread it. Vtot_target source
+      // order:
+      //   1. analysis a_hice (most informative — use it whenever positive);
+      //   2. KDTree donor mean hice;
+      //   3. hitot_min · ai_an fallback.
+      // The donor-mean Tsfc is still useful for the Stage C thermo seed (it
+      // sets initial Tsfcn/qsno/qice/sice physics consistently), so the
+      // donorMeanIce call stays in the seedNewIce pass.
+      double hice_seed = a_hice(jnode, 0);
+      if (hice_seed <= 0.0) {
+        double Tsfc_donor, hice_donor;
+        const bool foundDonor = donorMeanIce(jnode, seedK, donorCache,
+                                             Tsfc_donor, hice_donor);
+        hice_seed = (foundDonor && hice_donor > hitot_min)
+                        ? hice_donor : hitot_min;
       }
-      // Compute background mean thicknesses
-      double hice_bg = meanHice(new_vice_cat, new_aice(jnode, 0), jnode);
-      double hsno_bg = meanHsno(new_vsno_cat, new_aice(jnode, 0), jnode);
-      // Rescale thicknesses to match analysis
-      if (hice_bg > min_hice) {
-        alpha = a_hice(jnode, 0) / hice_bg;
-        // Rescale category volumes
-        for (size_t icat = 0; icat < ncat_; ++icat) {
-          new_vice_cat[icat](jnode, 0) = alpha * new_vice_cat[icat](jnode, 0);
-        }
+      vtot_target = hice_seed * ai_an;
+      for (std::size_t k = 0; k < ncat_; ++k) {
+        new_aice_cat[k](jnode, 0) = (k == 0) ? ai_an : 0.0;
+        new_vice_cat[k](jnode, 0) = (k == 0) ? vtot_target : 0.0;
+        new_vsno_cat[k](jnode, 0) = 0.0;
       }
-      if (hsno_bg > min_hsno) {
-        alpha = a_hsno(jnode, 0) / hsno_bg;
-        // Rescale category snow volumes
-        for (size_t icat = 0; icat < ncat_; ++icat) {
-          new_vsno_cat[icat](jnode, 0) = alpha * new_vsno_cat[icat](jnode, 0);
-        }
+    } else {
+      // ICE2ICE: alpha-rescale per-cat from background. The rebin (if
+      // enabled) then corrects toward analysis hice·a_aice. Trust the
+      // analysis hice unconditionally (user decision 2026-05-11).
+      const double alpha = ai_an / ai_bg;
+      for (std::size_t k = 0; k < ncat_; ++k) {
+        new_aice_cat[k](jnode, 0) = alpha * bg_aice_cat[k](jnode, 0);
+        new_vice_cat[k](jnode, 0) = alpha * bg_vice_cat[k](jnode, 0);
+        // vsnon is handled in the snow block below; clear here so the freeboard
+        // pass doesn't see stale background snow.
+        new_vsno_cat[k](jnode, 0) = 0.0;
       }
+      vtot_target = a_hice(jnode, 0) * ai_an;
     }
-    // Post-rescale snow refinement: optional area-weighted redistribution and
-    // a minimum-thickness floor. Both are no-ops by default to preserve parity
-    // with the legacy Fortran path.
-    if ((mask_(jnode, 0) > 0.0) && (a_aice(jnode, 0) > 0.0)
-        && (snow_redistribute_area || hsnow_min > 0.0)) {
-      // Snow volume currently in this cell; aice already matches analysis.
-      double aice_now = 0.0;
-      double vsno_sum = 0.0;
-      for (size_t icat = 0; icat < ncat_; ++icat) {
-        aice_now += new_aice_cat[icat](jnode, 0);
-        vsno_sum += new_vsno_cat[icat](jnode, 0);
-      }
-      if (aice_now > 0.0) {
-        if (snow_redistribute_area) {
-          // Distribute total snow volume by aicen weight: vsnon[k] = vsno_sum
-          // * aicen[k] / aice_now. Conserves Σ vsnon and keeps mean hsno =
-          // vsno_sum / aice_now.
-          for (size_t icat = 0; icat < ncat_; ++icat) {
-            new_vsno_cat[icat](jnode, 0) =
-                vsno_sum * (new_aice_cat[icat](jnode, 0) / aice_now);
-          }
-        }
-        if (hsnow_min > 0.0) {
-          // Drop snow on any cat whose mean snow thickness is below the floor.
-          for (size_t icat = 0; icat < ncat_; ++icat) {
-            const double a = new_aice_cat[icat](jnode, 0);
-            if (a > 0.0 && (new_vsno_cat[icat](jnode, 0) / a) < hsnow_min) {
-              new_vsno_cat[icat](jnode, 0) = 0.0;
-            }
-          }
-        }
-      }
-    }
-    // Re-bin the ice thickness distribution so each category's mean thickness
-    // is inside its bin. Keeps the per-cell totals (sum aicen, sum vicen) the
-    // same; only redistributes mass across categories to satisfy the bounds.
-    if (do_rebin && (mask_(jnode, 0) > 0.0)) {
-      double aice_sum = 0.0;
-      double vice_sum = 0.0;
+
+    // -------------------- Stage B: ITD rebin ------------------------------
+    if (do_rebin) {
       for (size_t icat = 0; icat < ncat_; ++icat) {
         rebin_aicen[icat] = new_aice_cat[icat](jnode, 0);
         rebin_vicen[icat] = new_vice_cat[icat](jnode, 0);
-        aice_sum += rebin_aicen[icat];
-        vice_sum += rebin_vicen[icat];
       }
-      if (aice_sum > 0.0 && vice_sum > 0.0) {
-        const bool ok = icephysics::adjustThicknessCategories(
-            rebin_aicen, rebin_vicen, vice_sum, hicat, dhi_min);
-        if (ok) {
-          for (size_t icat = 0; icat < ncat_; ++icat) {
-            new_vice_cat[icat](jnode, 0) = rebin_vicen[icat];
-          }
-        } else {
-          ++rebin_failures;
+      rebin_aicen_mutated   = 0;
+      rebin_max_delta_aicen = 0.0;
+      const bool ok = icephysics::adjustThicknessCategories(
+          rebin_aicen, rebin_vicen, ai_an, vtot_target, hicat, dhi_min,
+          /*ainMin=*/1.0e-8, /*aTol=*/1.0e-8, /*vTol=*/1.0e-6,
+          &rebin_aicen_mutated, &rebin_max_delta_aicen);
+      if (ok) {
+        for (size_t icat = 0; icat < ncat_; ++icat) {
+          new_aice_cat[icat](jnode, 0) = rebin_aicen[icat];
+          new_vice_cat[icat](jnode, 0) = rebin_vicen[icat];
         }
+        ++rebin_visited;
+        if (rebin_aicen_mutated) ++rebin_aicen_mutations;
+        rebin_max_delta_aicen_all =
+            std::max(rebin_max_delta_aicen_all, rebin_max_delta_aicen);
+      } else {
+        ++rebin_failures;
       }
     }
 
-    // Enforce hydrostatic snow/ice balance: rho_ice*hi + rho_snow*hs <=
-    // rho_ocean*(hi+hs) per category. Snow is first redistributed across
-    // cats; if any cat is still flooded, ice volume grows to lift the snow-
-    // ice interface back to sea level. Per-cell, no neighbour search needed.
-    if (do_freeboard && (mask_(jnode, 0) > 0.0)) {
+    // -------------------- Stage C: snow distribution ----------------------
+    // Recompute ai_now (may differ slightly from a_aice after rebin).
+    double ai_now = 0.0;
+    for (size_t icat = 0; icat < ncat_; ++icat) {
+      ai_now += new_aice_cat[icat](jnode, 0);
+    }
+    if (ai_now > icephysics::Constants::puny) {
+      // Target cell-mean snow thickness:
+      //   * use analysis hsno when available;
+      //   * fall back to background cell-mean.
+      double hsn_target = a_hsno(jnode, 0);
+      if (hsn_target <= 0.0) {
+        // Recover from background.
+        double bg_vsno_sum = 0.0;
+        for (size_t icat = 0; icat < ncat_; ++icat) {
+          bg_vsno_sum += bg_vsno_cat[icat](jnode, 0);
+        }
+        hsn_target = (bg_aice(jnode, 0) > icephysics::Constants::puny)
+                         ? bg_vsno_sum / bg_aice(jnode, 0)
+                         : 0.0;
+      }
+      // Clamp cell-mean to [hsnow_min, hsnow_max]. The min is treated as a
+      // floor only when there's enough analysis to justify it; zero passes
+      // through unchanged so noice/ice2noice still drop snow correctly.
+      if (hsn_target > 0.0) {
+        hsn_target = std::min(std::max(hsn_target, hsnow_min), hsnow_max);
+      }
+      const double vsno_total = hsn_target * ai_now;
+      for (size_t icat = 0; icat < ncat_; ++icat) {
+        new_vsno_cat[icat](jnode, 0) =
+            vsno_total * (new_aice_cat[icat](jnode, 0) / ai_now);
+      }
+    }
+
+    // -------------------- Stage C+: freeboard -----------------------------
+    if (do_freeboard) {
       bool anyIce = false;
       for (size_t icat = 0; icat < ncat_; ++icat) {
         fb_aicen[icat] = new_aice_cat[icat](jnode, 0);
@@ -458,23 +448,58 @@ void PostProcessIce::postProcess(State & pproc,
       }
     }
 
-    // Zero-out ice categories with tiny volumes
-    for (size_t icat = 0; icat < ncat_; ++icat) {
-      if (new_aice_cat[icat](jnode, 0) > 0.0 && new_vice_cat[icat](jnode, 0) < min_vice) {
-        new_aice_cat[icat](jnode, 0) = 0.0;
-        new_vice_cat[icat](jnode, 0) = 0.0;
-        new_vsno_cat[icat](jnode, 0) = 0.0;
+    // -------------------- min-vice cleanup (mass-conserving) --------------
+    // Identify cats with vicen < min_vice. Sum their (aicen, vicen, vsnon)
+    // and redistribute that mass into surviving cats proportionally to the
+    // survivors' aicen, preserving Σaicen/Σvicen/Σvsnon. Without this, the
+    // rebin's marginal-aice solutions (e.g. tiny mass in cat 0 + bulk in a
+    // thicker cat) get clipped to one cat at its upper bin edge, producing
+    // thick-ice-on-edge artifacts.
+    {
+      double dropA = 0.0, dropV = 0.0, dropS = 0.0;
+      double survA = 0.0;
+      for (size_t icat = 0; icat < ncat_; ++icat) {
+        if (new_aice_cat[icat](jnode, 0) > 0.0
+            && new_vice_cat[icat](jnode, 0) < min_vice) {
+          dropA += new_aice_cat[icat](jnode, 0);
+          dropV += new_vice_cat[icat](jnode, 0);
+          dropS += new_vsno_cat[icat](jnode, 0);
+          new_aice_cat[icat](jnode, 0) = 0.0;
+          new_vice_cat[icat](jnode, 0) = 0.0;
+          new_vsno_cat[icat](jnode, 0) = 0.0;
+        } else {
+          survA += new_aice_cat[icat](jnode, 0);
+        }
       }
+      if (dropA > 0.0 && survA > 0.0) {
+        for (size_t icat = 0; icat < ncat_; ++icat) {
+          if (new_aice_cat[icat](jnode, 0) > 0.0) {
+            const double w = new_aice_cat[icat](jnode, 0) / survA;
+            new_aice_cat[icat](jnode, 0) += dropA * w;
+            new_vice_cat[icat](jnode, 0) += dropV * w;
+            new_vsno_cat[icat](jnode, 0) += dropS * w;
+          }
+        }
+      }
+      // If no survivors, the dropped mass is gone — this happens only when
+      // every cat had vicen < min_vice, i.e. the cell-mean vicen was below
+      // the floor anyway. Acceptable.
     }
-    // Recompute total ice concentration and mean thicknesses
+    // -------------------- Aggregate diagnostics ---------------------------
     new_aice(jnode, 0) = totalAice(new_aice_cat, jnode);
     new_hice(jnode, 0) = meanHice(new_vice_cat, new_aice(jnode, 0), jnode);
     new_hsno(jnode, 0) = meanHsno(new_vsno_cat, new_aice(jnode, 0), jnode);
   }
-  if (do_rebin && rebin_failures > 0) {
-    oops::Log::warning() << "PostProcessIce: ITD rebin failed at "
-                         << rebin_failures << " cells (target outside the "
-                         << "feasible envelope); left untouched." << std::endl;
+  if (do_rebin) {
+    oops::Log::info() << "PostProcessIce: ITD rebin visited "
+                      << rebin_visited << " cells; aicen-mutated "
+                      << rebin_aicen_mutations << " (max |Δaicen|="
+                      << rebin_max_delta_aicen_all << ")." << std::endl;
+    if (rebin_failures > 0) {
+      oops::Log::warning() << "PostProcessIce: ITD rebin failed at "
+                           << rebin_failures << " cells (target outside the "
+                           << "feasible envelope); left untouched." << std::endl;
+    }
   }
   if (do_freeboard && freeboard_failures > 0) {
     oops::Log::warning() << "PostProcessIce: freeboard enforcement failed at "
@@ -485,9 +510,9 @@ void PostProcessIce::postProcess(State & pproc,
 
   // ---------------------------------------------------------------------------
   // Stage C: build NewIceMask, run applyThermoStage, optional seedNewIce,
-  // write CICE output + flush thermo. Donor consistency rule: cells whose
-  // thermo was already seeded by the shuffle path are excluded from the
-  // newIce mask so seedNewIce doesn't re-seed them with a different donor.
+  // write CICE output + flush thermo. With the shuffle path removed, every
+  // (owned, k) cell that transitioned bg_aicen==0 -> new_aicen>0 needs thermo
+  // seeding from a KDTree donor.
   NewIceMask newIce;
   newIce.ncat = ncat_;
   newIce.nOwnedNodes = frame.nOwnedNodes;
@@ -495,7 +520,6 @@ void PostProcessIce::postProcess(State & pproc,
   for (std::size_t jnode = 0; jnode < field_size; ++jnode) {
     const std::int64_t on64 = ownedNodeOf[jnode];
     if (on64 < 0) continue;
-    if (shuffleSeeded[jnode]) continue;
     const std::size_t on = static_cast<std::size_t>(on64);
     for (std::size_t k = 0; k < ncat_; ++k) {
       const bool wasZero = (bg_aice_cat[k](jnode, 0) == 0.0);
@@ -774,6 +798,47 @@ PostProcessIce::gatherDonorHalo(
     }
   }
   return cache;
+}
+
+// -----------------------------------------------------------------------------
+
+bool PostProcessIce::donorMeanIce(
+    std::size_t jnode,
+    std::size_t K,
+    const std::unordered_map<std::int64_t, CatRecord> & donorCache,
+    double & Tsfc_mean,
+    double & hice_mean) const {
+  const auto & fs   = geom_.functionSpace();
+  const auto gindex = atlas::array::make_view<atlas::gidx_t, 1>(fs.global_index());
+  const std::int64_t myG = static_cast<std::int64_t>(gindex(jnode));
+
+  atlas::PointLonLat target(lonlat_(jnode, 0), lonlat_(jnode, 1));
+  target.normalise();
+  auto list = kdTree_.closestPoints(target, K);
+
+  for (const auto & element : list) {
+    const std::int64_t g = static_cast<std::int64_t>(element.payload());
+    if (g == myG) continue;
+    auto it = donorCache.find(g);
+    if (it == donorCache.end()) continue;
+    const CatRecord & rec = it->second;
+    if (rec.mask == 0.0) continue;
+    double aiceTot   = 0.0;
+    double tWeighted = 0.0;
+    double vIceTot   = 0.0;
+    for (std::size_t k = 0; k < ncat_; ++k) {
+      if (rec.aicen[k] > 0.0) {
+        aiceTot   += rec.aicen[k];
+        tWeighted += rec.aicen[k] * rec.Tsfcn[k];
+        vIceTot   += rec.vicen[k];
+      }
+    }
+    if (aiceTot <= 0.0) continue;
+    Tsfc_mean = tWeighted / aiceTot;
+    hice_mean = vIceTot   / aiceTot;
+    return true;
+  }
+  return false;
 }
 
 // -----------------------------------------------------------------------------

@@ -23,40 +23,36 @@ double sum(const std::vector<double> & v) {
 }  // namespace
 
 // ---------------------------------------------------------------------------
-// adjustThicknessCategories
-//
-// Strategy (port of mc6util.adjust_thkncats_aice):
-//   1. Build target per-cat thickness from current aicen/vicen, fall back to
-//      mid-bin when a category has aicen but degenerate volume.
-//   2. Clamp each per-cat thickness to [hicat[k]+dhiMin, hicat[k+1]-dhiMin].
-//   3. Recompute vicen[k] = aicen[k] * h_clamped[k]. The total vice will then
-//      not match viceTarget; correct by spreading the residual onto categories
-//      that still have headroom (proportional to remaining headroom), iterating
-//      a few times. If the residual cannot be absorbed (target outside the
-//      feasible envelope sum_k aicen[k]*[h_lo,h_hi]) we return false.
+// adjustThicknessCategories (helpers)
 // ---------------------------------------------------------------------------
-bool adjustThicknessCategories(std::vector<double> & aicen,
-                               std::vector<double> & vicen,
-                               double viceTarget,
-                               const std::vector<double> & hicat,
-                               double dhiMin) {
-  const size_t ncat = aicen.size();
-  if (ncat == 0 || vicen.size() != ncat || hicat.size() != ncat + 1) {
-    return false;
-  }
+namespace {
 
-  std::vector<double> hLo(ncat), hHi(ncat);
+// Build per-cat thickness bounds, collapsing degenerate (too-narrow) bins to
+// the bin midpoint so the rest of the algorithm works on a flat point.
+void buildBounds(const std::vector<double> & hicat, double dhiMin,
+                 std::vector<double> & hLo, std::vector<double> & hHi) {
+  const size_t ncat = hLo.size();
   for (size_t k = 0; k < ncat; ++k) {
     hLo[k] = hicat[k] + dhiMin;
     hHi[k] = hicat[k + 1] - dhiMin;
     if (hHi[k] <= hLo[k]) {
-      // Bin too narrow for the requested gap; fall back to bin centre.
       const double mid = 0.5 * (hicat[k] + hicat[k + 1]);
       hLo[k] = hHi[k] = mid;
     }
   }
+}
 
-  // Feasibility: viceTarget must lie within [sum aicen*hLo, sum aicen*hHi].
+// Phase 1: iterate dh distribution to drive Sum(aicen*h) -> viceTarget while
+// holding aicen fixed. Returns true if convergence within vTol, false if the
+// target is outside the feasibility envelope of the current aicen.
+bool runVicenPhase(const std::vector<double> & aicen,
+                   const std::vector<double> & hLo,
+                   const std::vector<double> & hHi,
+                   double viceTarget,
+                   double vTol,
+                   std::vector<double> & h /* in/out: clamped to bounds */) {
+  const size_t ncat = aicen.size();
+  // Feasibility envelope for the current aicen.
   double vLo = 0.0, vHi = 0.0;
   for (size_t k = 0; k < ncat; ++k) {
     if (aicen[k] > Constants::puny) {
@@ -64,30 +60,14 @@ bool adjustThicknessCategories(std::vector<double> & aicen,
       vHi += aicen[k] * hHi[k];
     }
   }
-  if (viceTarget < vLo - 1.0e-12 || viceTarget > vHi + 1.0e-12) {
-    return false;
-  }
+  if (viceTarget < vLo - 1.0e-12 || viceTarget > vHi + 1.0e-12) return false;
 
-  // Initial per-cat thickness, clamped to bounds.
-  std::vector<double> h(ncat, 0.0);
-  for (size_t k = 0; k < ncat; ++k) {
-    if (aicen[k] > Constants::puny) {
-      const double hCur = vicen[k] / aicen[k];
-      h[k] = std::min(std::max(hCur, hLo[k]), hHi[k]);
-    }
-  }
-
-  // Distribute residual proportionally to available headroom (or shortfall).
   for (int iter = 0; iter < 50; ++iter) {
     double v = 0.0;
     for (size_t k = 0; k < ncat; ++k) v += aicen[k] * h[k];
     const double resid = viceTarget - v;
-    if (std::fabs(resid) < 1.0e-14) break;
+    if (std::fabs(resid) < std::max(vTol, 1.0e-14)) return true;
 
-    // dh[k] should satisfy sum_k aicen[k] * dh[k] = resid, while respecting
-    // bounds. Distribute proportionally to per-cat thickness room: choose
-    // dh[k] = resid * room[k] / sum_k(aicen[k] * room[k]). That way the
-    // per-cat aicen-weighting cancels in the volume sum.
     double weight = 0.0;
     for (size_t k = 0; k < ncat; ++k) {
       if (aicen[k] <= Constants::puny) continue;
@@ -103,7 +83,255 @@ bool adjustThicknessCategories(std::vector<double> & aicen,
       h[k] = std::min(std::max(h[k] + dh, hLo[k]), hHi[k]);
     }
   }
+  // Did we converge after the loop's final adjustment?
+  double v = 0.0;
+  for (size_t k = 0; k < ncat; ++k) v += aicen[k] * h[k];
+  return std::fabs(viceTarget - v) < std::max(vTol, 1.0e-9);
+}
 
+// Phase 2: shift aicen between cats so that viceTarget lies inside the new
+// feasibility envelope. Conserves Sum(aicen) = aiceTarget. Strategy: while
+// viceTarget > Sum(aicen*hHi), move aicen from the thinnest cat with mass to
+// the thickest one with headroom (and vice versa for viceTarget < envelope).
+// Returns true if a feasible aicen distribution was found.
+bool reshuffleAicen(std::vector<double> & aicen,
+                    const std::vector<double> & hLo,
+                    const std::vector<double> & hHi,
+                    double viceTarget,
+                    double aiceTarget) {
+  const size_t ncat = aicen.size();
+  // Renormalise to aiceTarget first (Python's "ain_sum>1" trick at small).
+  double aSum = 0.0;
+  for (double a : aicen) aSum += std::max(a, 0.0);
+  if (aSum <= Constants::puny) {
+    // All mass into cat 0 as a seed; caller may further reshape.
+    std::fill(aicen.begin(), aicen.end(), 0.0);
+    aicen[0] = aiceTarget;
+    aSum = aiceTarget;
+  } else if (std::fabs(aSum - aiceTarget) > 0.0) {
+    const double r = aiceTarget / aSum;
+    for (double & a : aicen) a = std::max(a, 0.0) * r;
+  }
+
+  auto envelope = [&](double & vLo, double & vHi) {
+    vLo = 0.0; vHi = 0.0;
+    for (size_t k = 0; k < ncat; ++k) {
+      if (aicen[k] > Constants::puny) {
+        vLo += aicen[k] * hLo[k];
+        vHi += aicen[k] * hHi[k];
+      }
+    }
+  };
+
+  // Bounded number of moves; each move shifts a small slice of aicen.
+  const int maxMoves = 200;
+  for (int it = 0; it < maxMoves; ++it) {
+    double vLo, vHi;
+    envelope(vLo, vHi);
+    if (viceTarget >= vLo - 1.0e-12 && viceTarget <= vHi + 1.0e-12) return true;
+
+    if (viceTarget > vHi) {
+      // Need a thicker envelope: move aicen toward higher cats. Source = lowest
+      // cat with mass; sink = highest cat (most room per unit aicen).
+      int src = -1;
+      for (size_t k = 0; k < ncat; ++k) {
+        if (aicen[k] > Constants::puny) { src = static_cast<int>(k); break; }
+      }
+      int snk = -1;
+      for (int k = static_cast<int>(ncat) - 1; k >= 0; --k) {
+        if (hHi[k] > hHi[src] + 1.0e-12) { snk = k; break; }
+      }
+      if (src < 0 || snk < 0) return false;
+      // Move enough aicen to close the gap; cap by available mass at src.
+      // dVol(per unit aicen moved) = hHi[snk] - hHi[src].
+      const double gap = viceTarget - vHi;
+      const double per = hHi[snk] - hHi[src];
+      const double da  = std::min(aicen[src],
+                                  std::max(gap / std::max(per, 1.0e-12), 1.0e-6));
+      aicen[src] -= da;
+      aicen[snk] += da;
+    } else {  // viceTarget < vLo
+      int src = -1;
+      for (int k = static_cast<int>(ncat) - 1; k >= 0; --k) {
+        if (aicen[k] > Constants::puny) { src = k; break; }
+      }
+      int snk = -1;
+      for (size_t k = 0; k < ncat; ++k) {
+        if (hLo[k] + 1.0e-12 < hLo[src]) { snk = static_cast<int>(k); break; }
+      }
+      if (src < 0 || snk < 0) return false;
+      const double gap = vLo - viceTarget;
+      const double per = hLo[src] - hLo[snk];
+      const double da  = std::min(aicen[src],
+                                  std::max(gap / std::max(per, 1.0e-12), 1.0e-6));
+      aicen[src] -= da;
+      aicen[snk] += da;
+    }
+  }
+  return false;
+}
+
+}  // namespace
+
+// ---------------------------------------------------------------------------
+// adjustThicknessCategories (full form)
+// ---------------------------------------------------------------------------
+bool adjustThicknessCategories(std::vector<double> & aicen,
+                               std::vector<double> & vicen,
+                               double aiceTarget,
+                               double viceTarget,
+                               const std::vector<double> & hicat,
+                               double dhiMin,
+                               double ainMin,
+                               double aTol,
+                               double vTol,
+                               int * aicenMutated,
+                               double * maxDeltaAicen) {
+  if (aicenMutated)   *aicenMutated   = 0;
+  if (maxDeltaAicen)  *maxDeltaAicen  = 0.0;
+
+  const size_t ncat = aicen.size();
+  if (ncat == 0 || vicen.size() != ncat || hicat.size() != ncat + 1) {
+    return false;
+  }
+
+  // Snapshot input aicen for the |delta| output.
+  const std::vector<double> aIn = aicen;
+
+  // Degenerate target: zero everything.
+  if (aiceTarget <= Constants::puny) {
+    std::fill(aicen.begin(), aicen.end(), 0.0);
+    std::fill(vicen.begin(), vicen.end(), 0.0);
+    if (maxDeltaAicen) {
+      double m = 0.0;
+      for (double a : aIn) m = std::max(m, std::fabs(a));
+      *maxDeltaAicen = m;
+    }
+    return true;
+  }
+
+  std::vector<double> hLo(ncat), hHi(ncat);
+  buildBounds(hicat, dhiMin, hLo, hHi);
+
+  // ----- Step 1: early-out when bins OK and totals match the targets.
+  bool binsOK = true;
+  for (size_t k = 0; k < ncat; ++k) {
+    if (aicen[k] > Constants::puny) {
+      const double h = vicen[k] / aicen[k];
+      if (h < hicat[k] - 1.0e-12 || h > hicat[k + 1] + 1.0e-12) {
+        binsOK = false; break;
+      }
+    }
+  }
+  if (binsOK) {
+    double aSum = 0.0, vSum = 0.0;
+    for (size_t k = 0; k < ncat; ++k) { aSum += aicen[k]; vSum += vicen[k]; }
+    if (std::fabs(aSum - aiceTarget) <= aTol &&
+        std::fabs(vSum - viceTarget) <= vTol) {
+      return true;
+    }
+  }
+
+  // ----- Step 2: build initial per-cat thickness, clamped to (hLo, hHi).
+  std::vector<double> h(ncat, 0.0);
+  for (size_t k = 0; k < ncat; ++k) {
+    if (aicen[k] > Constants::puny) {
+      const double hCur = vicen[k] / aicen[k];
+      h[k] = std::min(std::max(hCur, hLo[k]), hHi[k]);
+    } else {
+      h[k] = 0.5 * (hLo[k] + hHi[k]);  // mid-bin seed for empty cats
+    }
+  }
+
+  // ----- Step 3: rescale aicen to aiceTarget (Python 1e-12 trick).
+  // This is "rescale-only" and is NOT counted as aicen mutation, because the
+  // intent here is identical to alpha-rescale in the caller.
+  double aSum = 0.0;
+  for (double a : aicen) aSum += std::max(a, 0.0);
+  if (aSum > Constants::puny) {
+    const double r = aiceTarget / aSum;
+    for (double & a : aicen) a = std::max(a, 0.0) * r;
+  } else {
+    std::fill(aicen.begin(), aicen.end(), 0.0);
+    aicen[0] = aiceTarget;
+  }
+
+  // ----- Step 4: Phase 1 (vicen-only redistribution).
+  bool ok = runVicenPhase(aicen, hLo, hHi, viceTarget, vTol, h);
+
+  // ----- Step 5: Phase 2 only if Phase 1 failed.
+  if (!ok) {
+    if (aicenMutated) *aicenMutated = 1;
+    if (!reshuffleAicen(aicen, hLo, hHi, viceTarget, aiceTarget)) return false;
+    // Reseed h after aicen change: clamp current h to (hLo, hHi); for any
+    // cat that now has mass but no h, seed at mid-bin.
+    for (size_t k = 0; k < ncat; ++k) {
+      if (aicen[k] > Constants::puny) {
+        h[k] = std::min(std::max(h[k], hLo[k]), hHi[k]);
+      } else {
+        h[k] = 0.0;
+      }
+    }
+    ok = runVicenPhase(aicen, hLo, hHi, viceTarget, vTol, h);
+    if (!ok) return false;
+  }
+
+  // ----- Step 6: write back vicen; clean tiny aicen.
+  for (size_t k = 0; k < ncat; ++k) {
+    if (aicen[k] < ainMin) {
+      aicen[k] = 0.0;
+      vicen[k] = 0.0;
+    } else {
+      vicen[k] = aicen[k] * h[k];
+    }
+  }
+
+  // Re-normalise Sum(aicen) to aiceTarget after the ainMin sweep (tiny cats
+  // dropped).
+  aSum = 0.0;
+  for (double a : aicen) aSum += a;
+  if (aSum > Constants::puny && std::fabs(aSum - aiceTarget) > 1.0e-15) {
+    const double r = aiceTarget / aSum;
+    for (size_t k = 0; k < ncat; ++k) {
+      aicen[k] *= r;
+      vicen[k] *= r;  // preserve h[k]
+    }
+  }
+
+  if (maxDeltaAicen) {
+    double m = 0.0;
+    for (size_t k = 0; k < ncat; ++k) {
+      m = std::max(m, std::fabs(aicen[k] - aIn[k]));
+    }
+    *maxDeltaAicen = m;
+  }
+  return true;
+}
+
+// Back-compat overload: legacy callers preserve per-cat aicen (no Phase 2).
+// Equivalent to the old algorithm: only vicen is redistributed.
+bool adjustThicknessCategories(std::vector<double> & aicen,
+                               std::vector<double> & vicen,
+                               double viceTarget,
+                               const std::vector<double> & hicat,
+                               double dhiMin) {
+  const size_t ncat = aicen.size();
+  if (ncat == 0 || vicen.size() != ncat || hicat.size() != ncat + 1) {
+    return false;
+  }
+  std::vector<double> hLo(ncat), hHi(ncat);
+  buildBounds(hicat, dhiMin, hLo, hHi);
+
+  // Initial per-cat thickness, clamped to bounds.
+  std::vector<double> h(ncat, 0.0);
+  for (size_t k = 0; k < ncat; ++k) {
+    if (aicen[k] > Constants::puny) {
+      const double hCur = vicen[k] / aicen[k];
+      h[k] = std::min(std::max(hCur, hLo[k]), hHi[k]);
+    }
+  }
+  // Phase 1 only — aicen is preserved.
+  if (!runVicenPhase(aicen, hLo, hHi, viceTarget, 1.0e-9, h)) return false;
   for (size_t k = 0; k < ncat; ++k) {
     vicen[k] = (aicen[k] > Constants::puny) ? aicen[k] * h[k] : 0.0;
   }
