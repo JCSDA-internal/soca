@@ -15,63 +15,78 @@
 ! API: register-then-commit lifecycle. The SOCA-side caller pattern is:
 !
 !     type(soca_io_writer) :: w
-!     call w%init(domain, "myfile.nc", method=soca_io_method_from_config(f_conf))
+!     call w%init(domain, "myfile.nc")
 !     call w%enqueue("lonh", self%lonh)
 !     call w%enqueue("lath", self%lath)
 !     ...
 !     call w%commit()   ! gathers from all PEs and writes the file
 !
-! The caller code is identical for SOCA_IO_SERIAL and SOCA_IO_PARALLEL.
-! All gather/write strategy lives inside writer_commit's select case;
 ! enqueue copies data in so the caller can mutate or free its source
-! arrays before commit, and commit's failure mode (mpp_error(FATAL))
-! is the same for both methods. Don't add method-conditional logic to
-! init or enqueue -- if a strategy needs more state, store it in the
-! writer at init time and read it inside commit_<method>.
+! arrays before commit. Failure mode is mpp_error(FATAL).
 !
-! SOCA_IO_SERIAL: all gathers and nf90_put_var calls happen on PE 0.
-! Output is file-compatible with the legacy FMS path (same variable
-! names, same dtypes, Time leading axis) but uses cleaner dimension
-! names (xh/yh/Time) in place of FMS's auto-numbered xaxis_N/yaxis_N.
-! The "checksum" attribute FMS attached to each variable is omitted.
+! Read path: every PE opens the file in NF90_NOWRITE and reads only its
+! compute-domain tile via nf90_get_var(start, count). This mirrors FMS's
+! mpp_io MPP_READ_2DDECOMP pattern (per-PE strided reads, no broadcast).
+! For classic/64-bit-offset netcdf files (which is what SOCA reads), the
+! library state is process-local and concurrent read-only opens of the
+! same file are safe.
 !
-! SOCA_IO_PARALLEL (TODO) replaces the per-variable mpp_gather loop with
-! MPI_Igather/Igatherv posted across all variables before any wait, with
-! per-var destination buffers. Optionally distributes writer-root duty
-! round-robin across PEs (each writer-PE serializes its assigned vars'
-! nf90_put_var via token-passing, since HDF5 forbids concurrent
-! same-file writes -- verified in ~/work/jedi/io_spike/).
+! Write path: PE 0 creates the file structure, then per-variable mpp_gather
+! pulls each tile to PE 0, which writes the global field via nf90_put_var.
+! Output is file-compatible with the legacy FMS path (same variable names,
+! same dtypes, Time leading axis) but uses cleaner dimension names
+! (xh/yh/Time) in place of FMS's auto-numbered xaxis_N/yaxis_N. The
+! "checksum" attribute FMS attached to each variable is omitted.
 
 module soca_io_mod
 
 use netcdf
 use mpi
 use kinds, only: kind_real
-use mpp_mod, only: mpp_gather, mpp_broadcast, mpp_pe, mpp_root_pe, mpp_npes, &
+use mpp_mod, only: mpp_gather, mpp_pe, mpp_root_pe, mpp_npes, &
                    mpp_get_current_pelist, mpp_error, FATAL
 use mpp_domains_mod, only: domain2D, &
                            mpp_get_compute_domain, mpp_get_global_domain, &
                            mpp_get_data_domain
-use fckit_configuration_module, only: fckit_configuration
 
 implicit none
 private
 
 public :: soca_io_writer
 public :: soca_io_reader
-public :: soca_io_method_from_config
 public :: soca_io_file_exists, soca_io_var_exists
-
-! YAML schema (under the geometry block):
-!     io:
-!       method: serial | parallel
-! `serial`   = PE 0 gathers and writes all variables (default if io: absent)
-! `parallel` = parallel non-blocking gathers and a token-rotated serial
-!              nf90_put_var on multiple writer PEs (NOT YET IMPLEMENTED)
-integer, parameter, public :: SOCA_IO_SERIAL   = 1
-integer, parameter, public :: SOCA_IO_PARALLEL = 2
+public :: soca_io_close_all
 
 integer, parameter :: MAX_NAME = 64
+
+! Module-level cache of nf90_open(NF90_NOWRITE) handles, keyed by filename.
+! Mirrors FMS fms_io's get_file_unit + files_read(i)%var(j) tables: a file
+! is opened once on first reader_commit and the ncid is reused across every
+! subsequent reader_commit on the same path. Per-variable metadata (varid,
+! file_ndims, middle-dim sizes) is also cached so each repeat read only
+! does the nf90_get_var, skipping inq_varid + inquire_variable +
+! inquire_dimension. Closes happen only on soca_io_close_all (called from
+! soca_geom_end) or process exit.
+!
+! Read-only by design -- if the caller needs to read a file it has just
+! written, it must call soca_io_close_all first to drop the stale handle.
+integer, parameter :: MAX_FILE_NDIMS = 8
+type :: cached_var
+  character(len=MAX_NAME) :: name = ''
+  integer :: varid = -1
+  integer :: file_ndims = 0
+  integer :: middle_dims(MAX_FILE_NDIMS) = 1   ! sizes for dims 3..ndims-1
+end type cached_var
+type :: cached_open
+  character(len=:), allocatable :: filename
+  integer :: ncid = -1
+  type(cached_var), allocatable :: vars(:)
+  integer :: nvars = 0
+end type cached_open
+integer, parameter :: MAX_CACHED_OPENS = 256
+integer, parameter :: VAR_CACHE_INIT   = 16
+type(cached_open), save :: read_cache(MAX_CACHED_OPENS)
+integer, save :: n_read_cached = 0
 
 type :: var_entry
   character(len=MAX_NAME) :: name = ''
@@ -102,7 +117,6 @@ type :: axis_entry
 end type axis_entry
 
 type :: soca_io_writer
-  integer :: method = SOCA_IO_SERIAL
   character(len=:), allocatable :: filename
   type(domain2D), pointer :: domain => null()
   integer :: isc, iec, jsc, jec        ! local compute domain (1-based as mpp returns)
@@ -133,7 +147,6 @@ type :: read_entry
 end type read_entry
 
 type :: soca_io_reader
-  integer :: method = SOCA_IO_SERIAL
   character(len=:), allocatable :: filename
   type(domain2D), pointer :: domain => null()
   integer :: isc, iec, jsc, jec        ! compute domain (1-based, as mpp returns)
@@ -155,53 +168,15 @@ end type soca_io_reader
 contains
 
 !==============================================================================
-! Read the I/O method from a YAML config block:
-!     io:
-!       method: serial | parallel
-! Defaults to SOCA_IO_SERIAL if the io: block is absent. An unrecognized
-! method aborts with mpp_error(FATAL) so a typo surfaces immediately rather
-! than silently using the wrong path.
-!==============================================================================
-function soca_io_method_from_config(f_conf) result(method)
-  type(fckit_configuration), intent(in) :: f_conf
-  integer :: method
-  type(fckit_configuration) :: io_conf
-  character(len=:), allocatable :: str
-  logical :: ok
-
-  method = SOCA_IO_SERIAL
-  if (.not. f_conf%has("io")) return
-  ok = f_conf%get("io", io_conf)
-  if (.not. ok) return
-  if (.not. io_conf%has("method")) return
-  ok = io_conf%get("method", str)
-  if (.not. ok) return
-  select case (trim(str))
-  case ("serial")
-    method = SOCA_IO_SERIAL
-  case ("parallel")
-    method = SOCA_IO_PARALLEL
-  case default
-    call mpp_error(FATAL, &
-        'soca_io_mod: unknown io.method "'//trim(str)//&
-        '" (expected serial or parallel)')
-  end select
-end function soca_io_method_from_config
-
-
-!==============================================================================
 ! init: prepare a writer for a specific file. domain pointer is stored;
 ! caller must keep the domain alive until commit returns.
 !==============================================================================
-subroutine writer_init(self, domain, filename, method)
+subroutine writer_init(self, domain, filename)
   class(soca_io_writer), intent(inout) :: self
   type(domain2D), target, intent(in)   :: domain
   character(len=*),       intent(in)   :: filename
-  integer, optional,      intent(in)   :: method
 
   self%filename = filename
-  self%method = SOCA_IO_SERIAL
-  if (present(method)) self%method = method
   self%domain => domain
 
   call mpp_get_compute_domain(self%domain, self%isc, self%iec, self%jsc, self%jec)
@@ -313,34 +288,12 @@ end subroutine grow_if_needed
 
 
 !==============================================================================
-! commit: dispatches to the actual write implementation.
+! commit: PE 0 creates the file structure, then we gather each variable in
+! turn via mpp_gather and PE 0 writes via nf90_put_var. This is the
+! FMS-equivalent path (mpp_io threading=MPP_SINGLE); speedup vs FMS is
+! not the goal -- a clean, debuggable, FMS-free baseline is.
 !==============================================================================
 subroutine writer_commit(self)
-  class(soca_io_writer), intent(inout) :: self
-
-  select case (self%method)
-  case (SOCA_IO_SERIAL)
-    call commit_serial(self)
-  case (SOCA_IO_PARALLEL)
-    call mpp_error(FATAL, &
-        'soca_io_mod: io.method=parallel not yet implemented')
-  case default
-    call mpp_error(FATAL, 'soca_io_mod: unknown io method')
-  end select
-
-  ! release references; caller's data unaffected
-  if (allocated(self%vars)) deallocate(self%vars)
-  self%nvars = 0
-end subroutine writer_commit
-
-
-!==============================================================================
-! Serial implementation: PE 0 creates the file structure, then we gather each
-! variable in turn via mpp_gather and PE 0 writes via nf90_put_var. This is
-! the FMS-equivalent path; speedup vs FMS is not the goal -- a clean,
-! debuggable, FMS-free baseline is.
-!==============================================================================
-subroutine commit_serial(self)
   class(soca_io_writer), intent(inout) :: self
 
   integer :: ncid, dimid_t, varid_t, v, k
@@ -491,7 +444,11 @@ subroutine commit_serial(self)
     if (allocated(gbuf3d)) deallocate(gbuf3d)
   end if
   deallocate(pelist, x_axes, y_axes, z_axes, var_x_idx, var_y_idx, var_z_idx)
-end subroutine commit_serial
+
+  ! release references; caller's data unaffected
+  if (allocated(self%vars)) deallocate(self%vars)
+  self%nvars = 0
+end subroutine writer_commit
 
 
 !==============================================================================
@@ -500,15 +457,12 @@ end subroutine commit_serial
 ! interior. Halos are left untouched -- the caller refreshes them via
 ! mpp_update_domains the same way it did under FMS.
 !==============================================================================
-subroutine reader_init(self, domain, filename, method)
+subroutine reader_init(self, domain, filename)
   class(soca_io_reader), intent(inout) :: self
   type(domain2D), target, intent(in)   :: domain
   character(len=*),       intent(in)   :: filename
-  integer, optional,      intent(in)   :: method
 
   self%filename = filename
-  self%method = SOCA_IO_SERIAL
-  if (present(method)) self%method = method
   self%domain => domain
 
   call mpp_get_compute_domain(self%domain, self%isc, self%iec, self%jsc, self%jec)
@@ -596,18 +550,69 @@ subroutine grow_reader_if_needed(self)
 end subroutine grow_reader_if_needed
 
 
+!==============================================================================
+! Read all enqueued vars. Every PE opens the file in NF90_NOWRITE and pulls
+! only its compute-domain tile via nf90_get_var(start, count) -- this mirrors
+! FMS's MPP_READ_2DDECOMP path: no PE-0 bottleneck, no mpp_broadcast, N
+! parallel reads of (nx_c x ny_c x nz) slabs. Classic / 64-bit-offset netcdf
+! files permit concurrent read-only opens; the library state is process-local.
+! For 1D vars (file-global and identical on every PE) we still let every PE
+! read the whole array independently rather than broadcast from root.
+!==============================================================================
 subroutine reader_commit(self)
   class(soca_io_reader), intent(inout) :: self
 
-  select case (self%method)
-  case (SOCA_IO_SERIAL)
-    call commit_serial_read(self)
-  case (SOCA_IO_PARALLEL)
-    call mpp_error(FATAL, &
-        'soca_io_mod: io.method=parallel not yet implemented')
-  case default
-    call mpp_error(FATAL, 'soca_io_mod: unknown io method')
-  end select
+  integer :: ncid, file_idx, v, n3, n4
+  integer :: nx_c, ny_c, i_off, j_off, i_start, j_start
+  real(kind=kind_real), allocatable :: tile2(:,:), tile3(:,:,:), tile4(:,:,:,:)
+
+  call get_read_ncid(self%filename, ncid, file_idx)
+
+  nx_c    = self%iec - self%isc + 1
+  ny_c    = self%jec - self%jsc + 1
+  i_off   = self%isc - self%isd + 1     ! 1-based offset into data-domain buf
+  j_off   = self%jsc - self%jsd + 1
+  i_start = self%isc - self%isg + 1     ! 1-based start in the global file dim
+  j_start = self%jsc - self%jsg + 1
+
+  do v = 1, self%nvars
+    select case (self%vars(v)%ndims)
+    case (1)
+      call read_var_strided(ncid, file_idx, self%vars(v)%name, &
+          1, 1, size(self%vars(v)%data1d), 1, dst1=self%vars(v)%data1d)
+
+    case (2)
+      allocate(tile2(nx_c, ny_c))
+      call read_var_strided(ncid, file_idx, self%vars(v)%name, &
+          i_start, j_start, nx_c, ny_c, dst2=tile2)
+      self%vars(v)%data2d(i_off : i_off + nx_c - 1, &
+                          j_off : j_off + ny_c - 1) = tile2
+      deallocate(tile2)
+
+    case (3)
+      n3 = size(self%vars(v)%data3d, 3)
+      allocate(tile3(nx_c, ny_c, n3))
+      tile3 = 0.0_kind_real
+      call read_var_strided(ncid, file_idx, self%vars(v)%name, &
+          i_start, j_start, nx_c, ny_c, dst3=tile3)
+      self%vars(v)%data3d(i_off : i_off + nx_c - 1, &
+                          j_off : j_off + ny_c - 1, :) = tile3
+      deallocate(tile3)
+
+    case (4)
+      n3 = size(self%vars(v)%data4d, 3)
+      n4 = size(self%vars(v)%data4d, 4)
+      allocate(tile4(nx_c, ny_c, n3, n4))
+      tile4 = 0.0_kind_real
+      call read_var_strided(ncid, file_idx, self%vars(v)%name, &
+          i_start, j_start, nx_c, ny_c, dst4=tile4)
+      self%vars(v)%data4d(i_off : i_off + nx_c - 1, &
+                          j_off : j_off + ny_c - 1, :, :) = tile4
+      deallocate(tile4)
+    end select
+  end do
+
+  ! ncid stays open in read_cache; closed by soca_io_close_all.
 
   ! release pointers; caller's buffers untouched (they hold the read data)
   if (allocated(self%vars)) deallocate(self%vars)
@@ -616,101 +621,108 @@ end subroutine reader_commit
 
 
 !==============================================================================
-! Serial read: PE 0 nf90_open + nf90_get_var the global field for each var,
-! MPI_Bcast to all PEs, each PE copies its compute slice into the caller's
-! data-domain buffer. Matches the FMS register_restart_field+restore_state
-! pattern bandwidth-wise (FMS does the same: read global on PE 0, broadcast,
-! each PE indexes its slice).
+! Look up (or open and cache) the read handle for filename. Returns both the
+! ncid and the file_idx into read_cache(); read_var_strided uses file_idx to
+! look up per-var cached metadata. Per-PE cache.
 !==============================================================================
-subroutine commit_serial_read(self)
-  class(soca_io_reader), intent(inout) :: self
+subroutine get_read_ncid(filename, ncid, file_idx)
+  character(len=*), intent(in)  :: filename
+  integer,          intent(out) :: ncid, file_idx
+  integer :: i
 
-  integer :: ncid, v, n, n3, n4
-  integer :: varid
-  integer :: i_off, j_off, nx_c, ny_c, ig0, jg0
-  real(kind=kind_real), allocatable :: gbuf2d(:,:)
-  real(kind=kind_real), allocatable :: gbuf3d(:,:,:)
-  real(kind=kind_real), allocatable :: gbuf4d(:,:,:,:)
-  logical :: is_root
-
-  is_root = (mpp_pe() == mpp_root_pe())
-
-  if (is_root) then
-    call ncc(nf90_open(self%filename, NF90_NOWRITE, ncid), &
-        'nf90_open '//trim(self%filename))
-  end if
-
-  ! gbuf2d holds the global 2D field during the read+broadcast for 2D vars;
-  ! every PE allocates because it's the destination of mpp_broadcast.
-  allocate(gbuf2d(self%nx_g, self%ny_g))
-
-  nx_c = self%iec - self%isc + 1
-  ny_c = self%jec - self%jsc + 1
-  i_off = self%isc - self%isd + 1
-  j_off = self%jsc - self%jsd + 1
-  ig0   = self%isc - self%isg + 1
-  jg0   = self%jsc - self%jsg + 1
-
-  do v = 1, self%nvars
-    select case (self%vars(v)%ndims)
-    case (1)
-      n = size(self%vars(v)%data1d)
-      if (is_root) then
-        call ncc(nf90_inq_varid(ncid, trim(self%vars(v)%name), varid), &
-            'inq '//trim(self%vars(v)%name))
-        call ncc(nf90_get_var(ncid, varid, self%vars(v)%data1d, &
-            start=[1, 1], count=[n, 1]), &
-            'get '//trim(self%vars(v)%name))
+  do i = 1, n_read_cached
+    if (allocated(read_cache(i)%filename)) then
+      if (read_cache(i)%filename == filename) then
+        ncid     = read_cache(i)%ncid
+        file_idx = i
+        return
       end if
-      call mpp_broadcast(self%vars(v)%data1d, n, mpp_root_pe())
-
-    case (2)
-      if (is_root) then
-        call ncc(nf90_inq_varid(ncid, trim(self%vars(v)%name), varid), &
-            'inq '//trim(self%vars(v)%name))
-        call ncc(nf90_get_var(ncid, varid, gbuf2d, &
-            start=[1, 1, 1], count=[self%nx_g, self%ny_g, 1]), &
-            'get '//trim(self%vars(v)%name))
-      end if
-      call mpp_broadcast(gbuf2d, self%nx_g * self%ny_g, mpp_root_pe())
-      self%vars(v)%data2d(i_off : i_off + nx_c - 1, &
-                          j_off : j_off + ny_c - 1) &
-        = gbuf2d(ig0 : ig0 + nx_c - 1, jg0 : jg0 + ny_c - 1)
-
-    case (3)
-      n3 = size(self%vars(v)%data3d, 3)
-      if (allocated(gbuf3d)) deallocate(gbuf3d)
-      allocate(gbuf3d(self%nx_g, self%ny_g, n3))
-      gbuf3d = 0.0_kind_real
-      if (is_root) call read_global_var(ncid, self%vars(v)%name, &
-          self%nx_g, self%ny_g, gbuf3d=gbuf3d)
-      call mpp_broadcast(gbuf3d, self%nx_g * self%ny_g * n3, mpp_root_pe())
-      self%vars(v)%data3d(i_off : i_off + nx_c - 1, &
-                          j_off : j_off + ny_c - 1, :) &
-        = gbuf3d(ig0 : ig0 + nx_c - 1, jg0 : jg0 + ny_c - 1, :)
-
-    case (4)
-      n3 = size(self%vars(v)%data4d, 3)
-      n4 = size(self%vars(v)%data4d, 4)
-      if (allocated(gbuf4d)) deallocate(gbuf4d)
-      allocate(gbuf4d(self%nx_g, self%ny_g, n3, n4))
-      gbuf4d = 0.0_kind_real
-      if (is_root) call read_global_var(ncid, self%vars(v)%name, &
-          self%nx_g, self%ny_g, gbuf4d=gbuf4d)
-      call mpp_broadcast(gbuf4d, self%nx_g * self%ny_g * n3 * n4, mpp_root_pe())
-      self%vars(v)%data4d(i_off : i_off + nx_c - 1, &
-                          j_off : j_off + ny_c - 1, :, :) &
-        = gbuf4d(ig0 : ig0 + nx_c - 1, jg0 : jg0 + ny_c - 1, :, :)
-    end select
+    end if
   end do
 
-  if (is_root) then
-    call ncc(nf90_close(ncid), 'nf90_close '//trim(self%filename))
+  if (n_read_cached >= MAX_CACHED_OPENS) call mpp_error(FATAL, &
+      'soca_io_mod get_read_ncid: cache full (increase MAX_CACHED_OPENS)')
+  call ncc(nf90_open(filename, NF90_NOWRITE, ncid), 'nf90_open '//trim(filename))
+  n_read_cached = n_read_cached + 1
+  read_cache(n_read_cached)%filename = filename
+  read_cache(n_read_cached)%ncid     = ncid
+  allocate(read_cache(n_read_cached)%vars(VAR_CACHE_INIT))
+  read_cache(n_read_cached)%nvars    = 0
+  file_idx = n_read_cached
+end subroutine get_read_ncid
+
+
+!==============================================================================
+! Fetch cached metadata for (file_idx, varname), or do the inq calls and
+! cache them on first use. middle_dims(1:max(0, ndims-3)) gives the file's
+! dim sizes for axes 3..ndims-1 (the layer / category / "extra" dims).
+!==============================================================================
+subroutine get_var_meta(file_idx, name, varid, file_ndims, middle_dims)
+  integer,          intent(in)  :: file_idx
+  character(len=*), intent(in)  :: name
+  integer,          intent(out) :: varid, file_ndims
+  integer,          intent(out) :: middle_dims(MAX_FILE_NDIMS)
+
+  integer :: i, dd, sz, ncid, nv
+  integer :: file_dimids(MAX_FILE_NDIMS)
+  type(cached_var), allocatable :: tmp(:)
+
+  nv = read_cache(file_idx)%nvars
+  do i = 1, nv
+    if (read_cache(file_idx)%vars(i)%name == name) then
+      varid       = read_cache(file_idx)%vars(i)%varid
+      file_ndims  = read_cache(file_idx)%vars(i)%file_ndims
+      middle_dims = read_cache(file_idx)%vars(i)%middle_dims
+      return
+    end if
+  end do
+
+  ! First-touch -- do the inq calls and stash the result.
+  ncid = read_cache(file_idx)%ncid
+  call ncc(nf90_inq_varid(ncid, trim(name), varid), 'inq '//trim(name))
+  call ncc(nf90_inquire_variable(ncid, varid, ndims=file_ndims, dimids=file_dimids), &
+           'inquire '//trim(name))
+  if (file_ndims > MAX_FILE_NDIMS) call mpp_error(FATAL, &
+      'soca_io_mod get_var_meta: '//trim(name)//' exceeds MAX_FILE_NDIMS')
+  middle_dims = 1
+  do dd = 3, file_ndims - 1
+    call ncc(nf90_inquire_dimension(ncid, file_dimids(dd), len=sz), 'dim '//trim(name))
+    middle_dims(dd) = sz
+  end do
+
+  if (nv >= size(read_cache(file_idx)%vars)) then
+    allocate(tmp(2 * size(read_cache(file_idx)%vars)))
+    tmp(1:nv) = read_cache(file_idx)%vars(1:nv)
+    call move_alloc(tmp, read_cache(file_idx)%vars)
   end if
-  deallocate(gbuf2d)
-  if (allocated(gbuf3d)) deallocate(gbuf3d)
-  if (allocated(gbuf4d)) deallocate(gbuf4d)
-end subroutine commit_serial_read
+  nv = nv + 1
+  read_cache(file_idx)%nvars               = nv
+  read_cache(file_idx)%vars(nv)%name        = name
+  read_cache(file_idx)%vars(nv)%varid       = varid
+  read_cache(file_idx)%vars(nv)%file_ndims  = file_ndims
+  read_cache(file_idx)%vars(nv)%middle_dims = middle_dims
+end subroutine get_var_meta
+
+
+!==============================================================================
+! Close every cached read handle and drop the table. Call from geometry
+! shutdown (soca_geom%end) so the next geometry can open files fresh, and
+! so a writer that re-creates a previously-read file won't see a stale
+! cached ncid pointing at a deleted inode.
+!==============================================================================
+subroutine soca_io_close_all()
+  integer :: i, status
+  do i = 1, n_read_cached
+    if (read_cache(i)%ncid >= 0) then
+      status = nf90_close(read_cache(i)%ncid)
+      read_cache(i)%ncid = -1
+    end if
+    if (allocated(read_cache(i)%filename)) deallocate(read_cache(i)%filename)
+    if (allocated(read_cache(i)%vars))     deallocate(read_cache(i)%vars)
+    read_cache(i)%nvars = 0
+  end do
+  n_read_cached = 0
+end subroutine soca_io_close_all
 
 
 !==============================================================================
@@ -816,54 +828,72 @@ end function soca_io_var_exists
 
 
 !==============================================================================
-! Read a global var on PE 0 into either a 3D or 4D destination buffer,
-! tolerating "extra" degenerate file dims (size 1) that the buffer doesn't
-! enumerate. This is what FMS register_restart_field+restore_state did
-! transparently. Concrete cases:
-!   - 3D state field Salt(time, Layer, lath, lonh) -> 3D buffer (lonh, lath, Layer)
-!     file_ndims=4, count=[nx_g, ny_g, Layer, 1].
-!   - 5D CICE field Tsnz_h(time, nc=5, nksnow=1, nj, ni) -> 3D buffer (ni, nj, nc=5)
-!     file_ndims=5, count=[nx_g, ny_g, nksnow=1, nc=5, time=1] = [72, 35, 1, 5, 1].
-! In all cases count[1]=nx_g, count[2]=ny_g, count[ndims]=1, and the middle
-! count entries come straight from the file's actual dim sizes; total
-! element count is preserved so netcdf-fortran reads into the smaller-rank
-! buffer correctly. If the file's middle-dim product exceeds the buffer's
-! rest-extent the read is partial and the trailing portion of the buffer
-! (which the caller initialized to zero before commit) stays zero --
-! this is the original FMS behavior for the GDAS Tsnz_h case.
+! Strided read of a single variable into a caller-owned contiguous tile.
+! Builds start/count from (i_start, j_start, nx, ny) and the variable's file
+! shape, tolerating "extra" degenerate file dims (size 1) that the destination
+! buffer doesn't enumerate. Same middle-dim trick FMS register_restart_field+
+! restore_state did transparently. Concrete cases:
+!   - 3D state Salt(time, Layer, lath, lonh) -> 3D tile (nx, ny, Layer)
+!     file_ndims=4, count=[nx, ny, Layer, 1].
+!   - 5D CICE Tsnz_h(time, nc=5, nksnow=1, nj, ni) -> 3D tile (nx, ny, 5)
+!     file_ndims=5, count=[nx, ny, 1, 5, 1] = [nx, ny, nksnow=1, nc=5, time=1].
+! In all 2D+ cases count(1)=nx, count(2)=ny, count(ndims)=1 and the middle
+! count entries come from the file's actual dim sizes; total element count is
+! preserved so netcdf-fortran reads into the smaller-rank buffer correctly.
+! For 1D file vars (handled via dst1) count(1)=nx and we ignore j_start/ny.
 !==============================================================================
-subroutine read_global_var(ncid, name, nx_g, ny_g, gbuf3d, gbuf4d)
-  integer,                       intent(in)    :: ncid, nx_g, ny_g
-  character(len=*),              intent(in)    :: name
-  real(kind=kind_real), optional, intent(inout) :: gbuf3d(:,:,:)
-  real(kind=kind_real), optional, intent(inout) :: gbuf4d(:,:,:,:)
+subroutine read_var_strided(ncid, file_idx, name, i_start, j_start, nx, ny, &
+                            dst1, dst2, dst3, dst4)
+  integer,                       intent(in)  :: ncid, file_idx
+  integer,                       intent(in)  :: i_start, j_start, nx, ny
+  character(len=*),              intent(in)  :: name
+  real(kind=kind_real), optional, intent(out) :: dst1(:)
+  real(kind=kind_real), optional, intent(out) :: dst2(:,:)
+  real(kind=kind_real), optional, intent(out) :: dst3(:,:,:)
+  real(kind=kind_real), optional, intent(out) :: dst4(:,:,:,:)
 
-  integer :: varid, file_ndims, dd, sz
-  integer :: file_dimids(8)
+  integer :: varid, file_ndims, dd
+  integer :: middle_dims(MAX_FILE_NDIMS)
   integer, allocatable :: ct(:), st(:)
 
-  call ncc(nf90_inq_varid(ncid, trim(name), varid), 'inq '//trim(name))
-  call ncc(nf90_inquire_variable(ncid, varid, ndims=file_ndims, dimids=file_dimids), &
-           'inquire '//trim(name))
-  if (file_ndims < 3) call mpp_error(FATAL, &
-      'soca_io_mod read_global_var: '//trim(name)//' has fewer than 3 file dims')
-  allocate(ct(file_ndims), st(file_ndims))
+  call get_var_meta(file_idx, name, varid, file_ndims, middle_dims)
+  allocate(st(file_ndims), ct(file_ndims))
   st = 1
-  ct(1) = nx_g
-  ct(2) = ny_g
-  ct(file_ndims) = 1
-  do dd = 3, file_ndims - 1
-    call ncc(nf90_inquire_dimension(ncid, file_dimids(dd), len=sz), 'dim '//trim(name))
-    ct(dd) = sz
-  end do
+  ct = 1
+  if (present(dst1)) then
+    ! 1D var: count(1)=nx, rest stays 1
+    ct(1) = nx
+    if (file_ndims >= 2) ct(file_ndims) = 1
+  else
+    if (file_ndims < 2) call mpp_error(FATAL, &
+        'soca_io_mod read_var_strided: '//trim(name)//' has fewer than 2 file dims')
+    st(1) = i_start
+    st(2) = j_start
+    ct(1) = nx
+    ct(2) = ny
+    ! File may have an optional trailing time dim and any number of middle dims.
+    ! Trailing-time case: ct(file_ndims)=1 + middle dims from file (e.g. Salt's
+    ! Layer dim, Tsnz_h's nc/nksnow). Pure 2D file (no time, no middle): just
+    ! the leading x/y stride is enough.
+    if (file_ndims >= 3) then
+      ct(file_ndims) = 1
+      do dd = 3, file_ndims - 1
+        ct(dd) = middle_dims(dd)
+      end do
+    end if
+  end if
 
-  if (present(gbuf3d)) then
-    call ncc(nf90_get_var(ncid, varid, gbuf3d, start=st, count=ct), 'get '//trim(name))
-  else if (present(gbuf4d)) then
-    call ncc(nf90_get_var(ncid, varid, gbuf4d, start=st, count=ct), 'get '//trim(name))
+  if (present(dst2)) then
+    call ncc(nf90_get_var(ncid, varid, dst2, start=st, count=ct), 'get '//trim(name))
+  else if (present(dst3)) then
+    call ncc(nf90_get_var(ncid, varid, dst3, start=st, count=ct), 'get '//trim(name))
+  else if (present(dst4)) then
+    call ncc(nf90_get_var(ncid, varid, dst4, start=st, count=ct), 'get '//trim(name))
+  else if (present(dst1)) then
+    call ncc(nf90_get_var(ncid, varid, dst1, start=st, count=ct), 'get '//trim(name))
   end if
   deallocate(ct, st)
-end subroutine read_global_var
+end subroutine read_var_strided
 
 
 !==============================================================================

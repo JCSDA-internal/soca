@@ -17,9 +17,7 @@ use type_fieldset, only: fieldset_type
 
 ! mom6 / fms modules
 use fms_mod, only : fms_init, fms_end
-use soca_io_mod, only : soca_io_writer, soca_io_reader, &
-                        soca_io_method_from_config, &
-                        SOCA_IO_SERIAL, SOCA_IO_PARALLEL
+use soca_io_mod, only : soca_io_writer, soca_io_reader, soca_io_close_all
 use MOM, only : MOM_control_struct, initialize_MOM, MOM_end, get_MOM_state_elements
 use MOM_restart, only :MOM_restart_CS ! NOTE remove this when updating MOM6
 use MOM_domains, only : MOM_domain_type, MOM_domains_init, MOM_infra_init, MOM_infra_end
@@ -232,7 +230,7 @@ subroutine soca_geom_init(self, f_conf, f_comm, gen)
     ! NOTE that we will rerad the gridspec file later for some of the variables
     ! once the altas FunctionSpace has been created.
     if (.not. f_conf%get("geom_grid_file", str)) str = "soca_gridspec.nc"
-    call greader%init(self%Domain%mpp_domain, str, method=soca_io_method_from_config(f_conf))
+    call greader%init(self%Domain%mpp_domain, str)
     call greader%enqueue("lonh",    self%lonh)
     call greader%enqueue("lath",    self%lath)
     call greader%enqueue("lonq",    self%lonq)
@@ -282,6 +280,7 @@ end subroutine soca_geom_init
 !! \related soca_geom_mod::soca_geom
 subroutine soca_geom_end(self)
   class(soca_geom), intent(out)  :: self
+  call soca_io_close_all()
   nullify(self%Domain)
   if (allocated(self%lonh))          deallocate(self%lonh)
   if (allocated(self%lath))          deallocate(self%lath)
@@ -432,7 +431,7 @@ subroutine soca_geom_init_fieldset(self, f_conf, gen)
     allocate(fieldDataVars(self%isd:self%ied, self%jsd:self%jed, size(atlasVars)))
 
     ! read in from gridspec file
-    call greader%init(self%Domain%mpp_domain, str, method=soca_io_method_from_config(f_conf))
+    call greader%init(self%Domain%mpp_domain, str)
     do v = 1, size(atlasVars)
       call greader%enqueue(trim(atlasVars(v)), fieldDataVars(:,:,v))
     end do
@@ -620,7 +619,7 @@ subroutine soca_geom_write(self, f_conf)
   ! Save global domain
   if (.not. f_conf%get("geom_grid_file", str)) str = "soca_gridspec.nc"
 
-  call gwriter%init(self%Domain%mpp_domain, str, method=soca_io_method_from_config(f_conf))
+  call gwriter%init(self%Domain%mpp_domain, str)
   call gwriter%enqueue("lonh",    self%lonh)
   call gwriter%enqueue("lath",    self%lath)
   call gwriter%enqueue("lonq",    self%lonq)

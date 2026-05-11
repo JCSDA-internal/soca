@@ -28,7 +28,7 @@ use MOM_remapping, only : remapping_CS, initialize_remapping, remapping_core_h, 
 use mpp_domains_mod, only : mpp_update_domains
 
 ! SOCA I/O
-use soca_io_mod, only : soca_io_reader, soca_io_writer, soca_io_method_from_config, &
+use soca_io_mod, only : soca_io_reader, soca_io_writer, &
                         soca_io_file_exists, soca_io_var_exists
 
 ! SOCA modules
@@ -494,8 +494,7 @@ subroutine soca_fields_read(self, f_conf, vdate)
      h_common = 0.0_kind_real
 
      ! Read common vertical coordinate from file
-     call reader%init(self%geom%Domain%mpp_domain, str, &
-                      method=soca_io_method_from_config(f_conf))
+     call reader%init(self%geom%Domain%mpp_domain, str)
      call reader%enqueue('h', h_common)
      call reader%commit()
   end if
@@ -557,8 +556,7 @@ subroutine soca_fields_read(self, f_conf, vdate)
         allocate(vars(n))
 
         ! for each variable, setup to read
-        call reader%init(self%geom%Domain%mpp_domain, filename, &
-                         method=soca_io_method_from_config(f_conf))
+        call reader%init(self%geom%Domain%mpp_domain, filename)
         n = 0
         do f=1,size(self%fields)
           if (self%fields(f)%metadata%io_file == domains(d)) then
@@ -952,8 +950,7 @@ subroutine soca_fields_write_rst(self, f_conf, vdate)
     allocate(vars(n))
 
     ! copy atlas fields into per-PE compute-domain temporaries and enqueue with the writer
-    call writer%init(self%geom%Domain%mpp_domain, domain_filename, &
-                     method=soca_io_method_from_config(f_conf))
+    call writer%init(self%geom%Domain%mpp_domain, domain_filename)
     n=0
     do f=1,size(self%fields)
       if (self%fields(f)%metadata%io_file /= domains(d)) cycle
