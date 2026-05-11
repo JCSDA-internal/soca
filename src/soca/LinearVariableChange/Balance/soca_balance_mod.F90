@@ -203,7 +203,8 @@ subroutine soca_balance_setup(self, f_conf, traj, geom)
     if ( f_conf%has("dcdt") ) then
       call f_conf%get_or_die("dcdt.filename", filename)
       call f_conf%get_or_die("dcdt.name", kct_name)
-      if (open_file(fileobj, filename, "read", geom%Domain%mpp_domain)) then
+      if (open_file(fileobj, filename, "read", geom%Domain%mpp_domain, &
+                    use_netcdf_mpi=.true., use_collective=.true.)) then
         call soca_register_domain_axes(fileobj, geom%ieg-geom%isg+1, geom%jeg-geom%jsg+1)
         call read_data(fileobj, kct_name, kct)
         call close_file(fileobj)

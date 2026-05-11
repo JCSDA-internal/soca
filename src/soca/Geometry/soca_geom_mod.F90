@@ -232,7 +232,8 @@ subroutine soca_geom_init(self, f_conf, f_comm, gen)
     ! NOTE that we will rerad the gridspec file later for some of the variables
     ! once the altas FunctionSpace has been created.
     if (.not. f_conf%get("geom_grid_file", str)) str = "soca_gridspec.nc"
-    if (open_file(geom_restart, str, "read", self%Domain%mpp_domain)) then
+    if (open_file(geom_restart, str, "read", self%Domain%mpp_domain, &
+                  use_netcdf_mpi=.true., use_collective=.true.)) then
       call soca_register_domain_axes(geom_restart, self%ieg-self%isg+1, self%jeg-self%jsg+1)
       call read_data(geom_restart, "lonh",    self%lonh)
       call read_data(geom_restart, "lath",    self%lath)
@@ -434,7 +435,8 @@ subroutine soca_geom_init_fieldset(self, f_conf, gen)
     allocate(fieldDataVars(self%isd:self%ied, self%jsd:self%jed, size(atlasVars)))
 
     ! read in from gridspec file
-    if (open_file(geom_restart, str, "read", self%Domain%mpp_domain)) then
+    if (open_file(geom_restart, str, "read", self%Domain%mpp_domain, &
+                  use_netcdf_mpi=.true., use_collective=.true.)) then
       call soca_register_domain_axes(geom_restart, self%ieg-self%isg+1, self%jeg-self%jsg+1)
       do v = 1, size(atlasVars)
         call read_data(geom_restart, atlasVars(v), fieldDataVars(:,:,v))
@@ -639,8 +641,9 @@ subroutine soca_geom_write(self, f_conf)
     end do
   end do
 
-  if (open_file(geom_restart, str, "overwrite", self%Domain%mpp_domain, is_restart=.true., &
-                dont_add_res_to_filename=.true.)) then
+  if (open_file(geom_restart, str, "overwrite", self%Domain%mpp_domain, &
+                is_restart=.true., dont_add_res_to_filename=.true., &
+                use_netcdf_mpi=.true., use_collective=.true.)) then
     call register_axis(geom_restart, 'xaxis_1', 'x')
     call register_axis(geom_restart, 'yaxis_1', 'y')
     call register_axis(geom_restart, 'Time', unlimited)

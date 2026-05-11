@@ -494,7 +494,8 @@ subroutine soca_fields_read(self, f_conf, vdate)
      h_common = 0.0_kind_real
 
      ! Read common vertical coordinate from file
-     if (open_file(restart, str, "read", self%geom%Domain%mpp_domain)) then
+     if (open_file(restart, str, "read", self%geom%Domain%mpp_domain, &
+                   use_netcdf_mpi=.true., use_collective=.true.)) then
        call soca_register_domain_axes(restart, self%geom%ieg-self%geom%isg+1, self%geom%jeg-self%geom%jsg+1)
        call read_data(restart, 'h', h_common)
        call close_file(restart)
@@ -534,7 +535,8 @@ subroutine soca_fields_read(self, f_conf, vdate)
     compute_snowthickness = .false.
     if(f_conf%get("ice_filename", str)) then
       filename = trim(basename) // trim(str)
-      if (open_file(check_file, filename, "read", self%geom%Domain%mpp_domain)) then
+      if (open_file(check_file, filename, "read", self%geom%Domain%mpp_domain, &
+                    use_netcdf_mpi=.true., use_collective=.true.)) then
         field_meta = self%geom%fields_metadata%get("sea_ice_thickness")
         if (.not. variable_exists(check_file, field_meta%io_name)) then
           compute_icethickness = .true.
@@ -564,7 +566,8 @@ subroutine soca_fields_read(self, f_conf, vdate)
         allocate(vars(n))
 
         ! open the file for reading
-        if (.not. open_file(restart, filename, "read", self%geom%Domain%mpp_domain)) cycle
+        if (.not. open_file(restart, filename, "read", self%geom%Domain%mpp_domain, &
+                            use_netcdf_mpi=.true., use_collective=.true.)) cycle
         call soca_register_domain_axes(restart, self%geom%ieg-self%geom%isg+1, self%geom%jeg-self%geom%jsg+1)
 
         ! for each variable, read data
@@ -867,7 +870,8 @@ subroutine soca_fields_read_seaice(self, filename, seaice_categories_vars)
   if (cice_vars_cats%nvars() > 0) then
     allocate(tmp3d(self%geom%isd:self%geom%ied,self%geom%jsd:self%geom%jed,ncat,cice_vars_cats%nvars()))
     tmp3d = 0.0_kind_real
-    if (open_file(restart, filename, "read", self%geom%Domain%mpp_domain)) then
+    if (open_file(restart, filename, "read", self%geom%Domain%mpp_domain, &
+                  use_netcdf_mpi=.true., use_collective=.true.)) then
       call soca_register_domain_axes(restart, self%geom%ieg-self%geom%isg+1, self%geom%jeg-self%geom%jsg+1)
       do i=1,cice_vars_cats%nvars()
         call read_data(restart, cice_vars_cats%variable(i), tmp3d(:,:,:,i))
@@ -908,7 +912,8 @@ subroutine soca_fields_read_seaice(self, filename, seaice_categories_vars)
     allocate(tmp4d(self%geom%isd:self%geom%ied,self%geom%jsd:self%geom%jed,icelevs,&
     &ncat,cice_vars_cats_levs%nvars()))
     tmp4d = 0.0_kind_real
-    if (open_file(restart, filename, "read", self%geom%Domain%mpp_domain)) then
+    if (open_file(restart, filename, "read", self%geom%Domain%mpp_domain, &
+                  use_netcdf_mpi=.true., use_collective=.true.)) then
       call soca_register_domain_axes(restart, self%geom%ieg-self%geom%isg+1, self%geom%jeg-self%geom%jsg+1)
       do i=1,cice_vars_cats_levs%nvars()
         call read_data(restart, cice_vars_cats_levs%variable(i), tmp4d(:,:,:,:,i))
@@ -949,7 +954,8 @@ subroutine soca_fields_read_seaice(self, filename, seaice_categories_vars)
     allocate(tmp4d(self%geom%isd:self%geom%ied,self%geom%jsd:self%geom%jed,snowlevs,&
     &ncat,cice_vars_snow%nvars()))
     tmp4d = 0.0_kind_real
-    if (open_file(restart, filename, "read", self%geom%Domain%mpp_domain)) then
+    if (open_file(restart, filename, "read", self%geom%Domain%mpp_domain, &
+                  use_netcdf_mpi=.true., use_collective=.true.)) then
       call soca_register_domain_axes(restart, self%geom%ieg-self%geom%isg+1, self%geom%jeg-self%geom%jsg+1)
       do i=1,cice_vars_snow%nvars()
         call read_data(restart, cice_vars_snow%variable(i), tmp4d(:,:,:,:,i))
@@ -1051,8 +1057,9 @@ subroutine soca_fields_write_rst(self, f_conf, vdate)
     end do
 
     ! open file, register fields, write, and close
-    if (open_file(restart, domain_filename, "overwrite", self%geom%Domain%mpp_domain, is_restart=.true., &
-                  dont_add_res_to_filename=.true.)) then
+    if (open_file(restart, domain_filename, "overwrite", self%geom%Domain%mpp_domain, &
+                  is_restart=.true., dont_add_res_to_filename=.true., &
+                  use_netcdf_mpi=.true., use_collective=.true.)) then
       call register_axis(restart, 'xaxis_1', 'x')
       call register_axis(restart, 'yaxis_1', 'y')
       ! FMS2 requires axes to be registered before fields that reference them,
