@@ -520,7 +520,28 @@ void PostProcessIce::postProcess(State & pproc,
   }
 
   const auto & thermoParams = params_.thermo.value();
-  applyThermoStage(frame, pproc.fieldSet());
+
+  // Build snowTouched mask: non-zero on (owned-node, k) slots where the snow
+  // distribution modified vsnon vs the background restart. Drives the
+  // apnd/hpnd reset in applyThermoStage; mirrors dd's policy of resetting
+  // ponds only where snow was actually inserted.
+  std::vector<std::uint8_t> snowTouched;
+  snowTouched.assign(frame.nOwnedNodes * ncat_, 0);
+  const double snowTouchedTol = 1.0e-12;
+  for (std::size_t jnode = 0; jnode < field_size; ++jnode) {
+    const std::int64_t on64 = ownedNodeOf[jnode];
+    if (on64 < 0) continue;
+    const std::size_t on = static_cast<std::size_t>(on64);
+    for (std::size_t k = 0; k < ncat_; ++k) {
+      const double dv = std::fabs(new_vsno_cat[k](jnode, 0)
+                                  - bg_vsno_cat[k](jnode, 0));
+      if (dv > snowTouchedTol) {
+        snowTouched[on * ncat_ + k] = 1;
+      }
+    }
+  }
+
+  applyThermoStage(frame, pproc.fieldSet(), snowTouched);
 
   if (thermoParams.seedNewIce.value()) {
     const std::size_t fallbacks = seedNewIce(frame, newIce, donorCache,
@@ -576,12 +597,17 @@ double PostProcessIce::meanHsno(const std::vector<atlas::array::ArrayView<double
 
 // -----------------------------------------------------------------------------
 
-void PostProcessIce::applyThermoStage(CiceRestartIO::ThermoFrame & frame,
-                                      const atlas::FieldSet & fset) const {
+void PostProcessIce::applyThermoStage(
+    CiceRestartIO::ThermoFrame & frame,
+    const atlas::FieldSet & fset,
+    const std::vector<std::uint8_t> & snowTouched) const {
   const auto & thermoParams = params_.thermo.value();
   const bool updateSnowThermo = thermoParams.updateSnowThermo.value();
   const bool resetPonds       = thermoParams.resetPonds.value();
   if (!updateSnowThermo && !resetPonds) return;
+  if (resetPonds) {
+    ASSERT(snowTouched.size() == frame.nOwnedNodes * ncat_);
+  }
 
   ASSERT(frame.ncat == ncat_);
   const std::size_t iceLev = frame.iceLev;
@@ -626,7 +652,23 @@ void PostProcessIce::applyThermoStage(CiceRestartIO::ThermoFrame & frame,
     if (gindex(jnode) <= 0) continue;
     for (std::size_t k = 0; k < ncat_; ++k) {
       const double aice = aiceCat[k](jnode, 0);
-      if (aice <= 0.0) continue;
+      if (aice <= 0.0) {
+        // Cat lost its ice (ice2noice cell, rebin shuffle, or min-vice cleanup).
+        // Clear stale thermo so cats without ice carry zeros rather than the
+        // bg values they inherited from `pproc = restart`.
+        frame.at2(frame.Tsfcn, ownedNode, k) = 0.0;
+        for (std::size_t l = 0; l < snoLev; ++l) {
+          frame.at3(frame.qsno, snoLev, ownedNode, k, l) = 0.0;
+        }
+        for (std::size_t l = 0; l < iceLev; ++l) {
+          frame.at3(frame.qice, iceLev, ownedNode, k, l) = 0.0;
+          frame.at3(frame.sice, iceLev, ownedNode, k, l) = 0.0;
+        }
+        frame.at2(frame.apnd, ownedNode, k) = 0.0;
+        frame.at2(frame.hpnd, ownedNode, k) = 0.0;
+        frame.at2(frame.ipnd, ownedNode, k) = 0.0;
+        continue;
+      }
 
       if (updateSnowThermo) {
         const double vsno = vsnoCat[k](jnode, 0);
@@ -663,10 +705,11 @@ void PostProcessIce::applyThermoStage(CiceRestartIO::ThermoFrame & frame,
         }
       }
 
-      if (resetPonds) {
+      if (resetPonds && snowTouched[ownedNode * ncat_ + k]) {
+        // Match dd: only zero apnd/hpnd where snow was inserted. Never
+        // touch ipnd (the refrozen-lid thickness is preserved from bg).
         frame.at2(frame.apnd, ownedNode, k) = 0.0;
         frame.at2(frame.hpnd, ownedNode, k) = 0.0;
-        frame.at2(frame.ipnd, ownedNode, k) = 0.0;
       }
     }
     ++ownedNode;

@@ -120,10 +120,9 @@ class PostProcessIce: public util::Printable {
       "match the Python reference scripts.",
       true, this};
     oops::Parameter<bool> resetPonds{"reset ponds",
-      "Set apnd, hpnd, ipnd to zero on every category with aicen > 0. On by "
-      "default to match the Python reference scripts, which always zero ponds "
-      "where snow is touched (prevents rapid pond-driven snow melt after "
-      "restart).",
+      "Zero apnd and hpnd on per-cat slots where the snow distribution "
+      "modified vsnon. Mirrors the Python reference, which only zeros ponds "
+      "on snow-inserted cats. Never touches ipnd. On by default.",
       true, this};
     oops::Parameter<double> maxTsfc{"max Tsfc",
       "Upper bound on Tsfcn (deg C). Snow enthalpy is clipped accordingly.",
@@ -205,8 +204,14 @@ class PostProcessIce: public util::Printable {
   /// aicen / vsnon fields from `fset`. Owned-node ordering must match the
   /// CiceRestartIO traversal (ghost == 0 && global_index > 0). No-op when
   /// neither `update snow thermo` nor `reset ponds` is enabled.
+  ///
+  /// `snowTouched` is sized `nOwnedNodes * ncat`, indexed `[on * ncat + k]`,
+  /// non-zero where the snow distribution step modified vsnon on that
+  /// (owned-node, cat) slot. Used to gate the apnd/hpnd reset; ipnd is never
+  /// reset. May be empty when `reset ponds` is off.
   void applyThermoStage(CiceRestartIO::ThermoFrame & frame,
-                        const atlas::FieldSet & fset) const;
+                        const atlas::FieldSet & fset,
+                        const std::vector<std::uint8_t> & snowTouched) const;
 
   /// @brief Per-cell donor record assembled by the sparse halo exchange. Holds
   /// the donor cell's per-category ice and thermo values so consumers
