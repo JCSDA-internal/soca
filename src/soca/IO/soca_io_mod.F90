@@ -39,10 +39,10 @@
 !
 ! Write path: PE 0 creates the file structure, then per-variable mpp_gather
 ! pulls each tile to PE 0, which writes the global field via nf90_put_var.
-! Output is file-compatible with the legacy FMS path (same variable names,
-! same dtypes, Time leading axis) but uses cleaner dimension names
-! (xh/yh/Time) in place of FMS's auto-numbered xaxis_N/yaxis_N. The
-! "checksum" attribute FMS attached to each variable is omitted.
+! Output is byte-compatible with the legacy FMS path: same variable names,
+! same dtypes, same auto-numbered dim names (xaxis_N / yaxis_N / zaxis_N
+! / Time). The "checksum" attribute FMS attached to each variable is
+! omitted.
 
 module soca_io_mod
 
