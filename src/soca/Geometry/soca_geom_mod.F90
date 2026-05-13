@@ -160,7 +160,7 @@ contains
 !!
 !! \related soca_geom_mod::soca_geom
 subroutine soca_geom_init(self, f_conf, f_comm, gen)
-  class(soca_geom),         intent(out) :: self
+  class(soca_geom), target, intent(out) :: self  ! target so self%lonh etc. are valid pointer targets for soca_io_reader enqueue
   type(fckit_configuration), intent(in) :: f_conf
   type(fckit_mpi_comm),   intent(in)    :: f_comm !< MPI communicator for this geometry
   logical,                  intent(in)  :: gen !< if true, we are doing a full init
@@ -315,7 +315,7 @@ end subroutine soca_geom_end
 !! some variables are being set from the C++ side as well.
 !! \related soca_geom_mod::soca_geom
 subroutine soca_geom_init_fieldset(self, f_conf, gen)
-  class(soca_geom),  intent(inout) :: self
+  class(soca_geom), target, intent(inout) :: self  ! target for soca_io_reader pointer assoc
   type(fckit_configuration), intent(in) :: f_conf
   logical,                  intent(in)  :: gen !< if true, we are doing a full init
 
@@ -332,7 +332,7 @@ subroutine soca_geom_init_fieldset(self, f_conf, gen)
   character(len=20), dimension(2) :: atlasVars
   type(atlas_field) :: aField
   real(kind=kind_real), pointer :: aFieldData(:,:)
-  real(kind=kind_real), allocatable :: fieldData(:,:), fieldDataVars(:,:,:)
+  real(kind=kind_real), allocatable, target :: fieldData(:,:), fieldDataVars(:,:,:)  ! target for soca_io pointer assoc
 
 
   ! some fields always have to be generated because they are dependant on the PE layout
@@ -597,7 +597,7 @@ end subroutine
 !!
 !! \related soca_geom_mod::soca_geom
 subroutine soca_geom_write(self, f_conf)
-  class(soca_geom), intent(in) :: self
+  class(soca_geom), target, intent(in) :: self  ! target for soca_io_writer pointer assoc
   type(fckit_configuration), intent(in) :: f_conf
 
   ! variables needed for writing restart file
@@ -609,7 +609,7 @@ subroutine soca_geom_write(self, f_conf)
   character(len=20), dimension(2) :: atlasVars
   type(atlas_field) :: aField
   real(kind=kind_real), pointer :: aFieldData(:,:)
-  real(kind=kind_real), allocatable, dimension(:,:,:) :: fieldData
+  real(kind=kind_real), allocatable, target, dimension(:,:,:) :: fieldData  ! target for soca_io_writer pointer assoc
 
   ! variables for writing local domain
   logical :: save_local

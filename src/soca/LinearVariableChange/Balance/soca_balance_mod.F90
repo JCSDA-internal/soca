@@ -99,7 +99,7 @@ subroutine soca_balance_setup(self, f_conf, traj, geom)
 
   ! declarations related to the sea-ice Jacobian
   character(len=:), allocatable :: kct_name
-  real(kind=kind_real), allocatable :: kct(:,:) !> dc/dT
+  real(kind=kind_real), allocatable, target :: kct(:,:) !> dc/dT (target for soca_io_reader pointer association)
   type(soca_io_reader) :: dcdt_reader
 
   self%geom => geom

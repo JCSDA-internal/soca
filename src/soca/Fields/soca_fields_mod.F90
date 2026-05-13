@@ -470,12 +470,12 @@ subroutine soca_fields_read(self, f_conf, vdate)
 
   character(len=:), allocatable :: str, basename, filename
   integer :: iread = 0
-  real(kind=kind_real), allocatable :: h_common(:,:,:)    !< layer thickness to remap to
+  real(kind=kind_real), allocatable, target :: h_common(:,:,:)    !< layer thickness to remap to (target for soca_io_reader pointer association)
   type(soca_io_reader) :: reader
   integer :: d, f, i, j, k, n, idx
   type(remapping_CS)  :: remapCS
   type(oops_variables) :: seaice_categories_vars
-  type(varwrapper), allocatable :: vars(:)
+  type(varwrapper), allocatable, target :: vars(:)  ! target so vars(n)%data sections are valid pointer targets for soca_io enqueue
   type(atlas_field) :: afield1, afield2, afield3, afield4
   real(kind=kind_real), pointer :: adata1(:,:), adata2(:,:), adata3(:,:), adata4(:,:)
   real(kind=kind_real), allocatable :: h_common_ij(:), hocn_ij(:), varocn_ij(:), varocn2_ij(:)
@@ -926,7 +926,7 @@ subroutine soca_fields_write_rst(self, f_conf, vdate)
   character(len=3), allocatable :: domains(:)
   character(len=:), allocatable :: domain_filename
 
-  type(varwrapper), allocatable :: vars(:)
+  type(varwrapper), allocatable, target :: vars(:)  ! target so vars(n)%data sections are valid pointer targets for soca_io enqueue
 
   ! Get date IO format (colons or not?)
   date_cols = .true.

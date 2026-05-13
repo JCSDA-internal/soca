@@ -172,10 +172,15 @@ end subroutine writer_init
 
 
 !==============================================================================
-! enqueue_1d / enqueue_2d / enqueue_3d: register a variable for writing. Data
-! is copied in (caller may free or reuse the source). 1D assumed
-! global-on-every-PE (no gather; PE 0 writes directly); 2D/3D assumed
-! compute-domain-decomposed (mpp_gather to PE 0).
+! enqueue_1d / enqueue_2d / enqueue_3d: register a variable for writing. The
+! writer holds a pointer to the caller's buffer (no copy); the caller must
+! keep the source array alive and unmutated until commit() returns. The actual
+! argument must satisfy the TARGET-association rules (declare allocatables
+! with the TARGET attribute at the call site).
+! 1D assumed global-on-every-PE (no gather; PE 0 writes directly).
+! 2D/3D assumed compute-domain-decomposed (mpp_gather to PE 0; the
+! compute-domain slice is extracted from the halo-inclusive caller buffer
+! inside commit, one var/level at a time).
 !==============================================================================
 subroutine writer_enqueue_1d(self, name, src, long_name, units)
   class(soca_io_writer),         intent(inout) :: self
@@ -358,7 +363,13 @@ subroutine writer_commit(self)
   ! Phase 2: gather and write each user variable. The compute-domain tile is
   ! extracted from the caller's halo-inclusive buffer one var (and, for 3D,
   ! one level) at a time, so peak local memory is a single (nx_c, ny_c) tile.
-  if (is_root) allocate(gbuf2d(self%nx_g, self%ny_g))
+  ! Non-root allocates a 1x1 dummy for gbuf2d so the actual argument to
+  ! mpp_gather is always allocated (assumed-shape dummy requires it).
+  if (is_root) then
+    allocate(gbuf2d(self%nx_g, self%ny_g))
+  else
+    allocate(gbuf2d(1, 1))
+  end if
   allocate(tile2(nx_c, ny_c))
 
   do v = 1, self%nvars
@@ -389,6 +400,9 @@ subroutine writer_commit(self)
           if (size(gbuf3d, 3) /= nlev) deallocate(gbuf3d)
         end if
         if (.not. allocated(gbuf3d)) allocate(gbuf3d(self%nx_g, self%ny_g, nlev))
+      else
+        ! Non-root dummy so the actual argument to mpp_gather is allocated.
+        if (.not. allocated(gbuf3d)) allocate(gbuf3d(1, 1, 1))
       end if
       if (allocated(tile3)) then
         if (size(tile3, 3) /= nlev) deallocate(tile3)
@@ -409,10 +423,10 @@ subroutine writer_commit(self)
   ! Phase 3: close.
   if (is_root) then
     call ncc(nf90_close(ncid), 'nf90_close')
-    deallocate(varids, gbuf2d)
-    if (allocated(gbuf3d)) deallocate(gbuf3d)
+    deallocate(varids)
   end if
-  deallocate(tile2, pelist, x_axes, y_axes, z_axes, var_x_idx, var_y_idx, var_z_idx)
+  deallocate(gbuf2d, tile2, pelist, x_axes, y_axes, z_axes, var_x_idx, var_y_idx, var_z_idx)
+  if (allocated(gbuf3d)) deallocate(gbuf3d)
   if (allocated(tile3)) deallocate(tile3)
 
   ! drop pointer entries; caller's data is unaffected
