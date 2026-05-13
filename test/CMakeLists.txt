@@ -92,6 +92,7 @@ set( soca_test_input
   testinput/varchange_balance_TSSSH.yml
   testinput/varchange_balance.yml
   testinput/soca2cice_new.yml
+  testinput/soca2cice_new_bgfallback.yml
 )
 
 set( soca_test_ref
@@ -151,6 +152,7 @@ set( soca_test_ref
   testref/sqrtvertloc.test
   testref/tlm_toolbox_linearization_error.test
   testref/soca2cice_new.test
+  testref/soca2cice_new_bgfallback.test
 )
 
 # Create directory for test input/output/reference and symlink all files
@@ -847,6 +849,18 @@ soca_add_test( NAME soca2cice_new_thermo
 file(COPY ${CMAKE_CURRENT_BINARY_DIR}/data_static/72x35x25/restarts/iced.2018-04-15-00000.nc
      DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/data_generated/soca2cice_new_seed/ )
 soca_add_test( NAME soca2cice_new_seed
+              EXE  soca_postproc.x
+              MPI 2
+              NOTRAPFPE
+              TEST_DEPENDS test_soca_gridgen
+                           test_soca_3dvar )
+
+# bg-fallback variant: analysis has only sea_ice_area_fraction; hice and hsno
+# both fall back to background per-cell means. Exercises the new
+# `analysis variables` parameter in PostProcessIce.
+file(COPY ${CMAKE_CURRENT_BINARY_DIR}/data_static/72x35x25/restarts/iced.2018-04-15-00000.nc
+     DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/data_generated/soca2cice_new_bgfallback/ )
+soca_add_test( NAME soca2cice_new_bgfallback
               EXE  soca_postproc.x
               MPI 2
               NOTRAPFPE

@@ -178,10 +178,81 @@ void PostProcessIce::postProcess(State & pproc,
     new_hsno(jnode, 0) = meanHsno(new_vsno_cat, new_aice(jnode, 0), jnode);
   }
 
-  // Analysis fields
-  auto a_aice = atlas::array::make_view<double, 2>(anfields.field("sea_ice_area_fraction"));
-  auto a_hice = atlas::array::make_view<double, 2>(anfields.field("sea_ice_thickness"));
-  auto a_hsno = atlas::array::make_view<double, 2>(anfields.field("sea_ice_snow_thickness"));
+  // Analysis fields. The user lists which ice-related variables are actually
+  // produced by the DA in `params_.analysisVars`. We resolve each of the three
+  // logical inputs (aice, hice, hsno) from that list:
+  //   - aice: required; must be `sea_ice_area_fraction`.
+  //   - ice volume: either `sea_ice_thickness` (per-ice-area, m) or
+  //                 `sea_ice_volume` (per-cell-area, m). Missing -> bg fallback.
+  //   - snow volume: either `sea_ice_snow_thickness` or `sea_ice_snow_volume`.
+  //                  Missing -> bg fallback (the per-cell loop already does
+  //                  this when its per-jnode target is non-positive).
+  // Internally we always work in per-ice-area thickness; volume forms are
+  // divided by aice on read.
+  const oops::Variables & anVars = params_.analysisVars.value();
+  if (!anVars.has("sea_ice_area_fraction")) {
+    throw eckit::UserError(
+      "PostProcessIce: `analysis variables` must include sea_ice_area_fraction",
+      Here());
+  }
+  const bool has_hice_th  = anVars.has("sea_ice_thickness");
+  const bool has_hice_vol = anVars.has("sea_ice_volume");
+  const bool has_hsno_th  = anVars.has("sea_ice_snow_thickness");
+  const bool has_hsno_vol = anVars.has("sea_ice_snow_volume");
+  if (has_hice_th && has_hice_vol) {
+    throw eckit::UserError(
+      "PostProcessIce: `analysis variables` lists both sea_ice_thickness and "
+      "sea_ice_volume; pick one", Here());
+  }
+  if (has_hsno_th && has_hsno_vol) {
+    throw eckit::UserError(
+      "PostProcessIce: `analysis variables` lists both sea_ice_snow_thickness "
+      "and sea_ice_snow_volume; pick one", Here());
+  }
+
+  auto a_aice = atlas::array::make_view<double, 2>(
+      anfields.field("sea_ice_area_fraction"));
+
+  // Per-jnode per-ice-area thickness targets, materialized once. Negative-as-
+  // sentinel "no analysis here, fall back to bg" propagates through the
+  // existing per-cell loop logic.
+  std::vector<double> a_hice_vec(field_size, -1.0);
+  std::vector<double> a_hsno_vec(field_size, -1.0);
+  if (has_hice_th) {
+    auto v = atlas::array::make_view<double, 2>(
+        anfields.field("sea_ice_thickness"));
+    for (size_t jn = 0; jn < field_size; ++jn) a_hice_vec[jn] = v(jn, 0);
+  } else if (has_hice_vol) {
+    auto v = atlas::array::make_view<double, 2>(
+        anfields.field("sea_ice_volume"));
+    for (size_t jn = 0; jn < field_size; ++jn) {
+      const double ai = a_aice(jn, 0);
+      a_hice_vec[jn] = (ai > icephysics::Constants::puny) ? v(jn, 0) / ai : 0.0;
+    }
+  } else {
+    // Bg fallback: per-ice-area thickness from background per-cat volumes.
+    for (size_t jn = 0; jn < field_size; ++jn) {
+      double v = 0.0;
+      for (size_t k = 0; k < ncat_; ++k) v += bg_vice_cat[k](jn, 0);
+      a_hice_vec[jn] = (bg_aice(jn, 0) > icephysics::Constants::puny)
+                       ? v / bg_aice(jn, 0) : 0.0;
+    }
+  }
+  if (has_hsno_th) {
+    auto v = atlas::array::make_view<double, 2>(
+        anfields.field("sea_ice_snow_thickness"));
+    for (size_t jn = 0; jn < field_size; ++jn) a_hsno_vec[jn] = v(jn, 0);
+  } else if (has_hsno_vol) {
+    auto v = atlas::array::make_view<double, 2>(
+        anfields.field("sea_ice_snow_volume"));
+    for (size_t jn = 0; jn < field_size; ++jn) {
+      const double ai = a_aice(jn, 0);
+      a_hsno_vec[jn] = (ai > icephysics::Constants::puny) ? v(jn, 0) / ai : 0.0;
+    }
+  }
+  // hsno bg-fallback is left to the existing per-cell snow block: when
+  // a_hsno_vec[jnode] is non-positive (the default sentinel) it recovers
+  // hsn_target from the bg snow cell-mean. So nothing to do here.
 
   // parameters
   const auto & sstUpdateParams = params_.sstUpdate.value();
@@ -275,8 +346,8 @@ void PostProcessIce::postProcess(State & pproc,
     // Clamp bounds on analysis first.
     if (a_aice(jnode, 0) < min_aice) a_aice(jnode, 0) = 0.0;
     if (a_aice(jnode, 0) > 1.0)      a_aice(jnode, 0) = 1.0;
-    if (a_hice(jnode, 0) < 0.0)      a_hice(jnode, 0) = 0.0;
-    if (a_hsno(jnode, 0) < 0.0)      a_hsno(jnode, 0) = 0.0;
+    if (a_hice_vec[jnode] < 0.0)     a_hice_vec[jnode] = 0.0;
+    if (a_hsno_vec[jnode] < 0.0)     a_hsno_vec[jnode] = 0.0;
     // Drop output ice on cells where analysis aice is below the noise floor.
     // The rebin can otherwise produce micro-vicen layouts that show up as
     // thick-ice-on-edge artifacts after the min_vice cleanup.
@@ -324,7 +395,7 @@ void PostProcessIce::postProcess(State & pproc,
       // The donor-mean Tsfc is still useful for the Stage C thermo seed (it
       // sets initial Tsfcn/qsno/qice/sice physics consistently), so the
       // donorMeanIce call stays in the seedNewIce pass.
-      double hice_seed = a_hice(jnode, 0);
+      double hice_seed = a_hice_vec[jnode];
       if (hice_seed <= 0.0) {
         double Tsfc_donor, hice_donor;
         const bool foundDonor = donorMeanIce(jnode, seedK, donorCache,
@@ -350,7 +421,7 @@ void PostProcessIce::postProcess(State & pproc,
         // pass doesn't see stale background snow.
         new_vsno_cat[k](jnode, 0) = 0.0;
       }
-      vtot_target = a_hice(jnode, 0) * ai_an;
+      vtot_target = a_hice_vec[jnode] * ai_an;
     }
 
     // -------------------- Stage B: ITD rebin ------------------------------
@@ -389,7 +460,7 @@ void PostProcessIce::postProcess(State & pproc,
       // Target cell-mean snow thickness:
       //   * use analysis hsno when available;
       //   * fall back to background cell-mean.
-      double hsn_target = a_hsno(jnode, 0);
+      double hsn_target = a_hsno_vec[jnode];
       if (hsn_target <= 0.0) {
         // Recover from background.
         double bg_vsno_sum = 0.0;

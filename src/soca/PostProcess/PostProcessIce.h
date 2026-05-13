@@ -18,6 +18,8 @@
 #include "atlas/util/KDTree.h"
 #include "atlas/util/ObjectHandle.h"
 #include "eckit/config/Configuration.h"
+#include "oops/base/ParameterTraitsVariables.h"
+#include "oops/base/Variables.h"
 #include "oops/util/Printable.h"
 #include "oops/util/parameters/NumericConstraints.h"
 #include "oops/util/parameters/Parameter.h"
@@ -191,6 +193,15 @@ class PostProcessIce: public util::Printable {
             "ice can be found within seed-search-neighbors. Mirrors the Python "
             "reference scripts' hitot_min.",
             0.1, this, {oops::minConstraint(0.0)}};
+    oops::Parameter<oops::Variables> analysisVars{"analysis variables",
+            "Names of the ice-related analysis fields actually produced by the "
+            "DA. `sea_ice_area_fraction` is required. For ice volume, list "
+            "either `sea_ice_thickness` (per-ice-area, m) or `sea_ice_volume` "
+            "(per-cell-area, m); for snow, either `sea_ice_snow_thickness` or "
+            "`sea_ice_snow_volume`. Missing pairs fall back to the background.",
+            oops::Variables({"sea_ice_area_fraction",
+                             "sea_ice_thickness",
+                             "sea_ice_snow_thickness"}), this};
   };
 
   const std::string classname() {return "soca::PostProcessIce";}
