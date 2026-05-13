@@ -5,14 +5,13 @@
 
 ! soca_io_mod
 !
-! Direct netcdf I/O for SOCA fields, replacing the FMS register_restart_field /
-! save_restart / restore_state pattern. Designed so that LETKF parallel-ensemble
-! I/O (issue #1125) becomes possible: FMS forces every read/write to be
-! collective on the model's compute communicator, which prevents
-! "PE i alone reads/writes member i" patterns. With direct nf90_* calls,
-! a single PE can do its own I/O without coordinating with other PEs.
+! Direct netcdf I/O for SOCA fields, replacing FMS register_restart_field /
+! save_restart / restore_state. Enables LETKF parallel-ensemble I/O: FMS forces
+! every read/write to be collective on the compute communicator, blocking
+! "PE i alone reads/writes member i"; direct nf90_* lets a single PE do its
+! own I/O without coordinating with the others.
 !
-! API: register-then-commit lifecycle. The SOCA-side caller pattern is:
+! API: register-then-commit. Writer pattern:
 !
 !     type(soca_io_writer) :: w
 !     call w%init(domain, "myfile.nc")
@@ -21,40 +20,16 @@
 !     ...
 !     call w%commit()   ! gathers from all PEs and writes the file
 !
-! enqueue copies data in so the caller can mutate or free its source
-! arrays before commit. Failure mode is mpp_error(FATAL).
 !
-! Read path: two implementations selectable via YAML on the geometry block
-! (default broadcast; see read_mode docstring below for rationale and
-! benchmarks):
-!     geometry:
-!       io:
-!         read mode: broadcast | strided
-!   broadcast - PE 0 opens, nf90_get_var the full global field, then
-!               mpp_broadcast to all PEs which slice their compute tile.
-!   strided   - every PE opens NF90_NOWRITE independently and reads only
-!               its compute-domain tile via nf90_get_var(start, count).
-! Both paths share the same module-level handle / var-metadata cache so
-! every (PE, filename) pair pays the nf90_open and nf90_inq cost once.
-!
-! Write path: PE 0 creates the file structure, then per-variable mpp_gather
-! pulls each tile to PE 0, which writes the global field via nf90_put_var.
-! Output is byte-compatible with the legacy FMS path: same variable names,
-! same dtypes, same auto-numbered dim names (xaxis_N / yaxis_N / zaxis_N
-! / Time). The "checksum" attribute FMS attached to each variable is
-! omitted.
-
 module soca_io_mod
 
 use netcdf
-use mpi
 use kinds, only: kind_real
-use mpp_mod, only: mpp_gather, mpp_broadcast, mpp_pe, mpp_root_pe, mpp_npes, &
+use mpp_mod, only: mpp_gather, mpp_scatter, mpp_broadcast, mpp_pe, mpp_root_pe, mpp_npes, &
                    mpp_get_current_pelist, mpp_error, FATAL
 use mpp_domains_mod, only: domain2D, &
                            mpp_get_compute_domain, mpp_get_global_domain, &
                            mpp_get_data_domain
-use fckit_configuration_module, only: fckit_configuration
 
 implicit none
 private
@@ -63,21 +38,18 @@ public :: soca_io_writer
 public :: soca_io_reader
 public :: soca_io_file_exists, soca_io_var_exists
 public :: soca_io_close_all
-public :: soca_io_read_mode_from_config
 
-integer, parameter :: MAX_NAME = 64
+integer, parameter :: MAX_NAME = 256
 
-! Module-level cache of nf90_open(NF90_NOWRITE) handles, keyed by filename.
-! Mirrors FMS fms_io's get_file_unit + files_read(i)%var(j) tables: a file
-! is opened once on first reader_commit and the ncid is reused across every
-! subsequent reader_commit on the same path. Per-variable metadata (varid,
-! file_ndims, middle-dim sizes) is also cached so each repeat read only
-! does the nf90_get_var, skipping inq_varid + inquire_variable +
-! inquire_dimension. Closes happen only on soca_io_close_all (called from
-! soca_geom_end) or process exit.
+! Module-level cache of nf90_open(NF90_NOWRITE) handles, keyed by filename
+! (mirrors fms_io's get_file_unit + files_read(i)%var(j) tables). First
+! reader_commit opens; subsequent reader_commits reuse the ncid and cached
+! per-variable metadata (varid, file_ndims, middle-dim sizes), so repeat reads
+! skip inq_varid + inquire_variable + inquire_dimension. Closes happen only on
+! soca_io_close_all (from soca_geom_end) or process exit.
 !
-! Read-only by design -- if the caller needs to read a file it has just
-! written, it must call soca_io_close_all first to drop the stale handle.
+! Read-only by design -- a caller that needs to read a file it just wrote must
+! call soca_io_close_all first to drop the stale handle.
 integer, parameter :: MAX_FILE_NDIMS = 8
 type :: cached_var
   character(len=MAX_NAME) :: name = ''
@@ -96,45 +68,27 @@ integer, parameter :: VAR_CACHE_INIT   = 16
 type(cached_open), save :: read_cache(MAX_CACHED_OPENS)
 integer, save :: n_read_cached = 0
 
-! Read strategy: PE-0-only read + mpp_broadcast (default) vs per-PE strided
-! reads. Selected via YAML on geometry init -- see header docstring.
-!
-! Broadcast is the default because real DA cycling reads files that were
-! just written (model output, prev-cycle analyses) -- the page cache is
-! always cold. On cold cache, 8 concurrent strided readers thrash the
-! kernel readahead and pay 8x the open-syscall cost, while broadcast's
-! single PE-0 sequential read keeps readahead happy and moves data to
-! peers over fast in-node MPI. Measured on rancor 1deg 20-mem LETKF
-! (cold cache): broadcast 13.5 s vs strided 30.5 s. Warm cache reverses
-! the result (strided 3.9 s vs broadcast 13.3 s) but cycling never sees
-! warm cache. On a parallel filesystem (Lustre/GPFS) or multi-node setup
-! where the broadcast would have to cross the interconnect, strided may
-! win again.
-integer, parameter :: READ_MODE_STRIDED   = 1
-integer, parameter :: READ_MODE_BROADCAST = 2
-integer, save :: read_mode = READ_MODE_BROADCAST
 
 type :: var_entry
   character(len=MAX_NAME) :: name = ''
   integer :: ndims = 0          ! 1, 2 or 3
   integer :: nlevels = 0        ! 1 if ndims<=2, else nz
-  ! Data is copied into these buffers at enqueue time so the caller is free
-  ! to deallocate / reuse their source arrays before commit. For 1D vars the
-  ! data is global on every PE (no gather). For 2D/3D vars the buffer holds
-  ! the COMPUTE-DOMAIN slice (1-based) and is gathered to the root in commit.
-  real(kind=kind_real), allocatable :: data1d(:)
-  real(kind=kind_real), allocatable :: data2d(:,:)
-  real(kind=kind_real), allocatable :: data3d(:,:,:)
+  ! Pointers to the caller's buffer (no copy). 1D: global on every PE
+  ! (no gather, written directly by root). 2D/3D: the caller's halo-inclusive
+  ! data-domain array; commit extracts the compute-domain slice into a per-var
+  ! tile for mpp_gather. Caller must keep these alive and unmutated through
+  ! commit (matches the FMS register_restart_field contract).
+  real(kind=kind_real), pointer :: data1d(:)     => null()
+  real(kind=kind_real), pointer :: data2d(:,:)   => null()
+  real(kind=kind_real), pointer :: data3d(:,:,:) => null()
   character(len=MAX_NAME) :: long_name = ''
   character(len=MAX_NAME) :: units = 'none'
-  character(len=1)        :: cartesian_axis = ' '  ! ' ', 'X', 'Y', 'Z', 'T'
 end type var_entry
 
-! Tracks one unique axis (X, Y or Z) by (size, domain_key) and remembers
-! the netcdf dim/coord-var ids assigned to it during commit. Mirrors
-! FMS's unique_axes(): each direction has a counter; a var's dim reuses
-! an existing axis if its (size, domain) tuple matches one already seen,
-! else a new axis is created.
+! Tracks one unique axis (X/Y/Z) by (size, domain_key) and remembers the netcdf
+! dim/coord-var ids assigned during commit. Same dedup as FMS unique_axes(): a
+! var's dim reuses an existing axis if its (size, domain) tuple matches, else a
+! new axis is appended.
 type :: axis_entry
   integer :: size       = 0
   integer :: domain_key = 0      ! 0 = no domain (used for 1D vars); 1 = main domain
@@ -146,6 +100,7 @@ type :: soca_io_writer
   character(len=:), allocatable :: filename
   type(domain2D), pointer :: domain => null()
   integer :: isc, iec, jsc, jec        ! local compute domain (1-based as mpp returns)
+  integer :: isd, ied, jsd, jed        ! data domain (for compute-slice offsets)
   integer :: isg, ieg, jsg, jeg        ! global domain
   integer :: nx_g, ny_g                ! global x/y sizes
   type(var_entry), allocatable :: vars(:)
@@ -160,9 +115,8 @@ contains
 end type soca_io_writer
 
 
-! Read-side var_entry: the reader holds POINTERS to the caller's buffers
-! and fills them in commit. Caller must keep buffers alive and not mutate
-! them between enqueue and commit.
+! Read-side var_entry: holds POINTERS to caller buffers; commit fills them in
+! place. Caller must keep buffers alive and unmutated between enqueue and commit.
 type :: read_entry
   character(len=MAX_NAME) :: name = ''
   integer :: ndims = 0           ! 1, 2, 3, or 4
@@ -194,8 +148,8 @@ end type soca_io_reader
 contains
 
 !==============================================================================
-! init: prepare a writer for a specific file. domain pointer is stored;
-! caller must keep the domain alive until commit returns.
+! init: prepare a writer for a specific file. The domain pointer is stored, so
+! the caller must keep the domain alive until commit returns.
 !==============================================================================
 subroutine writer_init(self, domain, filename)
   class(soca_io_writer), intent(inout) :: self
@@ -206,7 +160,8 @@ subroutine writer_init(self, domain, filename)
   self%domain => domain
 
   call mpp_get_compute_domain(self%domain, self%isc, self%iec, self%jsc, self%jec)
-  call mpp_get_global_domain(self%domain,  self%isg, self%ieg, self%jsg, self%jeg)
+  call mpp_get_data_domain   (self%domain, self%isd, self%ied, self%jsd, self%jed)
+  call mpp_get_global_domain (self%domain, self%isg, self%ieg, self%jsg, self%jeg)
   self%nx_g = self%ieg - self%isg + 1
   self%ny_g = self%jeg - self%jsg + 1
 
@@ -217,58 +172,44 @@ end subroutine writer_init
 
 
 !==============================================================================
-! enqueue_1d / enqueue_2d / enqueue_3d: register a variable for writing.
-! The data is held by reference; do not deallocate before calling commit.
-! 1D data is assumed global-on-every-PE (no gather, PE 0 writes directly).
-! 2D/3D data is assumed compute-domain-decomposed (mpp_gather to PE 0).
+! enqueue_1d / enqueue_2d / enqueue_3d: register a variable for writing. Data
+! is copied in (caller may free or reuse the source). 1D assumed
+! global-on-every-PE (no gather; PE 0 writes directly); 2D/3D assumed
+! compute-domain-decomposed (mpp_gather to PE 0).
 !==============================================================================
-subroutine writer_enqueue_1d(self, name, src, long_name, units, cartesian_axis)
-  class(soca_io_writer),       intent(inout) :: self
-  character(len=*),            intent(in)    :: name
-  real(kind=kind_real),        intent(in)    :: src(:)
-  character(len=*), optional,  intent(in)    :: long_name, units
-  character(len=1), optional,  intent(in)    :: cartesian_axis
+subroutine writer_enqueue_1d(self, name, src, long_name, units)
+  class(soca_io_writer),         intent(inout) :: self
+  character(len=*),              intent(in)    :: name
+  real(kind=kind_real), target,  intent(in)    :: src(:)
+  character(len=*), optional,    intent(in)    :: long_name, units
 
   call grow_if_needed(self)
   self%nvars = self%nvars + 1
   self%vars(self%nvars)%name    = name
   self%vars(self%nvars)%ndims   = 1
   self%vars(self%nvars)%nlevels = 1
-  allocate(self%vars(self%nvars)%data1d(size(src)))
-  self%vars(self%nvars)%data1d = src
+  self%vars(self%nvars)%data1d => src
   self%vars(self%nvars)%long_name = name
   self%vars(self%nvars)%units     = 'none'
-  if (present(long_name))      self%vars(self%nvars)%long_name      = long_name
-  if (present(units))          self%vars(self%nvars)%units          = units
-  if (present(cartesian_axis)) self%vars(self%nvars)%cartesian_axis = cartesian_axis
+  if (present(long_name)) self%vars(self%nvars)%long_name = long_name
+  if (present(units))     self%vars(self%nvars)%units     = units
 end subroutine writer_enqueue_1d
 
-! 2D / 3D enqueue. Caller passes the whole halo-inclusive array as it was
-! allocated (e.g. self%lon, shape (isd:ied, jsd:jed)). Inside the routine
-! the assumed-shape array re-bases to (1:nx_data, 1:ny_data); we use the
-! domain's data-domain bounds to compute the offset of the compute slice
-! within that 1-based shape and copy it out into a 1-based buffer.
+! 2D/3D enqueue. Caller passes the whole halo-inclusive array (e.g. self%lon,
+! shape (isd:ied, jsd:jed)). We hold a pointer; the compute-slice extraction
+! happens lazily in commit so only one var's tile is in flight at a time.
 subroutine writer_enqueue_2d(self, name, src, long_name, units)
-  class(soca_io_writer),       intent(inout) :: self
-  character(len=*),            intent(in)    :: name
-  real(kind=kind_real),        intent(in)    :: src(:,:)
-  character(len=*), optional,  intent(in)    :: long_name, units
-
-  integer :: nx, ny, i_off, j_off, isd, ied, jsd, jed
+  class(soca_io_writer),         intent(inout) :: self
+  character(len=*),              intent(in)    :: name
+  real(kind=kind_real), target,  intent(in)    :: src(:,:)
+  character(len=*), optional,    intent(in)    :: long_name, units
 
   call grow_if_needed(self)
   self%nvars = self%nvars + 1
   self%vars(self%nvars)%name    = name
   self%vars(self%nvars)%ndims   = 2
   self%vars(self%nvars)%nlevels = 1
-  nx = self%iec - self%isc + 1
-  ny = self%jec - self%jsc + 1
-  allocate(self%vars(self%nvars)%data2d(nx, ny))
-  call mpp_get_data_domain(self%domain, isd, ied, jsd, jed)
-  i_off = self%isc - isd + 1
-  j_off = self%jsc - jsd + 1
-  self%vars(self%nvars)%data2d(:,:) = src(i_off : i_off + nx - 1, &
-                                          j_off : j_off + ny - 1)
+  self%vars(self%nvars)%data2d => src
   self%vars(self%nvars)%long_name = name
   self%vars(self%nvars)%units     = 'none'
   if (present(long_name)) self%vars(self%nvars)%long_name = long_name
@@ -276,27 +217,17 @@ subroutine writer_enqueue_2d(self, name, src, long_name, units)
 end subroutine writer_enqueue_2d
 
 subroutine writer_enqueue_3d(self, name, src, long_name, units)
-  class(soca_io_writer),       intent(inout) :: self
-  character(len=*),            intent(in)    :: name
-  real(kind=kind_real),        intent(in)    :: src(:,:,:)
-  character(len=*), optional,  intent(in)    :: long_name, units
-
-  integer :: nx, ny, nz, i_off, j_off, isd, ied, jsd, jed
+  class(soca_io_writer),         intent(inout) :: self
+  character(len=*),              intent(in)    :: name
+  real(kind=kind_real), target,  intent(in)    :: src(:,:,:)
+  character(len=*), optional,    intent(in)    :: long_name, units
 
   call grow_if_needed(self)
   self%nvars = self%nvars + 1
   self%vars(self%nvars)%name    = name
   self%vars(self%nvars)%ndims   = 3
   self%vars(self%nvars)%nlevels = size(src, 3)
-  nx = self%iec - self%isc + 1
-  ny = self%jec - self%jsc + 1
-  nz = size(src, 3)
-  allocate(self%vars(self%nvars)%data3d(nx, ny, nz))
-  call mpp_get_data_domain(self%domain, isd, ied, jsd, jed)
-  i_off = self%isc - isd + 1
-  j_off = self%jsc - jsd + 1
-  self%vars(self%nvars)%data3d(:,:,:) = src(i_off : i_off + nx - 1, &
-                                            j_off : j_off + ny - 1, :)
+  self%vars(self%nvars)%data3d => src
   self%vars(self%nvars)%long_name = name
   self%vars(self%nvars)%units     = 'none'
   if (present(long_name)) self%vars(self%nvars)%long_name = long_name
@@ -314,15 +245,14 @@ end subroutine grow_if_needed
 
 
 !==============================================================================
-! commit: PE 0 creates the file structure, then we gather each variable in
-! turn via mpp_gather and PE 0 writes via nf90_put_var. This is the
-! FMS-equivalent path (mpp_io threading=MPP_SINGLE); speedup vs FMS is
-! not the goal -- a clean, debuggable, FMS-free baseline is.
+! commit: PE 0 creates the file structure, then each var is mpp_gather'd and
+! PE 0 writes via nf90_put_var. Equivalent to FMS mpp_io threading=MPP_SINGLE
+! -- the goal is a clean, debuggable, FMS-free baseline, not a speedup.
 !==============================================================================
 subroutine writer_commit(self)
   class(soca_io_writer), intent(inout) :: self
 
-  integer :: ncid, dimid_t, varid_t, v, k
+  integer :: ncid, dimid_t, varid_t, v
   integer, allocatable :: varids(:)
   integer, allocatable :: var_x_idx(:), var_y_idx(:), var_z_idx(:)
   type(axis_entry), allocatable :: x_axes(:), y_axes(:), z_axes(:)
@@ -330,32 +260,36 @@ subroutine writer_commit(self)
   logical :: is_root
   real(kind=kind_real), allocatable :: gbuf2d(:,:), gbuf3d(:,:,:)
   integer, allocatable :: pelist(:)
-  integer :: nprocs, dom_key
+  integer :: dom_key
   integer, parameter :: MAX_AXES_PER_DIR = 32
+  integer :: nx_c, ny_c, i_off, j_off, nlev
+  real(kind=kind_real), allocatable :: tile2(:,:), tile3(:,:,:)
 
   is_root = (mpp_pe() == mpp_root_pe())
-  call mpi_pelist(pelist, nprocs)
+  call mpi_pelist(pelist)
 
-  ! ----------------------------------------------------------------------
-  ! Build per-direction unique-axis tables matching FMS's algorithm:
-  ! a var's dim at position k is matched against existing axes by
-  ! (size, domain_key); same tuple -> reuse; new tuple -> append.
-  ! ----------------------------------------------------------------------
+  nx_c  = self%iec - self%isc + 1
+  ny_c  = self%jec - self%jsc + 1
+  i_off = self%isc - self%isd + 1
+  j_off = self%jsc - self%jsd + 1
+
+  ! Build per-direction unique-axis tables (FMS algorithm): match each var's
+  ! dim against existing axes by (size, domain_key); reuse on match, append on
+  ! miss.
   allocate(x_axes(MAX_AXES_PER_DIR), y_axes(MAX_AXES_PER_DIR), z_axes(MAX_AXES_PER_DIR))
   allocate(var_x_idx(self%nvars), var_y_idx(self%nvars), var_z_idx(self%nvars))
   var_x_idx = 0; var_y_idx = 0; var_z_idx = 0
   nx_axes = 0; ny_axes = 0; nz_axes = 0
 
   do v = 1, self%nvars
-    ! 1D vars carry no domain (they are global-on-every-PE); 2D/3D vars
-    ! all share self%domain in this writer (key = 1).
+    ! 1D vars: no domain (global on every PE, key=0). 2D/3D vars share
+    ! self%domain (key=1).
     dom_key = 1
     if (self%vars(v)%ndims == 1) dom_key = 0
 
-    ! Every var contributes an X axis (Fortran first dim). 2D/3D vars hold
-    ! only their compute slice locally, so we use the writer's GLOBAL extents
-    ! for the axis sizes; 1D vars are already global on every PE so size()
-    ! is fine.
+    ! Every var contributes an X axis (Fortran first dim). For 2D/3D the local
+    ! buffer is only the compute slice, so use the writer's GLOBAL extents for
+    ! the axis size; 1D buffers are already global.
     select case (self%vars(v)%ndims)
     case (1)
       call find_or_add_axis(x_axes, nx_axes, size(self%vars(v)%data1d), dom_key, var_x_idx(v))
@@ -369,9 +303,7 @@ subroutine writer_commit(self)
     end select
   end do
 
-  ! ----------------------------------------------------------------------
   ! Phase 1: PE 0 defines the file structure -- dims, coord vars, data vars.
-  ! ----------------------------------------------------------------------
   if (is_root) then
     allocate(varids(self%nvars))
 
@@ -423,10 +355,11 @@ subroutine writer_commit(self)
     call put_axis_coord_data(ncid, z_axes, nz_axes)
   end if
 
-  ! ----------------------------------------------------------------------
-  ! Phase 2: gather and write each user variable.
-  ! ----------------------------------------------------------------------
+  ! Phase 2: gather and write each user variable. The compute-domain tile is
+  ! extracted from the caller's halo-inclusive buffer one var (and, for 3D,
+  ! one level) at a time, so peak local memory is a single (nx_c, ny_c) tile.
   if (is_root) allocate(gbuf2d(self%nx_g, self%ny_g))
+  allocate(tile2(nx_c, ny_c))
 
   do v = 1, self%nvars
     if (self%vars(v)%ndims == 1) then
@@ -436,52 +369,62 @@ subroutine writer_commit(self)
             'put '//trim(self%vars(v)%name))
       end if
     else if (self%vars(v)%ndims == 2) then
+      tile2 = self%vars(v)%data2d(i_off : i_off + nx_c - 1, &
+                                  j_off : j_off + ny_c - 1)
       call mpp_gather(self%isc, self%iec, self%jsc, self%jec, pelist, &
-                      self%vars(v)%data2d, gbuf2d, is_root)
+                      tile2, gbuf2d, is_root)
       if (is_root) then
         call ncc(nf90_put_var(ncid, varids(v), gbuf2d, &
             start=[1, 1, 1], count=[self%nx_g, self%ny_g, 1]), &
             'put '//trim(self%vars(v)%name))
       end if
     else
+      ! Single 3D mpp_gather per 3D var: one collective replaces nlevels 2D
+      ! gathers, and root receives the assembled global field directly into
+      ! gbuf3d (no per-level gbuf2d->gbuf3d memcpy). Reuse tile3/gbuf3d across
+      ! 3D vars when nlevels matches (typical for ocean state).
+      nlev = self%vars(v)%nlevels
       if (is_root) then
-        if (allocated(gbuf3d)) deallocate(gbuf3d)
-        allocate(gbuf3d(self%nx_g, self%ny_g, self%vars(v)%nlevels))
+        if (allocated(gbuf3d)) then
+          if (size(gbuf3d, 3) /= nlev) deallocate(gbuf3d)
+        end if
+        if (.not. allocated(gbuf3d)) allocate(gbuf3d(self%nx_g, self%ny_g, nlev))
       end if
-      do k = 1, self%vars(v)%nlevels
-        call mpp_gather(self%isc, self%iec, self%jsc, self%jec, pelist, &
-                        self%vars(v)%data3d(:,:,k), gbuf2d, is_root)
-        if (is_root) gbuf3d(:,:,k) = gbuf2d
-      end do
+      if (allocated(tile3)) then
+        if (size(tile3, 3) /= nlev) deallocate(tile3)
+      end if
+      if (.not. allocated(tile3)) allocate(tile3(nx_c, ny_c, nlev))
+      tile3 = self%vars(v)%data3d(i_off : i_off + nx_c - 1, &
+                                  j_off : j_off + ny_c - 1, :)
+      call mpp_gather(self%isc, self%iec, self%jsc, self%jec, nlev, pelist, &
+                      tile3, gbuf3d, is_root)
       if (is_root) then
         call ncc(nf90_put_var(ncid, varids(v), gbuf3d, &
-            start=[1, 1, 1, 1], count=[self%nx_g, self%ny_g, self%vars(v)%nlevels, 1]), &
+            start=[1, 1, 1, 1], count=[self%nx_g, self%ny_g, nlev, 1]), &
             'put '//trim(self%vars(v)%name))
       end if
     end if
   end do
 
-  ! ----------------------------------------------------------------------
   ! Phase 3: close.
-  ! ----------------------------------------------------------------------
   if (is_root) then
     call ncc(nf90_close(ncid), 'nf90_close')
     deallocate(varids, gbuf2d)
     if (allocated(gbuf3d)) deallocate(gbuf3d)
   end if
-  deallocate(pelist, x_axes, y_axes, z_axes, var_x_idx, var_y_idx, var_z_idx)
+  deallocate(tile2, pelist, x_axes, y_axes, z_axes, var_x_idx, var_y_idx, var_z_idx)
+  if (allocated(tile3)) deallocate(tile3)
 
-  ! release references; caller's data unaffected
+  ! drop pointer entries; caller's data is unaffected
   if (allocated(self%vars)) deallocate(self%vars)
   self%nvars = 0
 end subroutine writer_commit
 
 
 !==============================================================================
-! Reader: init / enqueue_*/ commit. The caller's buffer stays in place;
-! enqueue records a pointer, commit fills the buffer in the compute-domain
-! interior. Halos are left untouched -- the caller refreshes them via
-! mpp_update_domains the same way it did under FMS.
+! Reader: init / enqueue_* / commit. Caller buffer stays in place; enqueue
+! records a pointer, commit fills the compute-domain interior. Halos are left
+! untouched -- the caller refreshes them via mpp_update_domains (same as FMS).
 !==============================================================================
 subroutine reader_init(self, domain, filename)
   class(soca_io_reader), intent(inout) :: self
@@ -503,8 +446,7 @@ subroutine reader_init(self, domain, filename)
 end subroutine reader_init
 
 
-! 1D vars are global on every PE (no scatter): PE 0 reads, broadcasts,
-! every PE has the full array in its own buffer.
+! 1D vars are global on every PE (no scatter): PE 0 reads, broadcasts.
 subroutine reader_enqueue_1d(self, name, dst)
   class(soca_io_reader),                  intent(inout) :: self
   character(len=*),                       intent(in)    :: name
@@ -518,10 +460,9 @@ subroutine reader_enqueue_1d(self, name, dst)
 end subroutine reader_enqueue_1d
 
 
-! 2D vars are domain-decomposed: PE 0 reads the global field, broadcasts,
-! every PE copies its compute slice into the caller's data-domain buffer.
-! Caller buffer must be sized exactly (data_xsize, data_ysize); halos
-! remain undefined and the caller refreshes them with mpp_update_domains.
+! 2D vars are domain-decomposed: each PE pulls its own compute slice into the
+! caller's data-domain buffer. Caller buffer must be sized exactly
+! (data_xsize, data_ysize); halos are left undefined for mpp_update_domains.
 subroutine reader_enqueue_2d(self, name, dst)
   class(soca_io_reader),                  intent(inout) :: self
   character(len=*),                       intent(in)    :: name
@@ -577,25 +518,16 @@ end subroutine grow_reader_if_needed
 
 
 !==============================================================================
-! Read all enqueued vars. Every PE opens the file in NF90_NOWRITE and pulls
-! only its compute-domain tile via nf90_get_var(start, count) -- this mirrors
-! FMS's MPP_READ_2DDECOMP path: no PE-0 bottleneck, no mpp_broadcast, N
-! parallel reads of (nx_c x ny_c x nz) slabs. Classic / 64-bit-offset netcdf
-! files permit concurrent read-only opens; the library state is process-local.
-! For 1D vars (file-global and identical on every PE) we still let every PE
-! read the whole array independently rather than broadcast from root.
+! Read all enqueued vars. Every PE opens the file NF90_NOWRITE and pulls only
+! its compute-domain tile via nf90_get_var(start, count) -- mirrors FMS's
+! MPP_READ_2DDECOMP: no PE-0 bottleneck, no mpp_broadcast, N parallel reads.
+! Classic / 64-bit-offset netcdf allows concurrent read-only opens; library
+! state is process-local. 1D vars also read independently on every PE.
 !==============================================================================
 subroutine reader_commit(self)
   class(soca_io_reader), intent(inout) :: self
 
-  select case (read_mode)
-  case (READ_MODE_STRIDED)
-    call commit_reader_strided(self)
-  case (READ_MODE_BROADCAST)
-    call commit_reader_broadcast(self)
-  case default
-    call mpp_error(FATAL, 'soca_io_mod reader_commit: unknown read_mode')
-  end select
+  call commit_reader_strided(self)
 
   ! release pointers; caller's buffers untouched (they hold the read data)
   if (allocated(self%vars)) deallocate(self%vars)
@@ -623,6 +555,8 @@ subroutine commit_reader_strided(self)
   i_start = self%isc - self%isg + 1     ! 1-based start in the global file dim
   j_start = self%jsc - self%jsg + 1
 
+  ! tile2 size is invariant across vars; tile3/tile4 are reallocated only when
+  ! the trailing dims change between vars (rare in typical state I/O).
   do v = 1, self%nvars
     select case (self%vars(v)%ndims)
     case (1)
@@ -630,9 +564,98 @@ subroutine commit_reader_strided(self)
           1, 1, size(self%vars(v)%data1d), 1, dst1=self%vars(v)%data1d)
 
     case (2)
-      allocate(tile2(nx_c, ny_c))
+      if (.not. allocated(tile2)) allocate(tile2(nx_c, ny_c))
       call read_var_strided(ncid, file_idx, self%vars(v)%name, &
           i_start, j_start, nx_c, ny_c, dst2=tile2)
+      self%vars(v)%data2d(i_off : i_off + nx_c - 1, &
+                          j_off : j_off + ny_c - 1) = tile2
+
+    case (3)
+      n3 = size(self%vars(v)%data3d, 3)
+      if (allocated(tile3)) then
+        if (size(tile3, 3) /= n3) deallocate(tile3)
+      end if
+      if (.not. allocated(tile3)) allocate(tile3(nx_c, ny_c, n3))
+      call read_var_strided(ncid, file_idx, self%vars(v)%name, &
+          i_start, j_start, nx_c, ny_c, dst3=tile3)
+      self%vars(v)%data3d(i_off : i_off + nx_c - 1, &
+                          j_off : j_off + ny_c - 1, :) = tile3
+
+    case (4)
+      n3 = size(self%vars(v)%data4d, 3)
+      n4 = size(self%vars(v)%data4d, 4)
+      if (allocated(tile4)) then
+        if (size(tile4, 3) /= n3 .or. size(tile4, 4) /= n4) deallocate(tile4)
+      end if
+      if (.not. allocated(tile4)) allocate(tile4(nx_c, ny_c, n3, n4))
+      call read_var_strided(ncid, file_idx, self%vars(v)%name, &
+          i_start, j_start, nx_c, ny_c, dst4=tile4)
+      self%vars(v)%data4d(i_off : i_off + nx_c - 1, &
+                          j_off : j_off + ny_c - 1, :, :) = tile4
+    end select
+  end do
+
+  if (allocated(tile2)) deallocate(tile2)
+  if (allocated(tile3)) deallocate(tile3)
+  if (allocated(tile4)) deallocate(tile4)
+end subroutine commit_reader_strided
+
+
+!==============================================================================
+! PE-0 read + per-PE scatter. PE 0 nf90_get_var's the global field; mpp_scatter
+! sends each PE its compute-domain slice (1D vars are broadcast). Mirrors FMS
+! 2024.02 fms_netcdf_domain_io.F90:domain_read_3d.
+!
+! TODO: currently unused -- single-state reads use commit_reader_strided. Will
+! be exercised by parallel-ensemble I/O, where one reader PE per member
+! scatters that member to its compute-PE group.
+!==============================================================================
+subroutine commit_reader_scatter(self)
+  class(soca_io_reader), intent(inout) :: self
+
+  integer :: ncid, file_idx, v, n, n3, n4, k4
+  integer :: nx_c, ny_c, i_off, j_off, ishift, jshift
+  integer, allocatable :: pelist(:)
+  real(kind=kind_real), allocatable :: gbuf2(:,:), gbuf3(:,:,:), gbuf4(:,:,:,:)
+  real(kind=kind_real), allocatable :: tile2(:,:), tile3(:,:,:)
+  logical :: is_root
+
+  is_root = (mpp_pe() == mpp_root_pe())
+  call mpi_pelist(pelist)
+
+  ncid = -1
+  file_idx = -1
+  if (is_root) call get_read_ncid(self%filename, ncid, file_idx)
+
+  nx_c   = self%iec - self%isc + 1
+  ny_c   = self%jec - self%jsc + 1
+  i_off  = self%isc - self%isd + 1
+  j_off  = self%jsc - self%jsd + 1
+  ishift = 1 - self%isg    ! maps PE compute indices (isc:iec) to 1-based global file indices
+  jshift = 1 - self%jsg
+
+  do v = 1, self%nvars
+    select case (self%vars(v)%ndims)
+    case (1)
+      ! Global on every PE: PE 0 reads, broadcasts.
+      n = size(self%vars(v)%data1d)
+      if (is_root) call read_var_strided(ncid, file_idx, self%vars(v)%name, &
+          1, 1, n, 1, dst1=self%vars(v)%data1d)
+      call mpp_broadcast(self%vars(v)%data1d, n, mpp_root_pe())
+
+    case (2)
+      allocate(tile2(nx_c, ny_c))
+      if (is_root) then
+        allocate(gbuf2(self%nx_g, self%ny_g))
+        call read_var_strided(ncid, file_idx, self%vars(v)%name, &
+            1, 1, self%nx_g, self%ny_g, dst2=gbuf2)
+      else
+        allocate(gbuf2(1, 1))  ! dummy: mpp_scatter only reads input_data on root
+      end if
+      call mpp_scatter(self%isc, self%iec, self%jsc, self%jec, &
+                       pelist, tile2, gbuf2, is_root, &
+                       ishift=ishift, jshift=jshift)
+      deallocate(gbuf2)
       self%vars(v)%data2d(i_off : i_off + nx_c - 1, &
                           j_off : j_off + ny_c - 1) = tile2
       deallocate(tile2)
@@ -640,140 +663,62 @@ subroutine commit_reader_strided(self)
     case (3)
       n3 = size(self%vars(v)%data3d, 3)
       allocate(tile3(nx_c, ny_c, n3))
-      tile3 = 0.0_kind_real
-      call read_var_strided(ncid, file_idx, self%vars(v)%name, &
-          i_start, j_start, nx_c, ny_c, dst3=tile3)
+      if (is_root) then
+        allocate(gbuf3(self%nx_g, self%ny_g, n3))
+        call read_var_strided(ncid, file_idx, self%vars(v)%name, &
+            1, 1, self%nx_g, self%ny_g, dst3=gbuf3)
+      else
+        allocate(gbuf3(1, 1, 1))
+      end if
+      call mpp_scatter(self%isc, self%iec, self%jsc, self%jec, n3, &
+                       pelist, tile3, gbuf3, is_root, &
+                       ishift=ishift, jshift=jshift)
+      deallocate(gbuf3)
       self%vars(v)%data3d(i_off : i_off + nx_c - 1, &
                           j_off : j_off + ny_c - 1, :) = tile3
       deallocate(tile3)
 
     case (4)
+      ! mpp_scatter is 2D/3D only; loop the outer (4th) dim and call 3D scatter.
       n3 = size(self%vars(v)%data4d, 3)
       n4 = size(self%vars(v)%data4d, 4)
-      allocate(tile4(nx_c, ny_c, n3, n4))
-      tile4 = 0.0_kind_real
-      call read_var_strided(ncid, file_idx, self%vars(v)%name, &
-          i_start, j_start, nx_c, ny_c, dst4=tile4)
-      self%vars(v)%data4d(i_off : i_off + nx_c - 1, &
-                          j_off : j_off + ny_c - 1, :, :) = tile4
-      deallocate(tile4)
+      allocate(tile3(nx_c, ny_c, n3))
+      if (is_root) then
+        allocate(gbuf4(self%nx_g, self%ny_g, n3, n4))
+        call read_var_strided(ncid, file_idx, self%vars(v)%name, &
+            1, 1, self%nx_g, self%ny_g, dst4=gbuf4)
+      else
+        allocate(gbuf3(1, 1, 1))  ! dummy for non-root in the 3D scatter call
+      end if
+      do k4 = 1, n4
+        if (is_root) then
+          call mpp_scatter(self%isc, self%iec, self%jsc, self%jec, n3, &
+                           pelist, tile3, gbuf4(:,:,:,k4), is_root, &
+                           ishift=ishift, jshift=jshift)
+        else
+          call mpp_scatter(self%isc, self%iec, self%jsc, self%jec, n3, &
+                           pelist, tile3, gbuf3, is_root, &
+                           ishift=ishift, jshift=jshift)
+        end if
+        self%vars(v)%data4d(i_off : i_off + nx_c - 1, &
+                            j_off : j_off + ny_c - 1, :, k4) = tile3
+      end do
+      if (is_root) deallocate(gbuf4)
+      if (allocated(gbuf3)) deallocate(gbuf3)
+      deallocate(tile3)
     end select
   end do
-end subroutine commit_reader_strided
+
+  if (allocated(pelist)) deallocate(pelist)
+end subroutine commit_reader_scatter
+
+
 
 
 !==============================================================================
-! PE-0 read + broadcast implementation, mirroring FMS mpp_io's MPP_SINGLE
-! threading path: PE 0 nf90_get_var the entire global field, mpp_broadcast
-! to all peers, each PE then slices its compute tile out of the global buf.
-! Only PE 0 opens the file (and only PE 0's read_cache fills up).
-!==============================================================================
-subroutine commit_reader_broadcast(self)
-  class(soca_io_reader), intent(inout) :: self
-
-  integer :: ncid, file_idx, v, n, n3, n4
-  integer :: nx_c, ny_c, i_off, j_off, ig0, jg0
-  real(kind=kind_real), allocatable :: gbuf2(:,:), gbuf3(:,:,:), gbuf4(:,:,:,:)
-  logical :: is_root
-
-  is_root = (mpp_pe() == mpp_root_pe())
-
-  ncid = -1
-  file_idx = -1
-  if (is_root) call get_read_ncid(self%filename, ncid, file_idx)
-
-  nx_c = self%iec - self%isc + 1
-  ny_c = self%jec - self%jsc + 1
-  i_off = self%isc - self%isd + 1
-  j_off = self%jsc - self%jsd + 1
-  ig0   = self%isc - self%isg + 1
-  jg0   = self%jsc - self%jsg + 1
-
-  do v = 1, self%nvars
-    select case (self%vars(v)%ndims)
-    case (1)
-      n = size(self%vars(v)%data1d)
-      if (is_root) call read_var_strided(ncid, file_idx, self%vars(v)%name, &
-          1, 1, n, 1, dst1=self%vars(v)%data1d)
-      call mpp_broadcast(self%vars(v)%data1d, n, mpp_root_pe())
-
-    case (2)
-      allocate(gbuf2(self%nx_g, self%ny_g))
-      if (is_root) call read_var_strided(ncid, file_idx, self%vars(v)%name, &
-          1, 1, self%nx_g, self%ny_g, dst2=gbuf2)
-      call mpp_broadcast(gbuf2, self%nx_g * self%ny_g, mpp_root_pe())
-      self%vars(v)%data2d(i_off : i_off + nx_c - 1, &
-                          j_off : j_off + ny_c - 1) &
-        = gbuf2(ig0 : ig0 + nx_c - 1, jg0 : jg0 + ny_c - 1)
-      deallocate(gbuf2)
-
-    case (3)
-      n3 = size(self%vars(v)%data3d, 3)
-      allocate(gbuf3(self%nx_g, self%ny_g, n3))
-      gbuf3 = 0.0_kind_real
-      if (is_root) call read_var_strided(ncid, file_idx, self%vars(v)%name, &
-          1, 1, self%nx_g, self%ny_g, dst3=gbuf3)
-      call mpp_broadcast(gbuf3, self%nx_g * self%ny_g * n3, mpp_root_pe())
-      self%vars(v)%data3d(i_off : i_off + nx_c - 1, &
-                          j_off : j_off + ny_c - 1, :) &
-        = gbuf3(ig0 : ig0 + nx_c - 1, jg0 : jg0 + ny_c - 1, :)
-      deallocate(gbuf3)
-
-    case (4)
-      n3 = size(self%vars(v)%data4d, 3)
-      n4 = size(self%vars(v)%data4d, 4)
-      allocate(gbuf4(self%nx_g, self%ny_g, n3, n4))
-      gbuf4 = 0.0_kind_real
-      if (is_root) call read_var_strided(ncid, file_idx, self%vars(v)%name, &
-          1, 1, self%nx_g, self%ny_g, dst4=gbuf4)
-      call mpp_broadcast(gbuf4, self%nx_g * self%ny_g * n3 * n4, mpp_root_pe())
-      self%vars(v)%data4d(i_off : i_off + nx_c - 1, &
-                          j_off : j_off + ny_c - 1, :, :) &
-        = gbuf4(ig0 : ig0 + nx_c - 1, jg0 : jg0 + ny_c - 1, :, :)
-      deallocate(gbuf4)
-    end select
-  end do
-end subroutine commit_reader_broadcast
-
-
-!==============================================================================
-! Set the module-level read_mode from a config block. Looks for:
-!     io:
-!       read mode: broadcast | strided
-! If the `io` block or the `read mode` key is absent, the module-level
-! default (broadcast) is kept. Call once from soca_geom_init with the
-! geometry config; the value applies to every reader_commit afterwards.
-! Unrecognized values abort so typos surface immediately.
-!==============================================================================
-subroutine soca_io_read_mode_from_config(f_conf)
-  type(fckit_configuration), intent(in) :: f_conf
-  type(fckit_configuration) :: io_conf
-  character(len=:), allocatable :: str
-  logical :: ok
-
-  if (.not. f_conf%has("io")) return
-  ok = f_conf%get("io", io_conf)
-  if (.not. ok) return
-  if (.not. io_conf%has("read mode")) return
-  ok = io_conf%get("read mode", str)
-  if (.not. ok) return
-  select case (trim(str))
-  case ("broadcast")
-    read_mode = READ_MODE_BROADCAST
-  case ("strided")
-    read_mode = READ_MODE_STRIDED
-  case default
-    call mpp_error(FATAL, &
-        'soca_io_mod: io.read mode="'//trim(str)//&
-        '" unrecognized (expected broadcast or strided)')
-  end select
-end subroutine soca_io_read_mode_from_config
-
-
-!==============================================================================
-! Look up (or open and cache) the read handle for filename. Returns both the
-! ncid and the file_idx into read_cache(); read_var_strided uses file_idx to
-! look up per-var cached metadata. Per-PE cache.
+! Look up (or open and cache) the read handle for filename. Returns ncid and
+! file_idx into read_cache() so read_var_strided can find per-var cached
+! metadata. Per-PE cache.
 !==============================================================================
 subroutine get_read_ncid(filename, ncid, file_idx)
   character(len=*), intent(in)  :: filename
@@ -803,9 +748,9 @@ end subroutine get_read_ncid
 
 
 !==============================================================================
-! Fetch cached metadata for (file_idx, varname), or do the inq calls and
-! cache them on first use. middle_dims(1:max(0, ndims-3)) gives the file's
-! dim sizes for axes 3..ndims-1 (the layer / category / "extra" dims).
+! Fetch cached metadata for (file_idx, varname), or do the inq calls and cache
+! on first use. middle_dims(3..ndims-1) holds file dim sizes for the layer /
+! category / "extra" axes.
 !==============================================================================
 subroutine get_var_meta(file_idx, name, varid, file_ndims, middle_dims)
   integer,          intent(in)  :: file_idx
@@ -855,16 +800,15 @@ end subroutine get_var_meta
 
 
 !==============================================================================
-! Close every cached read handle and drop the table. Call from geometry
-! shutdown (soca_geom%end) so the next geometry can open files fresh, and
-! so a writer that re-creates a previously-read file won't see a stale
-! cached ncid pointing at a deleted inode.
+! Close every cached read handle and drop the table. Call from soca_geom%end
+! so the next geometry opens files fresh, and so a writer that re-creates a
+! previously-read file won't hit a stale ncid on a deleted inode.
 !==============================================================================
 subroutine soca_io_close_all()
-  integer :: i, status
+  integer :: i
   do i = 1, n_read_cached
     if (read_cache(i)%ncid >= 0) then
-      status = nf90_close(read_cache(i)%ncid)
+      call ncc(nf90_close(read_cache(i)%ncid), 'soca_io_close_all nf90_close')
       read_cache(i)%ncid = -1
     end if
     if (allocated(read_cache(i)%filename)) deallocate(read_cache(i)%filename)
@@ -946,13 +890,16 @@ subroutine put_axis_coord_data(ncid, axes, n_axes)
   real(kind=kind_real), allocatable :: idxbuf(:)
 
   do j = 1, n_axes
-    allocate(idxbuf(axes(j)%size))
+    if (allocated(idxbuf)) then
+      if (size(idxbuf) /= axes(j)%size) deallocate(idxbuf)
+    end if
+    if (.not. allocated(idxbuf)) allocate(idxbuf(axes(j)%size))
     do i = 1, axes(j)%size
       idxbuf(i) = real(i, kind=kind_real)
     end do
     call ncc(nf90_put_var(ncid, axes(j)%varid, idxbuf), 'put coord var')
-    deallocate(idxbuf)
   end do
+  if (allocated(idxbuf)) deallocate(idxbuf)
 end subroutine put_axis_coord_data
 
 
@@ -978,19 +925,18 @@ end function soca_io_var_exists
 
 
 !==============================================================================
-! Strided read of a single variable into a caller-owned contiguous tile.
-! Builds start/count from (i_start, j_start, nx, ny) and the variable's file
-! shape, tolerating "extra" degenerate file dims (size 1) that the destination
-! buffer doesn't enumerate. Same middle-dim trick FMS register_restart_field+
-! restore_state did transparently. Concrete cases:
+! Strided read of one variable into a caller-owned tile. Builds start/count
+! from (i_start, j_start, nx, ny) plus the file's actual dim sizes, tolerating
+! degenerate size-1 dims the buffer doesn't enumerate (same middle-dim trick
+! FMS register_restart_field + restore_state did transparently). For 2D+:
+! count(1)=nx, count(2)=ny, count(ndims)=1 (trailing time), middle entries from
+! middle_dims; total element count is preserved so netcdf-fortran reads into
+! the smaller-rank buffer correctly. 1D (dst1): count(1)=nx, j_start/ny ignored.
+! Concrete cases:
 !   - 3D state Salt(time, Layer, lath, lonh) -> 3D tile (nx, ny, Layer)
 !     file_ndims=4, count=[nx, ny, Layer, 1].
 !   - 5D CICE Tsnz_h(time, nc=5, nksnow=1, nj, ni) -> 3D tile (nx, ny, 5)
-!     file_ndims=5, count=[nx, ny, 1, 5, 1] = [nx, ny, nksnow=1, nc=5, time=1].
-! In all 2D+ cases count(1)=nx, count(2)=ny, count(ndims)=1 and the middle
-! count entries come from the file's actual dim sizes; total element count is
-! preserved so netcdf-fortran reads into the smaller-rank buffer correctly.
-! For 1D file vars (handled via dst1) count(1)=nx and we ignore j_start/ny.
+!     file_ndims=5, count=[nx, ny, 1, 5, 1] = [nx, ny, nksnow, nc, time].
 !==============================================================================
 subroutine read_var_strided(ncid, file_idx, name, i_start, j_start, nx, ny, &
                             dst1, dst2, dst3, dst4)
@@ -1004,12 +950,11 @@ subroutine read_var_strided(ncid, file_idx, name, i_start, j_start, nx, ny, &
 
   integer :: varid, file_ndims, dd
   integer :: middle_dims(MAX_FILE_NDIMS)
-  integer, allocatable :: ct(:), st(:)
+  integer :: st(MAX_FILE_NDIMS), ct(MAX_FILE_NDIMS)
 
   call get_var_meta(file_idx, name, varid, file_ndims, middle_dims)
-  allocate(st(file_ndims), ct(file_ndims))
-  st = 1
-  ct = 1
+  st(1:file_ndims) = 1
+  ct(1:file_ndims) = 1
   if (present(dst1)) then
     ! 1D var: count(1)=nx, rest stays 1
     ct(1) = nx
@@ -1021,10 +966,9 @@ subroutine read_var_strided(ncid, file_idx, name, i_start, j_start, nx, ny, &
     st(2) = j_start
     ct(1) = nx
     ct(2) = ny
-    ! File may have an optional trailing time dim and any number of middle dims.
-    ! Trailing-time case: ct(file_ndims)=1 + middle dims from file (e.g. Salt's
-    ! Layer dim, Tsnz_h's nc/nksnow). Pure 2D file (no time, no middle): just
-    ! the leading x/y stride is enough.
+    ! Trailing-time + middle dims case: ct(file_ndims)=1 plus middle dims from
+    ! the file (Salt's Layer, Tsnz_h's nc/nksnow). Pure 2D file: leading x/y
+    ! stride only.
     if (file_ndims >= 3) then
       ct(file_ndims) = 1
       do dd = 3, file_ndims - 1
@@ -1034,28 +978,29 @@ subroutine read_var_strided(ncid, file_idx, name, i_start, j_start, nx, ny, &
   end if
 
   if (present(dst2)) then
-    call ncc(nf90_get_var(ncid, varid, dst2, start=st, count=ct), 'get '//trim(name))
+    call ncc(nf90_get_var(ncid, varid, dst2, start=st(1:file_ndims), count=ct(1:file_ndims)), &
+        'get '//trim(name))
   else if (present(dst3)) then
-    call ncc(nf90_get_var(ncid, varid, dst3, start=st, count=ct), 'get '//trim(name))
+    call ncc(nf90_get_var(ncid, varid, dst3, start=st(1:file_ndims), count=ct(1:file_ndims)), &
+        'get '//trim(name))
   else if (present(dst4)) then
-    call ncc(nf90_get_var(ncid, varid, dst4, start=st, count=ct), 'get '//trim(name))
+    call ncc(nf90_get_var(ncid, varid, dst4, start=st(1:file_ndims), count=ct(1:file_ndims)), &
+        'get '//trim(name))
   else if (present(dst1)) then
-    call ncc(nf90_get_var(ncid, varid, dst1, start=st, count=ct), 'get '//trim(name))
+    call ncc(nf90_get_var(ncid, varid, dst1, start=st(1:file_ndims), count=ct(1:file_ndims)), &
+        'get '//trim(name))
   end if
-  deallocate(ct, st)
 end subroutine read_var_strided
 
 
 !==============================================================================
-! Helper: fetch mpp's current pelist (= geometry's f_comm pelist) for use
-! with mpp_gather. Using MPI_COMM_WORLD's pelist is wrong in ensemble mode
-! where each MPI task has its own size-1 mpp world.
+! Fetch mpp's current pelist (= geometry's f_comm pelist) for mpp_gather. Using
+! MPI_COMM_WORLD's pelist is wrong in ensemble mode where each task has its
+! own size-1 mpp world.
 !==============================================================================
-subroutine mpi_pelist(pelist, nprocs)
+subroutine mpi_pelist(pelist)
   integer, allocatable, intent(out) :: pelist(:)
-  integer,              intent(out) :: nprocs
-  nprocs = mpp_npes()
-  allocate(pelist(nprocs))
+  allocate(pelist(mpp_npes()))
   call mpp_get_current_pelist(pelist)
 end subroutine mpi_pelist
 
