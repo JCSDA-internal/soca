@@ -2,9 +2,6 @@ geometry:
   geom_grid_file: data_generated/gridgen/soca_gridspec.72x35x25.nc
   mom6_input_nml: data_static/72x35x25/input.nml
   fields metadata: data_static/fields_metadata.yml
-  io:
-    read mode: broadcast    # PE 0 reads + mpp_broadcast; best on cold cache / single node
-    # read mode: strided    # per-PE strided nf90_get_var; better on warm cache / parallel FS
 
 time window:
   begin: &date 2018-04-14T00:00:00Z
