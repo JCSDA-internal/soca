@@ -188,6 +188,29 @@ type :: ensemble_vars_t
   type(varwrapper), allocatable :: vars(:)
 end type ensemble_vars_t
 
+! ------------------------------------------------------------------------------
+! One member's worth of read state, carried across the soca_fields_read split
+! into prepare (config + queue) and finalize (copy-to-atlas + post-processing).
+! For the ensemble path, an array of plans is built up across members so that
+! all per-domain readers can be flushed in one bulk soca_io_readers_commit_ensemble
+! call, then each member's plan is finalized to drive its post-processing.
+type :: read_plan_t
+  integer :: iread = 0
+  ! per-(active domain) reader + scratch buffers (size 0 if iread is not 1 or 3)
+  type(soca_io_reader),   allocatable :: readers(:)
+  character(len=3),       allocatable :: plan_domains(:)
+  type(ensemble_vars_t),  allocatable :: domain_vars(:)
+  ! vertical remap target (allocatable so its absence flags "no remap").
+  ! target-ness comes from declaring plan instances with the target attribute.
+  real(kind=kind_real),  allocatable :: h_common(:,:,:)
+  ! CICE category-vars deferred-read state (handled in finalize via read_seaice)
+  type(oops_variables) :: seaice_categories_vars
+  character(len=:),       allocatable :: ice_filename
+  ! Probe results that drive post-processing
+  logical :: compute_icethickness = .false.
+  logical :: compute_snowthickness = .false.
+end type read_plan_t
+
 
 ! ------------------------------------------------------------------------------
 ! ------------------------------------------------------------------------------
@@ -492,307 +515,393 @@ subroutine soca_fields_read(self, f_conf, vdate)
   type(fckit_configuration),  intent(in)    :: f_conf
   type(datetime),             intent(inout) :: vdate
 
+  type(read_plan_t), target :: plan
+  integer :: r
+
+  call soca_fields_read_prepare(self, f_conf, vdate, plan)
+
+  ! Drain the per-domain readers serially in the single-state path.
+  ! soca_fields_read_ensemble flushes all members' readers together via
+  ! soca_io_readers_commit_ensemble instead.
+  if (allocated(plan%readers)) then
+    do r = 1, size(plan%readers)
+      call plan%readers(r)%commit()
+    end do
+  end if
+
+  call soca_fields_read_finalize(self, plan)
+end subroutine soca_fields_read
+
+
+! ------------------------------------------------------------------------------
+!> Build a read_plan_t for one soca_fields member: handle pre-read config
+!! (Identity, vdate from "date", h_common for vertical remap), open per-domain
+!! readers, and enqueue reads onto them. The readers are NOT committed here --
+!! callers do that, either per-reader (single-state path) or in bulk via
+!! soca_io_readers_commit_ensemble (ensemble path).
+!!
+!! \param[inout] self  fields to populate
+!! \param[in]    f_conf config block (basename, *_filename, read_from_file, ...)
+!! \param[inout] vdate  set from f_conf%"date" if Identity or iread==1
+!! \param[out]   plan   per-domain readers + scratch + post-processing flags
+!! \param[in]    reader_pe optional reader_pe for all readers built here
+!!               (h_common + per-domain). Ensemble path passes
+!!               soca_io_ensemble_root_pe(m, nmembers) so different members'
+!!               readers run on different PEs concurrently.
+!! \relates soca_fields_mod::soca_fields
+subroutine soca_fields_read_prepare(self, f_conf, vdate, plan, reader_pe)
+  class(soca_fields), target,    intent(inout) :: self
+  type(fckit_configuration),     intent(in)    :: f_conf
+  type(datetime),                intent(inout) :: vdate
+  type(read_plan_t), target,     intent(inout) :: plan
+  integer, optional,             intent(in)    :: reader_pe
+
   character(len=:), allocatable :: str, basename, filename
-  integer :: iread = 0
-  real(kind=kind_real), allocatable, target :: h_common(:,:,:)    !< layer thickness to remap to (target for soca_io_reader pointer association)
-  type(soca_io_reader) :: reader
-  integer :: d, f, i, j, k, n, idx
-  type(remapping_CS)  :: remapCS
-  type(oops_variables) :: seaice_categories_vars
-  type(varwrapper), allocatable, target :: vars(:)  ! target so vars(n)%data sections are valid pointer targets for soca_io enqueue
+  type(soca_io_reader) :: hreader
+  integer :: d, f, i, n, idx, nreaders, ri
+  type(soca_field_metadata) :: field_meta
+  character(len=3), dimension(5) :: domains
+
+  domains = [character(len=3) :: "ocn", "sfc", "ice", "wav", "bio"]
+  ! Default iread to 1 when 'basename' is set: the original soca_fields_read had
+  ! `integer :: iread = 0` which (Fortran gotcha) gave it implicit SAVE, so
+  ! callers like saber's "model file" path (basename + ocn_filename but no
+  ! read_from_file) silently relied on iread being inherited from a prior call.
+  ! Inferring iread=1 from the presence of basename keeps that behavior
+  ! deterministic without forcing a YAML schema change.
+  plan%iread = 0
+  if (f_conf%has("basename")) plan%iread = 1
+  if (f_conf%has("read_from_file")) call f_conf%get_or_die("read_from_file", plan%iread)
+
+  ! Vertical remap target: read h_common immediately on its own reader.
+  ! Kept serial-per-member in v1; lives outside plan%readers so the bulk
+  ! ensemble commit isn't blocked on this small single-field read.
+  if (f_conf%has("remap_filename")) then
+    call f_conf%get_or_die("remap_filename", str)
+    allocate(plan%h_common(self%geom%isd:self%geom%ied, &
+                           self%geom%jsd:self%geom%jed, self%geom%nzo))
+    plan%h_common = 0.0_kind_real
+    if (present(reader_pe)) then
+      call hreader%init(self%geom%Domain%mpp_domain, str, reader_pe=reader_pe)
+    else
+      call hreader%init(self%geom%Domain%mpp_domain, str)
+    end if
+    call hreader%enqueue('h', plan%h_common)
+    call hreader%commit()
+  end if
+
+  ! Identity (unit increment); independent of iread. Sets vdate from "date".
+  if (f_conf%has("Identity")) then
+    call f_conf%get_or_die("Identity", i)
+    if (i == 1) call self%ones()
+    call f_conf%get_or_die("date", str)
+    call datetime_set(str, vdate)
+  end if
+
+  if (plan%iread /= 1 .and. plan%iread /= 3) then
+    allocate(plan%readers(0), plan%plan_domains(0), plan%domain_vars(0))
+    return
+  end if
+
+  plan%seaice_categories_vars = oops_variables()
+
+  if (plan%iread == 1) then
+    call f_conf%get_or_die("date", str)
+    call datetime_set(str, vdate)
+  end if
+  call f_conf%get_or_die("basename", basename)
+
+  ! Probe for compute_ice/snow thickness from the ice file (if any).
+  if (f_conf%get("ice_filename", str)) then
+    filename = trim(basename) // trim(str)
+    plan%ice_filename = filename
+    field_meta = self%geom%fields_metadata%get("sea_ice_thickness")
+    if (.not. soca_io_var_exists(filename, field_meta%io_name)) then
+      plan%compute_icethickness = .true.
+    end if
+    field_meta = self%geom%fields_metadata%get("sea_ice_snow_thickness")
+    if (.not. soca_io_var_exists(filename, field_meta%io_name)) then
+      plan%compute_snowthickness = .true.
+    end if
+  end if
+
+  ! Pass 1: count domains that have both a filename in config and matching fields.
+  nreaders = 0
+  do d = 1, size(domains)
+    if (.not. f_conf%get(domains(d)//"_filename", str)) cycle
+    n = 0
+    do i = 1, size(self%fields)
+      if (self%fields(i)%metadata%io_file == domains(d)) n = n + 1
+    end do
+    if (n > 0) nreaders = nreaders + 1
+  end do
+
+  allocate(plan%readers(nreaders))
+  allocate(plan%plan_domains(nreaders))
+  allocate(plan%domain_vars(nreaders))
+
+  ! Pass 2: init each reader, enqueue all matching vars. Vars whose data are
+  ! not allocated (the deferred-CICE-category case) keep allocated(data)=.false.
+  ! and finalize's copy-to-atlas loop skips them.
+  ri = 0
+  do d = 1, size(domains)
+    if (.not. f_conf%get(domains(d)//"_filename", str)) cycle
+    filename = trim(basename) // trim(str)
+
+    n = 0
+    do i = 1, size(self%fields)
+      if (self%fields(i)%metadata%io_file == domains(d)) n = n + 1
+    end do
+    if (n == 0) cycle
+
+    ri = ri + 1
+    plan%plan_domains(ri) = domains(d)
+    allocate(plan%domain_vars(ri)%vars(n))
+    if (present(reader_pe)) then
+      call plan%readers(ri)%init(self%geom%Domain%mpp_domain, filename, reader_pe=reader_pe)
+    else
+      call plan%readers(ri)%init(self%geom%Domain%mpp_domain, filename)
+    end if
+
+    n = 0
+    do f = 1, size(self%fields)
+      if (self%fields(f)%metadata%io_file /= domains(d)) cycle
+      if (domains(d) == "ice" .and. self%fields(f)%metadata%categories > 0) then
+        ! CICE-history-style aggregated cat+lev files take a separate read path
+        ! in finalize via self%read_seaice. SOCA-written files have each
+        ! category as a separate var and read through here normally.
+        if (soca_io_file_exists(filename) .and. &
+            soca_io_var_exists(filename, self%fields(f)%metadata%io_name)) then
+        else
+          call plan%seaice_categories_vars%push_back(self%fields(f)%name)
+          cycle
+        end if
+      end if
+      n = n + 1
+
+      associate (v => plan%domain_vars(ri)%vars(n))
+        v%field => self%fields(f)
+        v%afield = self%afieldset%field(v%field%name)
+        call v%afield%data(v%adata)
+        allocate(v%data(self%geom%isd:self%geom%ied, &
+                        self%geom%jsd:self%geom%jed, v%field%nz))
+        if (v%field%nz == 1) then
+          if ((self%fields(f)%metadata%name == "sea_ice_thickness") &
+              .and. plan%compute_icethickness) then
+            field_meta = self%geom%fields_metadata%get("sea_ice_volume")
+            call plan%readers(ri)%enqueue(field_meta%io_name, v%data(:,:,1))
+          else if ((self%fields(f)%metadata%name == "sea_ice_snow_thickness") &
+                   .and. plan%compute_snowthickness) then
+            field_meta = self%geom%fields_metadata%get("sea_ice_snow_volume")
+            call plan%readers(ri)%enqueue(field_meta%io_name, v%data(:,:,1))
+          else
+            call plan%readers(ri)%enqueue(v%field%metadata%io_name, v%data(:,:,1))
+          end if
+        else
+          call plan%readers(ri)%enqueue(v%field%metadata%io_name, v%data(:,:,:))
+        end if
+      end associate
+    end do
+    ! unused slots at tail of plan%domain_vars(ri)%vars (skipped CICE cases)
+    ! keep allocated(v%data)=.false.; finalize handles them.
+  end do
+end subroutine soca_fields_read_prepare
+
+
+! ------------------------------------------------------------------------------
+!> Drain a populated read_plan_t into self: copy per-domain scratch into atlas
+!! fields with land-mask handling, run the existing post-processing chain
+!! (CICE-category deferred read, ice/snow thickness compute, mid-layer depth,
+!! mixed-layer depth, optional vertical remap), and release scratch.
+!!
+!! Assumes readers in plan%readers have already been committed.
+!! \relates soca_fields_mod::soca_fields
+subroutine soca_fields_read_finalize(self, plan)
+  class(soca_fields), target,    intent(inout) :: self
+  type(read_plan_t), target,     intent(inout) :: plan
+
+  integer :: d, f, i, j, k, n, idx, ri
+  type(remapping_CS) :: remapCS
   type(atlas_field) :: afield1, afield2, afield3, afield4
   real(kind=kind_real), pointer :: adata1(:,:), adata2(:,:), adata3(:,:), adata4(:,:)
   real(kind=kind_real), allocatable :: h_common_ij(:), hocn_ij(:), varocn_ij(:), varocn2_ij(:)
-  logical :: compute_icethickness, compute_snowthickness, remap_this_point
+  logical :: remap_this_point
 
-  character(len=3), dimension(5) :: domains
-  type(soca_field_metadata) :: field_meta
-  domains = [character(len=3) :: "ocn", "sfc", "ice", "wav", "bio"]
-
-  if ( f_conf%has("read_from_file") ) call f_conf%get_or_die("read_from_file", iread)
-
-  ! Check if vertical remapping needs to be applied
-  if ( f_conf%has("remap_filename") ) then
-     call f_conf%get_or_die("remap_filename", str)
-     allocate(h_common(self%geom%isd:self%geom%ied, self%geom%jsd:self%geom%jed, self%geom%nzo))
-     h_common = 0.0_kind_real
-
-     ! Read common vertical coordinate from file
-     call reader%init(self%geom%Domain%mpp_domain, str)
-     call reader%enqueue('h', h_common)
-     call reader%commit()
+  ! Identity-only / no-read path still needs h_common dealloc; nothing else to do.
+  if (plan%iread /= 1 .and. plan%iread /= 3) then
+    if (allocated(plan%h_common)) deallocate(plan%h_common)
+    return
   end if
 
-  ! Create unit increment
-  if ( f_conf%has("Identity") ) then
-     call f_conf%get_or_die("Identity", i)
-     if ( i==1 ) call self%ones()
-     call f_conf%get_or_die("date", str)
-     call datetime_set(str, vdate)
-  end if
-
-  ! iread = 1 (state) or 3 (increment): Read restart file
-  if (iread==1 .or. iread==3) then
-    seaice_categories_vars = oops_variables()
-
-    ! Set vdate if reading state
-    if (iread==1) then
-      call f_conf%get_or_die("date", str)
-      call datetime_set(str, vdate)
+  ! Set constant-valued atlas fields (independent of any read).
+  do f = 1, size(self%fields)
+    if (self%fields(f)%metadata%io_file == "CONSTANT") then
+      afield1 = self%afieldset%field(self%fields(f)%name)
+      call afield1%data(adata1)
+      adata1(:,:) = self%fields(f)%metadata%constant_value
     end if
-    call f_conf%get_or_die("basename", basename)
+  end do
 
-    ! handle constant fields first
-    do f=1,size(self%fields)
-      if (self%fields(f)%metadata%io_file == "CONSTANT") then
-        afield1  = self%afieldset%field(self%fields(f)%name)
-        call afield1%data(adata1)
-        adata1(:,:) = self%fields(f)%metadata%constant_value
-      end if
-    end do
-
-    ! determine whether we'll need to compute ice thickness or snow thickness
-    compute_icethickness = .false.
-    compute_snowthickness = .false.
-    if(f_conf%get("ice_filename", str)) then
-      filename = trim(basename) // trim(str)
-      field_meta = self%geom%fields_metadata%get("sea_ice_thickness")
-      if ((.not. soca_io_var_exists(filename, field_meta%io_name))) then
-        compute_icethickness = .true.
-      endif
-      field_meta = self%geom%fields_metadata%get("sea_ice_snow_thickness")
-      if ((.not. soca_io_var_exists(filename, field_meta%io_name))) then
-        compute_snowthickness = .true.
-      endif
-    endif
-
-    ! for each separate domain, check if a filename is provided
-    do d=1, size(domains)
-      if(f_conf%get(domains(d)//"_filename", str)) then
-        filename = trim(basename) // trim(str)
-
-        ! determine how many variables will be read in with this file
-        n = 0
-        do i=1,size(self%fields)
-          if (self%fields(i)%metadata%io_file == domains(d)) n = n + 1
-        end do
-        if (n == 0) cycle
-        allocate(vars(n))
-
-        ! for each variable, setup to read
-        call reader%init(self%geom%Domain%mpp_domain, filename)
-        n = 0
-        do f=1,size(self%fields)
-          if (self%fields(f)%metadata%io_file == domains(d)) then
-            if (domains(d) == "ice" .and. self%fields(f)%metadata%categories > 0) then
-              ! check if the file was constructed by soca or comes from the CICE history
-              ! The CICE history aggregates the category and level in 1 array
-              ! The SOCA io considers categories to be separate variables and will index the naming
-              if(soca_io_file_exists(filename) .and. soca_io_var_exists(filename, self%fields(f)%metadata%io_name)) then
-              else
-                call seaice_categories_vars%push_back(self%fields(f)%name)
-                cycle
-              end if
-            end if
-            n = n + 1
-
-            vars(n)%field => self%fields(f)
-            vars(n)%afield = self%afieldset%field(vars(n)%field%name)
-            call vars(n)%afield%data(vars(n)%adata)
-            allocate(vars(n)%data(&
-              self%geom%isd:self%geom%ied, self%geom%jsd:self%geom%jed, vars(n)%field%nz))
-            if (vars(n)%field%nz == 1) then
-              ! special handling when ice thickness is requested but only ice volume and
-              ! ice concentration are available
-              if ((self%fields(f)%metadata%name == "sea_ice_thickness") .and. compute_icethickness) then
-                field_meta = self%geom%fields_metadata%get("sea_ice_volume")
-                call reader%enqueue(field_meta%io_name, vars(n)%data(:,:,1))
-              elseif ((self%fields(f)%metadata%name == "sea_ice_snow_thickness") .and. compute_snowthickness) then
-                field_meta = self%geom%fields_metadata%get("sea_ice_snow_volume")
-                call reader%enqueue(field_meta%io_name, vars(n)%data(:,:,1))
-              else
-                call reader%enqueue(vars(n)%field%metadata%io_name, vars(n)%data(:,:,1))
-              endif
-            else
-              call reader%enqueue(vars(n)%field%metadata%io_name, vars(n)%data(:,:,:))
-            end if
-          end if
-        end do
-
-        ! read
-        call reader%commit()
-
-        ! copy back into atlas fields, filling land with fillvalue
-        do n=1,size(vars)
-          if (.not. allocated(vars(n)%data)) cycle ! skip special ice fields
-          vars(n)%adata(:,:) = 0.0
-          do j=self%geom%jsc, self%geom%jec
-            do i=self%geom%isc, self%geom%iec
-              idx = self%geom%atlas_ij2idx(i,j)
-              if (associated(vars(n)%field%mask)) then
-                if (vars(n)%field%mask(i,j) == 0) then
-                  vars(n)%adata(:, idx) = vars(n)%field%metadata%fillvalue
-                else
-                  vars(n)%adata(:, idx) = vars(n)%data(i,j,:)
-                end if
+  ! Copy per-domain scratch buffers into atlas fields with land-mask handling.
+  do ri = 1, size(plan%readers)
+    associate (vars => plan%domain_vars(ri)%vars)
+      do n = 1, size(vars)
+        if (.not. allocated(vars(n)%data)) cycle  ! deferred CICE-category slot
+        vars(n)%adata(:,:) = 0.0
+        do j = self%geom%jsc, self%geom%jec
+          do i = self%geom%isc, self%geom%iec
+            idx = self%geom%atlas_ij2idx(i,j)
+            if (associated(vars(n)%field%mask)) then
+              if (vars(n)%field%mask(i,j) == 0) then
+                vars(n)%adata(:, idx) = vars(n)%field%metadata%fillvalue
               else
                 vars(n)%adata(:, idx) = vars(n)%data(i,j,:)
               end if
-            end do
-          end do
-          call vars(n)%afield%set_dirty()
-        end do
-
-        ! done, cleanup
-        do i=1,size(vars)
-          if (.not. allocated(vars(i)%data)) cycle
-          deallocate(vars(i)%data)
-          call vars(i)%afield%final()
-        end do
-        deallocate(vars)
-      end if
-    end do
-
-    ! read sea ice variables with category and/or levels dimensions
-    if (seaice_categories_vars%nvars() > 0) then
-      call f_conf%get_or_die("ice_filename", str)
-      filename = trim(basename) // trim(str)
-      call self%read_seaice(filename, seaice_categories_vars)
-    end if
-
-    ! compute ice thickness if needed
-    if (compute_icethickness .and. self%afieldset%has("sea_ice_thickness")) then
-      afield1 = self%afieldset%field("sea_ice_thickness")
-      afield2 = self%afieldset%field("sea_ice_area_fraction")
-      call afield1%data(adata1)
-      call afield2%data(adata2)
-      do j=self%geom%jsc, self%geom%jec
-        do i=self%geom%isc, self%geom%iec
-          idx = self%geom%atlas_ij2idx(i,j)
-          if (adata2(1,idx) > 0.0) then
-            adata1(1,idx) = adata1(1,idx) / adata2(1,idx)
-          else
-            adata1(1,idx) = 0.0_kind_real
-          end if
-        end do
-      end do
-      call afield1%set_dirty()
-    end if
-    ! compute snow thickness if needed
-    if (compute_snowthickness .and. self%afieldset%has("sea_ice_snow_thickness")) then
-      afield1 = self%afieldset%field("sea_ice_snow_thickness")
-      afield2 = self%afieldset%field("sea_ice_area_fraction")
-      call afield1%data(adata1)
-      call afield2%data(adata2)
-      do j=self%geom%jsc, self%geom%jec
-        do i=self%geom%isc, self%geom%iec
-          idx = self%geom%atlas_ij2idx(i,j)
-          if (adata2(1,idx) > 0.0) then
-            adata1(1,idx) = adata1(1,idx) / adata2(1,idx)
-          else
-            adata1(1,idx) = 0.0_kind_real
-          end if
-        end do
-      end do
-      call afield1%set_dirty()
-    end if
-
-    ! initialize mid-layer depth from layer thickness
-    ! TODO, this shouldn't live here, it should be part of the variable change class only
-    if (self%afieldset%has("sea_water_depth")) then
-      afield1 = self%afieldset%field("sea_water_depth")
-      afield2 = self%afieldset%field("sea_water_cell_thickness")
-      call afield1%data(adata1)
-      call afield2%data(adata2)
-      do j=self%geom%jsc, self%geom%jec
-        do i=self%geom%isc, self%geom%iec
-          idx = self%geom%atlas_ij2idx(i,j)
-          adata1(:,idx) = 0.5 * adata2(:,idx)
-          do k=2,afield1%shape(1)
-            adata1(k,idx) = adata1(k,idx) + sum(adata2(1:k-1,idx))
-          end do
-        end do
-      end do
-      call afield1%set_dirty()
-    end if
-
-    ! Compute mixed layer depth TODO: Move somewhere else ...
-    if (self%afieldset%has("ocean_mixed_layer_thickness")) then
-      afield1 = self%afieldset%field("ocean_mixed_layer_thickness")
-      afield2 = self%afieldset%field("sea_water_salinity")
-      afield3 = self%afieldset%field("sea_water_potential_temperature")
-      afield4 = self%afieldset%field("sea_water_depth")
-      call afield1%data(adata1)
-      call afield2%data(adata2)
-      call afield3%data(adata3)
-      call afield4%data(adata4)
-      adata1(:,:) = 0.0_kind_real
-      do j=self%geom%jsc, self%geom%jec
-        do i=self%geom%isc, self%geom%iec
-          if (self%geom%mask2d(i,j)==0) cycle
-          idx = self%geom%atlas_ij2idx(i,j)
-          adata1(1,idx) = soca_mld(adata2(:,idx), adata3(:,idx), adata4(:,idx), &
-            self%geom%lon(i,j), self%geom%lat(i,j))
-        end do
-      end do
-      call afield1%set_dirty()
-    end if
-
-    ! Remap layers if needed
-    if (allocated(h_common)) then
-      call initialize_remapping(remapCS,'PCM')
-
-      ! allocate things
-      allocate(h_common_ij(self%geom%nzo), hocn_ij(self%geom%nzo), &
-               varocn_ij(self%geom%nzo), varocn2_ij(self%geom%nzo))
-      afield1 = self%afieldset%field("sea_water_cell_thickness")
-      call afield1%data(adata1)
-
-      ! for each field that should be remapped
-      do n=1,size(self%fields)
-        if (.not. self%fields(n)%metadata%vert_interp) cycle
-        if ( self%geom%f_comm%rank() == 0 ) then
-          call oops_log%info("vertically remapping "//trim(self%fields(n)%name))
-        end if
-        afield2 = self%afieldset%field(self%fields(n)%name)
-        call afield2%data(adata2)
-
-        ! for each grid point
-        do j=self%geom%jsc, self%geom%jec
-          do i=self%geom%isc, self%geom%iec
-            idx = self%geom%atlas_ij2idx(i,j)
-            remap_this_point = .not. associated(self%fields(n)%mask)
-            if (associated(self%fields(n)%mask)) then
-              remap_this_point = self%fields(n)%mask(i,j) .gt. 0.0
-            end if
-            if (remap_this_point) then
-              h_common_ij(:) = h_common(i,j,:)
-              hocn_ij(:) = adata1(:, idx)
-              varocn_ij(:) = adata2(:, idx)
-              call remapping_core_h(remapCS, self%geom%nzo, h_common_ij, varocn_ij, &
-                                    self%geom%nzo, hocn_ij, varocn2_ij)
-              adata2(:, idx) = varocn2_ij
             else
-              adata2(:, idx) = 0.0_kind_real
+              vars(n)%adata(:, idx) = vars(n)%data(i,j,:)
             end if
           end do
         end do
-        call afield2%set_dirty()
+        call vars(n)%afield%set_dirty()
       end do
+      do n = 1, size(vars)
+        if (.not. allocated(vars(n)%data)) cycle
+        deallocate(vars(n)%data)
+        call vars(n)%afield%final()
+      end do
+    end associate
+    deallocate(plan%domain_vars(ri)%vars)
+  end do
 
-      ! cleanup
-      call end_remapping(remapCS)
-      deallocate(h_common_ij, hocn_ij, varocn_ij, varocn2_ij)
-    end if
+  ! Deferred-CICE-category read (its own internal I/O cycle; kept serial in v1).
+  if (plan%seaice_categories_vars%nvars() > 0) then
+    call self%read_seaice(plan%ice_filename, plan%seaice_categories_vars)
   end if
 
-  ! cleanup
-  if (allocated(h_common)) deallocate(h_common)
+  ! Compute ice thickness from ice_volume / ice_area_fraction.
+  if (plan%compute_icethickness .and. self%afieldset%has("sea_ice_thickness")) then
+    afield1 = self%afieldset%field("sea_ice_thickness")
+    afield2 = self%afieldset%field("sea_ice_area_fraction")
+    call afield1%data(adata1)
+    call afield2%data(adata2)
+    do j = self%geom%jsc, self%geom%jec
+      do i = self%geom%isc, self%geom%iec
+        idx = self%geom%atlas_ij2idx(i,j)
+        if (adata2(1,idx) > 0.0) then
+          adata1(1,idx) = adata1(1,idx) / adata2(1,idx)
+        else
+          adata1(1,idx) = 0.0_kind_real
+        end if
+      end do
+    end do
+    call afield1%set_dirty()
+  end if
+
+  ! Compute snow thickness from snow_volume / ice_area_fraction.
+  if (plan%compute_snowthickness .and. self%afieldset%has("sea_ice_snow_thickness")) then
+    afield1 = self%afieldset%field("sea_ice_snow_thickness")
+    afield2 = self%afieldset%field("sea_ice_area_fraction")
+    call afield1%data(adata1)
+    call afield2%data(adata2)
+    do j = self%geom%jsc, self%geom%jec
+      do i = self%geom%isc, self%geom%iec
+        idx = self%geom%atlas_ij2idx(i,j)
+        if (adata2(1,idx) > 0.0) then
+          adata1(1,idx) = adata1(1,idx) / adata2(1,idx)
+        else
+          adata1(1,idx) = 0.0_kind_real
+        end if
+      end do
+    end do
+    call afield1%set_dirty()
+  end if
+
+  ! TODO: this should live in a variable-change class, not here.
+  ! Mid-layer depth from layer thickness (running half-thickness sum).
+  if (self%afieldset%has("sea_water_depth")) then
+    afield1 = self%afieldset%field("sea_water_depth")
+    afield2 = self%afieldset%field("sea_water_cell_thickness")
+    call afield1%data(adata1)
+    call afield2%data(adata2)
+    do j = self%geom%jsc, self%geom%jec
+      do i = self%geom%isc, self%geom%iec
+        idx = self%geom%atlas_ij2idx(i,j)
+        adata1(:,idx) = 0.5 * adata2(:,idx)
+        do k = 2, afield1%shape(1)
+          adata1(k,idx) = adata1(k,idx) + sum(adata2(1:k-1,idx))
+        end do
+      end do
+    end do
+    call afield1%set_dirty()
+  end if
+
+  ! TODO: move out. Mixed-layer depth from T/S/depth.
+  if (self%afieldset%has("ocean_mixed_layer_thickness")) then
+    afield1 = self%afieldset%field("ocean_mixed_layer_thickness")
+    afield2 = self%afieldset%field("sea_water_salinity")
+    afield3 = self%afieldset%field("sea_water_potential_temperature")
+    afield4 = self%afieldset%field("sea_water_depth")
+    call afield1%data(adata1)
+    call afield2%data(adata2)
+    call afield3%data(adata3)
+    call afield4%data(adata4)
+    adata1(:,:) = 0.0_kind_real
+    do j = self%geom%jsc, self%geom%jec
+      do i = self%geom%isc, self%geom%iec
+        if (self%geom%mask2d(i,j) == 0) cycle
+        idx = self%geom%atlas_ij2idx(i,j)
+        adata1(1,idx) = soca_mld(adata2(:,idx), adata3(:,idx), adata4(:,idx), &
+          self%geom%lon(i,j), self%geom%lat(i,j))
+      end do
+    end do
+    call afield1%set_dirty()
+  end if
+
+  ! Optional vertical remap onto h_common.
+  if (allocated(plan%h_common)) then
+    call initialize_remapping(remapCS, 'PCM')
+    allocate(h_common_ij(self%geom%nzo), hocn_ij(self%geom%nzo), &
+             varocn_ij(self%geom%nzo), varocn2_ij(self%geom%nzo))
+    afield1 = self%afieldset%field("sea_water_cell_thickness")
+    call afield1%data(adata1)
+    do n = 1, size(self%fields)
+      if (.not. self%fields(n)%metadata%vert_interp) cycle
+      if (self%geom%f_comm%rank() == 0) then
+        call oops_log%info("vertically remapping "//trim(self%fields(n)%name))
+      end if
+      afield2 = self%afieldset%field(self%fields(n)%name)
+      call afield2%data(adata2)
+      do j = self%geom%jsc, self%geom%jec
+        do i = self%geom%isc, self%geom%iec
+          idx = self%geom%atlas_ij2idx(i,j)
+          remap_this_point = .not. associated(self%fields(n)%mask)
+          if (associated(self%fields(n)%mask)) then
+            remap_this_point = self%fields(n)%mask(i,j) .gt. 0.0
+          end if
+          if (remap_this_point) then
+            h_common_ij(:) = plan%h_common(i,j,:)
+            hocn_ij(:) = adata1(:, idx)
+            varocn_ij(:) = adata2(:, idx)
+            call remapping_core_h(remapCS, self%geom%nzo, h_common_ij, varocn_ij, &
+                                  self%geom%nzo, hocn_ij, varocn2_ij)
+            adata2(:, idx) = varocn2_ij
+          else
+            adata2(:, idx) = 0.0_kind_real
+          end if
+        end do
+      end do
+      call afield2%set_dirty()
+    end do
+    call end_remapping(remapCS)
+    deallocate(h_common_ij, hocn_ij, varocn_ij, varocn2_ij)
+  end if
+
+  if (allocated(plan%h_common)) deallocate(plan%h_common)
   call afield1%final()
   call afield2%final()
   call afield3%final()
   call afield4%final()
-end subroutine soca_fields_read
+end subroutine soca_fields_read_finalize
 
 
 ! Populate an empty oop_variable instance with the unique CICE variables
