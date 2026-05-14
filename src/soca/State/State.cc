@@ -312,9 +312,22 @@ namespace soca {
     Log::trace() << "soca::State::readEnsemble starting (" << states.size()
                  << " members)" << std::endl;
     ASSERT(states.size() == configs.size());
-    for (size_t i = 0; i < states.size(); ++i) {
-      states[i]->read(configs[i]);
+    if (states.empty()) return;
+
+    const size_t n = states.size();
+    std::vector<F90flds> keys(n);
+    std::vector<const eckit::Configuration*> confPtrs(n);
+    std::vector<util::DateTime*> dtPtrs(n);
+    for (size_t i = 0; i < n; ++i) {
+      keys[i]     = states[i]->keyFlds_;
+      confPtrs[i] = &configs[i];
+      dtPtrs[i]   = &states[i]->time_;
     }
+    const int nm = static_cast<int>(n);
+    soca_state_read_ensemble_f90(nm, keys.data(), confPtrs.data(), dtPtrs.data());
+
+    for (auto* x : states) x->fieldSet_.set_dirty();
+
     Log::trace() << "soca::State::readEnsemble done" << std::endl;
   }
 
