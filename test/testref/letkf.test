@@ -40,39 +40,39 @@ Initial state for member 4:
 molar_concentration_of_biomass_in_sea_water_in_p_units   min=0.0000000000000000   max=0.0000001876715923   mean=0.0000000065410833
 H(x) for member 1:
 
-SeaSurfaceTemp nobs= 199 Min=-0.7441076047036195, Max=30.2955112206964365, RMS=24.1542415128504473
+SeaSurfaceTemp nobs= 199 Min=-0.7441076047036200, Max=30.2955112206964365, RMS=24.1542415128504473
 
-ADT nobs= 99 Min=-1.1929069605178633, Max=1.3891336108272321, RMS=0.7501724249667436
+ADT nobs= 99 Min=-1.1929069605178633, Max=1.3891336108272323, RMS=0.7501724249667436
 
 H(x) for member 2:
 
 SeaSurfaceTemp nobs= 199 Min=-1.2926307112395774, Max=30.4841785881009670, RMS=24.2118380260323285
 
-ADT nobs= 99 Min=-1.1899094089431328, Max=1.3705839957238304, RMS=0.7280970231666010
+ADT nobs= 99 Min=-1.1899094089431330, Max=1.3705839957238304, RMS=0.7280970231666010
 
 H(x) for member 3:
 
-SeaSurfaceTemp nobs= 199 Min=-0.7441076047036195, Max=30.2633211470504264, RMS=24.3332862432359711
+SeaSurfaceTemp nobs= 199 Min=-0.7441076047036200, Max=30.2633211470504264, RMS=24.3332862432359711
 
-ADT nobs= 99 Min=-1.3113170534052312, Max=1.4184680738516637, RMS=0.7455287795980962
+ADT nobs= 99 Min=-1.3113170534052305, Max=1.4184680738516637, RMS=0.7455287795980962
 
 H(x) for member 4:
 
-SeaSurfaceTemp nobs= 199 Min=-0.8582812691598128, Max=30.6045092155533567, RMS=24.1751261362401451
+SeaSurfaceTemp nobs= 199 Min=-0.8582812691598130, Max=30.6045092155533602, RMS=24.1751261362401451
 
-ADT nobs= 99 Min=-1.1380124010811425, Max=1.4184998010520407, RMS=0.7327654107991013
+ADT nobs= 99 Min=-1.1380124010811423, Max=1.4184998010520409, RMS=0.7327654107991014
 
 H(x) ensemble background mean: 
 
-SeaSurfaceTemp nobs= 190 Min=-0.7441076047036195, Max=30.3823358499043152, RMS=24.2905142987602680
+SeaSurfaceTemp nobs= 190 Min=-0.7441076047036200, Max=30.3823358499043152, RMS=24.2905142987602680
 
-ADT nobs= 94 Min=-1.2014615059012805, Max=1.3991713703636917, RMS=0.7267517351147673
+ADT nobs= 94 Min=-1.2014615059012803, Max=1.3991713703636921, RMS=0.7267517351147675
 
 background y - H(x): 
 
-SeaSurfaceTemp nobs= 190 Min=-5.7729528751167365, Max=2.9165190476353704, RMS=1.2735071931212980
+SeaSurfaceTemp nobs= 190 Min=-5.7729528751167400, Max=2.9165190476353704, RMS=1.2735071931212980
 
-ADT nobs= 94 Min=-0.5538478248680494, Max=0.4971260506454180, RMS=0.1849878892403299
+ADT nobs= 94 Min=-0.5538478248680494, Max=0.4971260506454178, RMS=0.1849878892403299
 
 Background mean :
   Valid time: 2018-04-15T00:00:00Z
@@ -84,26 +84,36 @@ Background mean :
                               sea_water_cell_thickness   min=0.0009999999999977   max=1345.6400000000003274   mean=128.6280642064969300
         mass_concentration_of_chlorophyll_in_sea_water   min=0.0000000000000000   max=4.6740395250897722   mean=0.1185230861366729
 molar_concentration_of_biomass_in_sea_water_in_p_units   min=0.0000000000000000   max=0.0000001872794279   mean=0.0000000065402047
+Analysis variance :
+  Valid time: 2018-04-15T00:00:00Z
+                                    sea_water_salinity   min=0.0000000000000000   max=1.7104282308976473   mean=0.0413757430866444
+                       sea_water_potential_temperature   min=0.0000000000000000   max=7.8656470700203833   mean=0.2166581022034579
+                        sea_surface_height_above_geoid   min=0.0000000000000000   max=0.0544643674027920   mean=0.0029621893358051
+                           eastward_sea_water_velocity   min=0.0000000000000000   max=0.0001167744415576   mean=0.0000012019439033
+                          northward_sea_water_velocity   min=0.0000000000000000   max=0.0001011959886228   mean=0.0000005748459930
+                              sea_water_cell_thickness   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
+        mass_concentration_of_chlorophyll_in_sea_water   min=0.0000000000000000   max=0.0040005895569697   mean=0.0000126069102228
+molar_concentration_of_biomass_in_sea_water_in_p_units   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
 Analysis mean :
   Valid time: 2018-04-15T00:00:00Z
-                                    sea_water_salinity   min=10.7210460395083924   max=39.0134414472242099   mean=34.5413230888747194
-                       sea_water_potential_temperature   min=-4.0934681155130246   max=39.0513613009855689   mean=6.0598694870122101
-                        sea_surface_height_above_geoid   min=-1.9808467985331564   max=0.9352302621324899   mean=-0.2892970578197220
-                           eastward_sea_water_velocity   min=-0.8572272513723267   max=0.6996116119601119   mean=-0.0002418168137548
-                          northward_sea_water_velocity   min=-0.7669957318555991   max=1.4343630397266860   mean=0.0020778102801518
+                                    sea_water_salinity   min=10.7210460395083924   max=39.0134413288195887   mean=34.5413230920998444
+                       sea_water_potential_temperature   min=-4.0934678962805426   max=39.0513587257774404   mean=6.0598694914173263
+                        sea_surface_height_above_geoid   min=-1.9808467954034410   max=0.9352302719526202   mean=-0.2892970579827093
+                           eastward_sea_water_velocity   min=-0.8572272504956890   max=0.6996116119925759   mean=-0.0002418168166684
+                          northward_sea_water_velocity   min=-0.7669957338683069   max=1.4343630397773199   mean=0.0020778102835577
                               sea_water_cell_thickness   min=0.0009999999999977   max=1345.6400000000003274   mean=128.6280642064969300
-        mass_concentration_of_chlorophyll_in_sea_water   min=-0.0090938135600502   max=4.6761292782974451   mean=0.1184558120744337
-molar_concentration_of_biomass_in_sea_water_in_p_units   min=-0.0000000005639014   max=0.0000001880980479   mean=0.0000000065367306
+        mass_concentration_of_chlorophyll_in_sea_water   min=-0.0090938141415146   max=4.6761292809463075   mean=0.1184558120843750
+molar_concentration_of_biomass_in_sea_water_in_p_units   min=-0.0000000005639014   max=0.0000001880980476   mean=0.0000000065367306
 Analysis mean increment :
   Valid time: 2018-04-15T00:00:00Z
-                                    sea_water_salinity   min=-2.4967647220423537   max=2.0140077592666330   mean=0.0201040637434014
-                       sea_water_potential_temperature   min=-6.6406775322476328   max=11.0157098874178416   mean=-0.0033258455444431
-                        sea_surface_height_above_geoid   min=-0.7412018595678023   max=0.3545725634873331   mean=-0.0169678823796280
-                           eastward_sea_water_velocity   min=-0.0224173872339886   max=0.0342101181111959   mean=0.0000145031941624
-                          northward_sea_water_velocity   min=-0.0146226006709015   max=0.0572818485497349   mean=0.0000500623014760
+                                    sea_water_salinity   min=-2.4967651005875986   max=2.0140075471041996   mean=0.0201040669684533
+                       sea_water_potential_temperature   min=-6.6406791003506136   max=11.0157073122097131   mean=-0.0033258411393050
+                        sea_surface_height_above_geoid   min=-0.7412017958248682   max=0.3545726189830887   mean=-0.0169678825426153
+                           eastward_sea_water_velocity   min=-0.0224173924980948   max=0.0342101041856079   mean=0.0000145031912488
+                          northward_sea_water_velocity   min=-0.0146226036951741   max=0.0572818332581017   mean=0.0000500623048818
                               sea_water_cell_thickness   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
-        mass_concentration_of_chlorophyll_in_sea_water   min=-0.0837295132701064   max=0.0851241803415967   mean=-0.0000672740622389
-molar_concentration_of_biomass_in_sea_water_in_p_units   min=-0.0000000081872658   max=0.0000000058534179   mean=-0.0000000000034742
+        mass_concentration_of_chlorophyll_in_sea_water   min=-0.0837294973412548   max=0.0851241948402848   mean=-0.0000672740522981
+molar_concentration_of_biomass_in_sea_water_in_p_units   min=-0.0000000081872650   max=0.0000000058534180   mean=-0.0000000000034742
 Forecast variance :
   Valid time: 2018-04-15T00:00:00Z
                                     sea_water_salinity   min=0.0000000000000000   max=1.8239276341677122   mean=0.0464818888856853
@@ -114,51 +124,41 @@ Forecast variance :
                               sea_water_cell_thickness   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
         mass_concentration_of_chlorophyll_in_sea_water   min=0.0000000000000000   max=0.0043480739217898   mean=0.0000135550829322
 molar_concentration_of_biomass_in_sea_water_in_p_units   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
-Analysis variance :
-  Valid time: 2018-04-15T00:00:00Z
-                                    sea_water_salinity   min=0.0000000000000000   max=1.7104281961315342   mean=0.0413757431979954
-                       sea_water_potential_temperature   min=0.0000000000000000   max=7.8656468860302979   mean=0.2166581025458524
-                        sea_surface_height_above_geoid   min=0.0000000000000000   max=0.0544643675499139   mean=0.0029621893364903
-                           eastward_sea_water_velocity   min=0.0000000000000000   max=0.0001167744415576   mean=0.0000012019439092
-                          northward_sea_water_velocity   min=0.0000000000000000   max=0.0001011959998600   mean=0.0000005748459971
-                              sea_water_cell_thickness   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
-        mass_concentration_of_chlorophyll_in_sea_water   min=0.0000000000000000   max=0.0040005895589570   mean=0.0000126069102777
-molar_concentration_of_biomass_in_sea_water_in_p_units   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
 H(x) for member 1:
 
-SeaSurfaceTemp nobs= 199 Min=-0.8718279613280746, Max=30.4616722819311683, RMS=24.0055715080527072
+SeaSurfaceTemp nobs= 199 Min=-0.8718282819450008, Max=30.4616723790843480, RMS=24.0055715088835342
 
-ADT nobs= 99 Min=-1.2498707079223106, Max=1.4048282415360751, RMS=0.7653978996935882
+ADT nobs= 99 Min=-1.2498707084751426, Max=1.4048282392864553, RMS=0.7653979005937898
 
 H(x) for member 2:
 
-SeaSurfaceTemp nobs= 199 Min=-1.3182003488258205, Max=30.8053841631393261, RMS=24.0528932302901062
+SeaSurfaceTemp nobs= 199 Min=-1.3182003210916573, Max=30.8053842761832115, RMS=24.0528932372496804
 
-ADT nobs= 99 Min=-1.2697126655863518, Max=1.3879853169941589, RMS=0.7455927462789180
+ADT nobs= 99 Min=-1.2697126685221036, Max=1.3879853158358548, RMS=0.7455927475336083
 
 H(x) for member 3:
 
-SeaSurfaceTemp nobs= 199 Min=-1.6589168650992598, Max=30.3276403109911783, RMS=24.1602588747984512
+SeaSurfaceTemp nobs= 199 Min=-1.6589169507435910, Max=30.3276403017475538, RMS=24.1602588734882993
 
-ADT nobs= 99 Min=-1.3745512020375599, Max=1.4324782100868187, RMS=0.7616889975418673
+ADT nobs= 99 Min=-1.3745512037680852, Max=1.4324782081029608, RMS=0.7616889985075800
 
 H(x) for member 4:
 
-SeaSurfaceTemp nobs= 199 Min=-0.9189330504901951, Max=30.6605174785234240, RMS=24.0249048803911514
+SeaSurfaceTemp nobs= 199 Min=-0.9189330961858834, Max=30.6605174756551122, RMS=24.0249048800189833
 
-ADT nobs= 99 Min=-1.1895981915763638, Max=1.4337936418846093, RMS=0.7494393908317486
+ADT nobs= 99 Min=-1.1895981917573422, Max=1.4337936391792838, RMS=0.7494393919763109
 
 H(x) ensemble analysis mean: 
 
-SeaSurfaceTemp nobs= 190 Min=-0.7441076047036195, Max=30.2938566387807882, RMS=24.1154968411678645
+SeaSurfaceTemp nobs= 190 Min=-0.7441076047036200, Max=30.2938566336877351, RMS=24.1154968324877323
 
-ADT nobs= 94 Min=-1.2709331917806463, Max=1.4147713526254155, RMS=0.7453361288229762
+ADT nobs= 94 Min=-1.2709331931306682, Max=1.4147713506011388, RMS=0.7453361300077671
 
 analysis y - H(x): 
 
-SeaSurfaceTemp nobs= 190 Min=-2.6815508491085396, Max=2.1880178372093884, RMS=0.6985294395705187
+SeaSurfaceTemp nobs= 190 Min=-2.6815509734447858, Max=2.1880177344442000, RMS=0.6985294212567227
 
-ADT nobs= 94 Min=-0.5462180117680071, Max=0.4378032970820429, RMS=0.1670504287262663
+ADT nobs= 94 Min=-0.5462180084104454, Max=0.4378033133931578, RMS=0.1670504290209683
 
 ombg RMS: 1.0470660506201215
-oman RMS: 0.5793767635894295
+oman RMS: 0.5793767488456225
