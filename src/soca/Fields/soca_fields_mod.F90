@@ -32,6 +32,7 @@ use mpp_domains_mod, only : mpp_update_domains
 use soca_io_mod, only : soca_io_reader, soca_io_writer, &
                         soca_io_file_exists, soca_io_var_exists, &
                         soca_io_writers_commit_ensemble, &
+                        soca_io_readers_commit_ensemble, &
                         soca_io_ensemble_root_pe, &
                         soca_io_ensemble_write_parallel
 
@@ -1266,44 +1267,77 @@ end subroutine soca_fields_write_ensemble
 
 
 ! ------------------------------------------------------------------------------
-!> Bulk read multiple states/increments. Current implementation loops members
-!! and dispatches to the per-member soca_fields_read; each per-member read
-!! honors the geometry.io.'single state read' knob (strided vs scatter). This
-!! preserves all post-read transforms (CICE thickness compute, MLD compute,
-!! vertical remapping) without duplicating the post-read logic.
-!!
-!! TODO: parallel-across-members ensemble read (soca_io_readers_commit_ensemble
-!! with rotated reader_pes) is a follow-up. It requires factoring the per-
-!! member post-read logic out of soca_fields_read so it can be re-run after a
-!! bulk I/O phase.
+!> Bulk read multiple states/increments. Mirrors soca_fields_write_ensemble:
+!! prepare per-member read_plan_t with a rotated reader_pe, flatten all
+!! per-(member, domain) readers into a single array, drive the bulk I/O via
+!! soca_io_readers_commit_ensemble (strided or scatter, sync or async per the
+!! geometry.io knobs), then finalize each member to copy scratch into atlas
+!! fields and run post-read transforms.
 !!
 !! \param fields_ptrs polymorphic pointers to soca_state or soca_increment
-!! \param f_confs    per-member configurations
-!! \param vdates     per-member valid dates
+!! \param c_confs     per-member configurations (c_ptrs; materialized inline)
+!! \param vdates      per-member valid dates
 !! \relates soca_fields_mod::soca_fields
 subroutine soca_fields_read_ensemble(fields_ptrs, c_confs, vdates)
   type(soca_fields_ptr_t),    intent(inout) :: fields_ptrs(:)
   type(c_ptr),                intent(in)    :: c_confs(:)
   type(datetime),             intent(inout) :: vdates(:)
 
-  integer :: m
-  class(soca_fields), pointer :: fld
+  integer :: nmembers, m, ri, nreaders_total, root_pe, k
+  type(read_plan_t), allocatable, target :: plans(:)
+  type(soca_io_reader), allocatable :: flat_readers(:)
   type(fckit_configuration) :: f_conf
 
-  if (size(fields_ptrs) == 0) return
-  if (size(c_confs) /= size(fields_ptrs) .or. size(vdates) /= size(fields_ptrs)) then
+  nmembers = size(fields_ptrs)
+  if (nmembers == 0) return
+  if (size(c_confs) /= nmembers .or. size(vdates) /= nmembers) then
     call abor1_ftn("soca_fields_read_ensemble: input array size mismatch")
   end if
 
-  ! Construct fckit_configuration on the fly per member; passing an array of
-  ! fckit_configuration through a c-binding entrypoint and then walking it
-  ! has dropped the underlying c_ptr in practice. Materializing a fresh handle
-  ! each iteration matches the single-state pattern in soca_state.interface.F90.
-  do m = 1, size(fields_ptrs)
-    fld => fields_ptrs(m)%p
+  allocate(plans(nmembers))
+
+  ! Pass 1: prepare each member. Rotated reader_pe spreads the bulk reads
+  ! across PEs so they hit different files concurrently in the scatter path.
+  ! Construct fckit_configuration on the fly per member -- array-of-handles
+  ! through the c-binding has dropped the c_ptr in some compiler/version
+  ! combos; same pattern as soca_fields_write_ensemble.
+  do m = 1, nmembers
     f_conf = fckit_configuration(c_confs(m))
-    call fld%read(f_conf, vdates(m))
+    root_pe = soca_io_ensemble_root_pe(m, nmembers)
+    call soca_fields_read_prepare(fields_ptrs(m)%p, f_conf, vdates(m), plans(m), &
+                                  reader_pe=root_pe)
   end do
+
+  ! Pass 2: flatten all per-domain readers into one array for the bulk commit.
+  ! Intrinsic assignment deep-copies the read_entry vars (incl. the data
+  ! pointers); the pointer targets are the plans(m)%domain_vars(...)%data
+  ! scratch buffers, which persist until finalize, so the bulk scatter
+  ! delivers data straight into the buffers finalize reads from.
+  nreaders_total = 0
+  do m = 1, nmembers
+    nreaders_total = nreaders_total + size(plans(m)%readers)
+  end do
+  if (nreaders_total > 0) then
+    allocate(flat_readers(nreaders_total))
+    k = 0
+    do m = 1, nmembers
+      do ri = 1, size(plans(m)%readers)
+        k = k + 1
+        flat_readers(k) = plans(m)%readers(ri)
+      end do
+    end do
+    call soca_io_readers_commit_ensemble(flat_readers)
+    deallocate(flat_readers)
+  end if
+
+  ! Pass 3: per-member finalize -- copy scratch -> atlas, run post-processing
+  ! (CICE category deferred read, ice/snow thickness, mid-layer depth, MLD,
+  ! vertical remap), release scratch.
+  do m = 1, nmembers
+    call soca_fields_read_finalize(fields_ptrs(m)%p, plans(m))
+  end do
+
+  deallocate(plans)
 end subroutine soca_fields_read_ensemble
 
 
