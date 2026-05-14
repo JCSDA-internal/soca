@@ -94,6 +94,18 @@ namespace soca {
       /// I/O and diagnostics
       void read(const eckit::Configuration &);
       void write(const eckit::Configuration &) const;
+
+      /// Bulk parallel write across ensemble members. Mirrors State::writeEnsemble
+      /// for ensemble-of-increments output (e.g. LETKF posterior ensemble
+      /// increments). Each member is gathered to a strided writer PE and
+      /// written concurrently.
+      static void writeEnsemble(const std::vector<const Increment*> &,
+                                const std::vector<eckit::LocalConfiguration> &);
+
+      /// Bulk read across ensemble members. Mirrors State::readEnsemble.
+      static void readEnsemble(const std::vector<Increment*> &,
+                               const std::vector<eckit::LocalConfiguration> &);
+
       void horiz_scales(const eckit::Configuration &);
       void vert_scales(const double &);
       std::vector<double> rmsByLevel(const std::string &) const;

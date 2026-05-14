@@ -18,6 +18,7 @@ use datetime_mod, only: datetime, datetime_set, datetime_to_string, datetime_to_
                         datetime_create, datetime_diff
 use duration_mod, only: duration, duration_to_string
 use fckit_configuration_module, only: fckit_configuration
+use iso_c_binding, only: c_ptr
 use logger_mod
 use kinds, only: kind_real
 use oops_variables_mod, only: oops_variables
@@ -29,7 +30,10 @@ use mpp_domains_mod, only : mpp_update_domains
 
 ! SOCA I/O
 use soca_io_mod, only : soca_io_reader, soca_io_writer, &
-                        soca_io_file_exists, soca_io_var_exists
+                        soca_io_file_exists, soca_io_var_exists, &
+                        soca_io_writers_commit_ensemble, &
+                        soca_io_ensemble_root_pe, &
+                        soca_io_ensemble_write_parallel
 
 ! SOCA modules
 use soca_fields_metadata_mod, only : soca_field_metadata
@@ -39,6 +43,9 @@ use soca_utils, only: soca_stencil_interp, soca_stencil_neighbors
 
 implicit none
 private
+
+public :: soca_fields_write_ensemble
+public :: soca_fields_read_ensemble
 
 
 ! ------------------------------------------------------------------------------
@@ -163,6 +170,23 @@ type varwrapper
   type(soca_field), pointer :: field
   real(kind=kind_real), allocatable :: data(:,:,:)
 end type varwrapper
+
+! ------------------------------------------------------------------------------
+! Polymorphic pointer wrapper so soca_fields_*_ensemble can take heterogeneous
+! arrays of soca_state and soca_increment (both extend soca_fields). Used only
+! by the bulk I/O entrypoints; built on the Fortran side from arrays of C++
+! registry keys.
+type, public :: soca_fields_ptr_t
+  class(soca_fields), pointer :: p => null()
+end type soca_fields_ptr_t
+
+! ------------------------------------------------------------------------------
+! One writer's worth of varwrapper state in the ensemble write path. Per-writer
+! arrays are nested under this type so a single 1-D allocatable indexed by
+! "writer index" carries all the per-(member, domain) vars buffers.
+type :: ensemble_vars_t
+  type(varwrapper), allocatable :: vars(:)
+end type ensemble_vars_t
 
 
 ! ------------------------------------------------------------------------------
@@ -993,6 +1017,186 @@ subroutine soca_fields_write_rst(self, f_conf, vdate)
     deallocate(vars)
   end do
 end subroutine soca_fields_write_rst
+
+! ------------------------------------------------------------------------------
+!> Bulk write multiple states/increments in one ensemble pass. Each member's
+!! per-domain files are written from a rotated writer PE (assigned by
+!! soca_io_ensemble_root_pe) so disk writes happen concurrently across the
+!! world communicator. Falls back to sequential per-member commit when
+!! geometry.io.'ensemble write' is 'sequential'.
+!!
+!! Behavior per-member is identical to soca_fields_write_rst: same domain set,
+!! same per-domain filename via soca_genfilename, same mask/fillvalue handling,
+!! same byte-level netCDF output. Only the dispatch (rotated root + ensemble
+!! orchestrator) changes.
+!!
+!! \param fields_ptrs polymorphic pointers to soca_state or soca_increment
+!! \param f_confs    per-member configurations (must align 1:1 with fields_ptrs)
+!! \param vdates     per-member valid dates
+!! \relates soca_fields_mod::soca_fields
+subroutine soca_fields_write_ensemble(fields_ptrs, c_confs, vdates)
+  type(soca_fields_ptr_t),    intent(inout) :: fields_ptrs(:)
+  type(c_ptr),                intent(in)    :: c_confs(:)
+  type(datetime),             intent(inout) :: vdates(:)
+
+  integer, parameter :: max_string_length = 800
+  integer :: nmembers, m, d, f, i, j, n, idx, wi, nwriters, root_pe
+  character(len=3), allocatable :: domains(:)
+  character(len=:), allocatable :: domain_filename
+  logical :: date_cols
+  class(soca_fields), pointer :: fld
+  type(soca_io_writer), allocatable, target :: writers(:)
+  type(ensemble_vars_t), allocatable, target :: vars_arr(:)
+  type(fckit_configuration) :: f_conf
+
+  nmembers = size(fields_ptrs)
+  if (nmembers == 0) return
+  if (size(c_confs) /= nmembers .or. size(vdates) /= nmembers) then
+    call abor1_ftn("soca_fields_write_ensemble: input array size mismatch")
+  end if
+
+  domains = [character(len=3) :: "ocn", "sfc", "ice", "wav", "bio"]
+
+  ! Pass 1: count writers (one per (member, domain) with vars).
+  nwriters = 0
+  do m = 1, nmembers
+    fld => fields_ptrs(m)%p
+    do d = 1, size(domains)
+      n = 0
+      do f = 1, size(fld%fields)
+        if (fld%fields(f)%metadata%io_file == domains(d)) n = n + 1
+      end do
+      if (n > 0) nwriters = nwriters + 1
+    end do
+  end do
+  if (nwriters == 0) return
+
+  allocate(writers(nwriters))
+  allocate(vars_arr(nwriters))
+
+  ! Pass 2: build writers and enqueue. Construct fckit_configuration on the fly
+  ! per member (array assignment of fckit_configuration drops the underlying
+  ! c_ptr in some compiler/version combos, so we materialize a fresh handle
+  ! each iteration -- same pattern as the single-state interface).
+  wi = 0
+  do m = 1, nmembers
+    fld => fields_ptrs(m)%p
+    f_conf = fckit_configuration(c_confs(m))
+    date_cols = .true.
+    if (f_conf%has("date colons")) then
+      call f_conf%get_or_die("date colons", date_cols)
+    end if
+
+    root_pe = soca_io_ensemble_root_pe(m, nmembers)
+
+    do d = 1, size(domains)
+      n = 0
+      do f = 1, size(fld%fields)
+        if (fld%fields(f)%metadata%io_file == domains(d)) n = n + 1
+      end do
+      if (n == 0) cycle
+
+      wi = wi + 1
+      domain_filename = soca_genfilename(f_conf, max_string_length, vdates(m), date_cols, domains(d))
+      call writers(wi)%init(fld%geom%Domain%mpp_domain, domain_filename, root_pe=root_pe)
+
+      allocate(vars_arr(wi)%vars(n))
+      n = 0
+      do f = 1, size(fld%fields)
+        if (fld%fields(f)%metadata%io_file /= domains(d)) cycle
+        n = n + 1
+
+        vars_arr(wi)%vars(n)%afield = fld%aFieldset%field(fld%fields(f)%name)
+        call vars_arr(wi)%vars(n)%afield%data(vars_arr(wi)%vars(n)%adata)
+        allocate(vars_arr(wi)%vars(n)%data(fld%geom%isd:fld%geom%ied, &
+                                            fld%geom%jsd:fld%geom%jed, &
+                                            vars_arr(wi)%vars(n)%afield%shape(1)))
+
+        if (associated(fld%fields(f)%mask)) vars_arr(wi)%vars(n)%data = fld%fields(f)%metadata%fillvalue
+        do j = fld%geom%jsc, fld%geom%jec
+          do i = fld%geom%isc, fld%geom%iec
+            idx = fld%geom%atlas_ij2idx(i, j)
+            if (associated(fld%fields(f)%mask)) then
+              if (fld%fields(f)%mask(i, j) == 0) cycle
+            end if
+            vars_arr(wi)%vars(n)%data(i, j, :) = vars_arr(wi)%vars(n)%adata(:, idx)
+          end do
+        end do
+
+        if (vars_arr(wi)%vars(n)%afield%shape(1) == 1) then
+          call writers(wi)%enqueue(fld%fields(f)%metadata%io_name, vars_arr(wi)%vars(n)%data(:,:,1))
+        else
+          call writers(wi)%enqueue(fld%fields(f)%metadata%io_name, vars_arr(wi)%vars(n)%data(:,:,:))
+        end if
+      end do
+    end do
+  end do
+
+  ! Commit. The 'sequential' fallback is kept for A/B; it does not benefit
+  ! from rotated root_pes (each writer still gathers to its assigned PE), so
+  ! reproducibility holds.
+  if (soca_io_ensemble_write_parallel()) then
+    call soca_io_writers_commit_ensemble(writers)
+  else
+    do wi = 1, nwriters
+      call writers(wi)%commit()
+    end do
+  end if
+
+  ! Cleanup. Atlas fields use refcounted handles -> need explicit final().
+  do wi = 1, nwriters
+    if (.not. allocated(vars_arr(wi)%vars)) cycle
+    do n = 1, size(vars_arr(wi)%vars)
+      if (allocated(vars_arr(wi)%vars(n)%data)) deallocate(vars_arr(wi)%vars(n)%data)
+      call vars_arr(wi)%vars(n)%afield%final()
+    end do
+    deallocate(vars_arr(wi)%vars)
+  end do
+  deallocate(writers, vars_arr)
+end subroutine soca_fields_write_ensemble
+
+
+! ------------------------------------------------------------------------------
+!> Bulk read multiple states/increments. Current implementation loops members
+!! and dispatches to the per-member soca_fields_read; each per-member read
+!! honors the geometry.io.'single state read' knob (strided vs scatter). This
+!! preserves all post-read transforms (CICE thickness compute, MLD compute,
+!! vertical remapping) without duplicating the post-read logic.
+!!
+!! TODO: parallel-across-members ensemble read (soca_io_readers_commit_ensemble
+!! with rotated reader_pes) is a follow-up. It requires factoring the per-
+!! member post-read logic out of soca_fields_read so it can be re-run after a
+!! bulk I/O phase.
+!!
+!! \param fields_ptrs polymorphic pointers to soca_state or soca_increment
+!! \param f_confs    per-member configurations
+!! \param vdates     per-member valid dates
+!! \relates soca_fields_mod::soca_fields
+subroutine soca_fields_read_ensemble(fields_ptrs, c_confs, vdates)
+  type(soca_fields_ptr_t),    intent(inout) :: fields_ptrs(:)
+  type(c_ptr),                intent(in)    :: c_confs(:)
+  type(datetime),             intent(inout) :: vdates(:)
+
+  integer :: m
+  class(soca_fields), pointer :: fld
+  type(fckit_configuration) :: f_conf
+
+  if (size(fields_ptrs) == 0) return
+  if (size(c_confs) /= size(fields_ptrs) .or. size(vdates) /= size(fields_ptrs)) then
+    call abor1_ftn("soca_fields_read_ensemble: input array size mismatch")
+  end if
+
+  ! Construct fckit_configuration on the fly per member; passing an array of
+  ! fckit_configuration through a c-binding entrypoint and then walking it
+  ! has dropped the underlying c_ptr in practice. Materializing a fresh handle
+  ! each iteration matches the single-state pattern in soca_state.interface.F90.
+  do m = 1, size(fields_ptrs)
+    fld => fields_ptrs(m)%p
+    f_conf = fckit_configuration(c_confs(m))
+    call fld%read(f_conf, vdates(m))
+  end do
+end subroutine soca_fields_read_ensemble
+
 
 ! ------------------------------------------------------------------------------
 !> Interpolates from uv-points location to h-points.

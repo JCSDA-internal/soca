@@ -17,7 +17,8 @@ use type_fieldset, only: fieldset_type
 
 ! mom6 / fms modules
 use fms_mod, only : fms_init, fms_end
-use soca_io_mod, only : soca_io_writer, soca_io_reader, soca_io_close_all
+use soca_io_mod, only : soca_io_writer, soca_io_reader, soca_io_close_all, &
+                        soca_io_config_from_yaml
 use MOM, only : MOM_control_struct, initialize_MOM, MOM_end, get_MOM_state_elements
 use MOM_restart, only :MOM_restart_CS ! NOTE remove this when updating MOM6
 use MOM_domains, only : MOM_domain_type, MOM_domains_init, MOM_infra_init, MOM_infra_end
@@ -180,6 +181,10 @@ subroutine soca_geom_init(self, f_conf, f_comm, gen)
 
   ! MPI communicator
   self%f_comm = f_comm
+
+  ! Resolve the soca_io dispatch knobs (parallel/sequential, scatter/strided,
+  ! async mpi) from geometry.io once; values persist module-level for the run.
+  call soca_io_config_from_yaml(f_conf)
 
   ! use MOM6 to setup domain decomposition
   call mpp_init(localcomm=f_comm%communicator())
