@@ -197,14 +197,17 @@ end type ensemble_vars_t
 ! call, then each member's plan is finalized to drive its post-processing.
 type :: read_plan_t
   integer :: iread = 0
-  ! per-(active domain) reader + scratch buffers (size 0 if iread is not 1 or 3)
+  ! per-active-domain reader + scratch buffers. readers(ri) reads into
+  ! domain_vars(ri)%vars(n)%data; same ri indexes both. Size 0 when
+  ! iread is not 1 or 3 (the no-read paths).
   type(soca_io_reader),   allocatable :: readers(:)
-  character(len=3),       allocatable :: plan_domains(:)
   type(ensemble_vars_t),  allocatable :: domain_vars(:)
   ! vertical remap target (allocatable so its absence flags "no remap").
   ! target-ness comes from declaring plan instances with the target attribute.
   real(kind=kind_real),  allocatable :: h_common(:,:,:)
-  ! CICE category-vars deferred-read state (handled in finalize via read_seaice)
+  ! CICE category-vars deferred-read state (handled in finalize via read_seaice).
+  ! seaice_categories_vars is only initialized (oops_variables() empty_ctor)
+  ! when iread==1 or 3; finalize matches that guard before destructing.
   type(oops_variables) :: seaice_categories_vars
   character(len=:),       allocatable :: ice_filename
   ! Probe results that drive post-processing
@@ -600,7 +603,7 @@ subroutine soca_fields_read_prepare(self, f_conf, vdate, plan, reader_pe)
   end if
 
   if (plan%iread /= 1 .and. plan%iread /= 3) then
-    allocate(plan%readers(0), plan%plan_domains(0), plan%domain_vars(0))
+    allocate(plan%readers(0), plan%domain_vars(0))
     return
   end if
 
@@ -638,7 +641,6 @@ subroutine soca_fields_read_prepare(self, f_conf, vdate, plan, reader_pe)
   end do
 
   allocate(plan%readers(nreaders))
-  allocate(plan%plan_domains(nreaders))
   allocate(plan%domain_vars(nreaders))
 
   ! Pass 2: init each reader, enqueue all matching vars. Vars whose data are
@@ -656,7 +658,6 @@ subroutine soca_fields_read_prepare(self, f_conf, vdate, plan, reader_pe)
     if (n == 0) cycle
 
     ri = ri + 1
-    plan%plan_domains(ri) = domains(d)
     allocate(plan%domain_vars(ri)%vars(n))
     if (present(reader_pe)) then
       call plan%readers(ri)%init(self%geom%Domain%mpp_domain, filename, reader_pe=reader_pe)
@@ -896,6 +897,10 @@ subroutine soca_fields_read_finalize(self, plan)
     call end_remapping(remapCS)
     deallocate(h_common_ij, hocn_ij, varocn_ij, varocn2_ij)
   end if
+
+  ! Release the empty-ctor'd seaice_categories_vars handle from prepare so
+  ! the C++-side variables_ allocation doesn't leak per-member.
+  call plan%seaice_categories_vars%destruct()
 
   if (allocated(plan%h_common)) deallocate(plan%h_common)
   call afield1%final()
@@ -1309,10 +1314,12 @@ subroutine soca_fields_read_ensemble(fields_ptrs, c_confs, vdates)
   end do
 
   ! Pass 2: flatten all per-domain readers into one array for the bulk commit.
-  ! Intrinsic assignment deep-copies the read_entry vars (incl. the data
-  ! pointers); the pointer targets are the plans(m)%domain_vars(...)%data
-  ! scratch buffers, which persist until finalize, so the bulk scatter
-  ! delivers data straight into the buffers finalize reads from.
+  ! Intrinsic assignment deep-copies the read_entry vars(:) but shallow-copies
+  ! their pointer components (data1d/2d/3d/4d -> plans(m)%domain_vars(...)%data
+  ! scratch buffers) and the domain pointer. The read_entry gbuf_* allocatables
+  ! are unallocated at copy time (only populated during reader_stage_read on
+  ! flat_readers), so the deep-copy doesn't duplicate any payload. The bulk
+  ! scatter delivers data straight into the buffers finalize reads from.
   nreaders_total = 0
   do m = 1, nmembers
     nreaders_total = nreaders_total + size(plans(m)%readers)

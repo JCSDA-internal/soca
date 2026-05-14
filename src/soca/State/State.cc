@@ -326,6 +326,10 @@ namespace soca {
     const int nm = static_cast<int>(n);
     soca_state_read_ensemble_f90(nm, keys.data(), confPtrs.data(), dtPtrs.data());
 
+    // Fortran-side soca_fields_read_finalize marks each atlas::Field dirty,
+    // but the C++ atlas::FieldSet wrapper keeps its own dirty-bit cache that
+    // doesn't auto-update from the underlying fields. Mirror the writeEnsemble
+    // pattern and re-mark here so downstream FieldSet consumers refresh.
     for (auto* x : states) x->fieldSet_.set_dirty();
 
     Log::trace() << "soca::State::readEnsemble done" << std::endl;
