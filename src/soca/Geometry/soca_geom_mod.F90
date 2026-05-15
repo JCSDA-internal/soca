@@ -17,8 +17,7 @@ use type_fieldset, only: fieldset_type
 
 ! mom6 / fms modules
 use fms_mod, only : fms_init, fms_end
-use soca_io_mod, only : soca_io_writer, soca_io_reader, soca_io_close_all, &
-                        soca_io_config_from_yaml
+use soca_io_mod, only : soca_io_writer, soca_io_reader, soca_io_config_from_yaml
 use MOM, only : MOM_control_struct, initialize_MOM, MOM_end, get_MOM_state_elements
 use MOM_restart, only :MOM_restart_CS ! NOTE remove this when updating MOM6
 use MOM_domains, only : MOM_domain_type, MOM_domains_init, MOM_infra_init, MOM_infra_end
@@ -285,7 +284,6 @@ end subroutine soca_geom_init
 !! \related soca_geom_mod::soca_geom
 subroutine soca_geom_end(self)
   class(soca_geom), intent(out)  :: self
-  call soca_io_close_all()
   nullify(self%Domain)
   if (allocated(self%lonh))          deallocate(self%lonh)
   if (allocated(self%lath))          deallocate(self%lath)

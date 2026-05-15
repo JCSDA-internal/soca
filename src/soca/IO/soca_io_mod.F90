@@ -39,7 +39,6 @@ private
 public :: soca_io_writer
 public :: soca_io_reader
 public :: soca_io_file_exists, soca_io_var_exists
-public :: soca_io_close_all
 public :: soca_io_config_from_yaml
 public :: soca_io_ensemble_write_parallel
 public :: soca_io_ensemble_read_scatter
@@ -49,7 +48,7 @@ public :: soca_io_ensemble_root_pe
 public :: soca_io_writers_commit_ensemble
 public :: soca_io_readers_commit_ensemble
 
-integer, parameter :: MAX_NAME = 256
+integer, parameter :: MAX_NAME       = 256
 
 ! Module-level I/O dispatch knobs, set once from geometry.io YAML at
 ! soca_geom_init via soca_io_config_from_yaml; persist for the run. Defaults are
@@ -59,34 +58,15 @@ logical, save :: ensemble_write_parallel_   = .true.
 logical, save :: ensemble_read_scatter_     = .true.
 logical, save :: single_state_read_scatter_ = .false.
 logical, save :: async_mpi_enabled_         = .true.
-
-! Module-level cache of nf90_open(NF90_NOWRITE) handles, keyed by filename
-! (mirrors fms_io's get_file_unit + files_read(i)%var(j) tables). First
-! reader_commit opens; subsequent reader_commits reuse the ncid and cached
-! per-variable metadata (varid, file_ndims, middle-dim sizes), so repeat reads
-! skip inq_varid + inquire_variable + inquire_dimension. Closes happen only on
-! soca_io_close_all (from soca_geom_end) or process exit.
-!
-! Read-only by design -- a caller that needs to read a file it just wrote must
-! call soca_io_close_all first to drop the stale handle.
 integer, parameter :: MAX_FILE_NDIMS = 8
-type :: cached_var
-  character(len=MAX_NAME) :: name = ''
-  integer :: varid = -1
-  integer :: file_ndims = 0
-  integer :: middle_dims(MAX_FILE_NDIMS) = 1   ! sizes for dims 3..ndims-1
-end type cached_var
-type :: cached_open
-  character(len=:), allocatable :: filename
-  integer :: ncid = -1
-  type(cached_var), allocatable :: vars(:)
-  integer :: nvars = 0
-end type cached_open
-integer, parameter :: MAX_CACHED_OPENS = 256
-integer, parameter :: VAR_CACHE_INIT   = 16
-type(cached_open), save :: read_cache(MAX_CACHED_OPENS)
-integer, save :: n_read_cached = 0
 
+! Reader is stateless across commits: every reader_commit nf90_opens the file,
+! reads all enqueued vars, and nf90_closes. Within a single commit the var
+! loop reuses the open ncid but nf90_inq_varid + inquire_variable +
+! inquire_dimension run inline per var (microseconds; not worth caching).
+! Holding NetCDF4 handles open across commits is what bloats LETKF memory:
+! each open HDF5 file holds MB of metadata + chunk cache, and dozens of
+! ensemble-member files per PE accumulates to GB-scale per-PE growth.
 
 type :: var_entry
   character(len=MAX_NAME) :: name = ''
@@ -251,6 +231,7 @@ subroutine writer_enqueue_1d(self, name, src, long_name, units)
   real(kind=kind_real), target,  intent(in)    :: src(:)
   character(len=*), optional,    intent(in)    :: long_name, units
 
+  call check_buf_1d('writer_enqueue_1d', name, size(src))
   call grow_if_needed(self)
   self%nvars = self%nvars + 1
   self%vars(self%nvars)%name    = name
@@ -272,6 +253,8 @@ subroutine writer_enqueue_2d(self, name, src, long_name, units)
   real(kind=kind_real), target,  intent(in)    :: src(:,:)
   character(len=*), optional,    intent(in)    :: long_name, units
 
+  call check_buf_2d('writer_enqueue_2d', name, size(src, 1), size(src, 2), &
+                    self%ied - self%isd + 1, self%jed - self%jsd + 1)
   call grow_if_needed(self)
   self%nvars = self%nvars + 1
   self%vars(self%nvars)%name    = name
@@ -290,6 +273,9 @@ subroutine writer_enqueue_3d(self, name, src, long_name, units)
   real(kind=kind_real), target,  intent(in)    :: src(:,:,:)
   character(len=*), optional,    intent(in)    :: long_name, units
 
+  call check_buf_2d('writer_enqueue_3d', name, size(src, 1), size(src, 2), &
+                    self%ied - self%isd + 1, self%jed - self%jsd + 1)
+  call check_buf_1d('writer_enqueue_3d (z)', name, size(src, 3))
   call grow_if_needed(self)
   self%nvars = self%nvars + 1
   self%vars(self%nvars)%name    = name
@@ -894,6 +880,7 @@ subroutine reader_enqueue_1d(self, name, dst)
   character(len=*),                       intent(in)    :: name
   real(kind=kind_real), target,           intent(inout) :: dst(:)
 
+  call check_buf_1d('reader_enqueue_1d', name, size(dst))
   call grow_reader_if_needed(self)
   self%nvars = self%nvars + 1
   self%vars(self%nvars)%name  = name
@@ -910,6 +897,8 @@ subroutine reader_enqueue_2d(self, name, dst)
   character(len=*),                       intent(in)    :: name
   real(kind=kind_real), target,           intent(inout) :: dst(:,:)
 
+  call check_buf_2d('reader_enqueue_2d', name, size(dst, 1), size(dst, 2), &
+                    self%ied - self%isd + 1, self%jed - self%jsd + 1)
   call grow_reader_if_needed(self)
   self%nvars = self%nvars + 1
   self%vars(self%nvars)%name  = name
@@ -925,6 +914,9 @@ subroutine reader_enqueue_3d(self, name, dst)
   character(len=*),                       intent(in)    :: name
   real(kind=kind_real), target,           intent(inout) :: dst(:,:,:)
 
+  call check_buf_2d('reader_enqueue_3d', name, size(dst, 1), size(dst, 2), &
+                    self%ied - self%isd + 1, self%jed - self%jsd + 1)
+  call check_buf_1d('reader_enqueue_3d (z)', name, size(dst, 3))
   call grow_reader_if_needed(self)
   self%nvars = self%nvars + 1
   self%vars(self%nvars)%name  = name
@@ -941,6 +933,10 @@ subroutine reader_enqueue_4d(self, name, dst)
   character(len=*),                       intent(in)    :: name
   real(kind=kind_real), target,           intent(inout) :: dst(:,:,:,:)
 
+  call check_buf_2d('reader_enqueue_4d', name, size(dst, 1), size(dst, 2), &
+                    self%ied - self%isd + 1, self%jed - self%jsd + 1)
+  call check_buf_1d('reader_enqueue_4d (n3)', name, size(dst, 3))
+  call check_buf_1d('reader_enqueue_4d (n4)', name, size(dst, 4))
   call grow_reader_if_needed(self)
   self%nvars = self%nvars + 1
   self%vars(self%nvars)%name  = name
@@ -985,17 +981,19 @@ end subroutine reader_commit
 
 
 !==============================================================================
-! Per-PE strided read implementation. Every PE opens the file (cached) and
-! pulls only its compute-domain tile via nf90_get_var(start, count).
+! Per-PE strided read implementation. Opens the file, pulls each var's
+! compute-domain tile via nf90_get_var(start, count), closes. Stateless --
+! no module-level handle cache.
 !==============================================================================
 subroutine commit_reader_strided(self)
   class(soca_io_reader), intent(inout) :: self
 
-  integer :: ncid, file_idx, v, n3, n4
+  integer :: ncid, v, n3, n4
   integer :: nx_c, ny_c, i_off, j_off, i_start, j_start
   real(kind=kind_real), allocatable :: tile2(:,:), tile3(:,:,:), tile4(:,:,:,:)
 
-  call get_read_ncid(self%filename, ncid, file_idx)
+  call ncc(nf90_open(self%filename, NF90_NOWRITE, ncid), &
+      'nf90_open '//trim(self%filename))
 
   nx_c    = self%iec - self%isc + 1
   ny_c    = self%jec - self%jsc + 1
@@ -1009,12 +1007,12 @@ subroutine commit_reader_strided(self)
   do v = 1, self%nvars
     select case (self%vars(v)%ndims)
     case (1)
-      call read_var_strided(ncid, file_idx, self%vars(v)%name, &
+      call read_var_strided(ncid, self%vars(v)%name, &
           1, 1, size(self%vars(v)%data1d), 1, dst1=self%vars(v)%data1d)
 
     case (2)
       if (.not. allocated(tile2)) allocate(tile2(nx_c, ny_c))
-      call read_var_strided(ncid, file_idx, self%vars(v)%name, &
+      call read_var_strided(ncid, self%vars(v)%name, &
           i_start, j_start, nx_c, ny_c, dst2=tile2)
       self%vars(v)%data2d(i_off : i_off + nx_c - 1, &
                           j_off : j_off + ny_c - 1) = tile2
@@ -1025,7 +1023,7 @@ subroutine commit_reader_strided(self)
         if (size(tile3, 3) /= n3) deallocate(tile3)
       end if
       if (.not. allocated(tile3)) allocate(tile3(nx_c, ny_c, n3))
-      call read_var_strided(ncid, file_idx, self%vars(v)%name, &
+      call read_var_strided(ncid, self%vars(v)%name, &
           i_start, j_start, nx_c, ny_c, dst3=tile3)
       self%vars(v)%data3d(i_off : i_off + nx_c - 1, &
                           j_off : j_off + ny_c - 1, :) = tile3
@@ -1037,12 +1035,14 @@ subroutine commit_reader_strided(self)
         if (size(tile4, 3) /= n3 .or. size(tile4, 4) /= n4) deallocate(tile4)
       end if
       if (.not. allocated(tile4)) allocate(tile4(nx_c, ny_c, n3, n4))
-      call read_var_strided(ncid, file_idx, self%vars(v)%name, &
+      call read_var_strided(ncid, self%vars(v)%name, &
           i_start, j_start, nx_c, ny_c, dst4=tile4)
       self%vars(v)%data4d(i_off : i_off + nx_c - 1, &
                           j_off : j_off + ny_c - 1, :, :) = tile4
     end select
   end do
+
+  call ncc(nf90_close(ncid), 'nf90_close '//trim(self%filename))
 
   if (allocated(tile2)) deallocate(tile2)
   if (allocated(tile3)) deallocate(tile3)
@@ -1063,40 +1063,43 @@ end subroutine commit_reader_strided
 subroutine reader_stage_read(self)
   type(soca_io_reader), intent(inout) :: self
 
-  integer :: ncid, file_idx, v, n, n3, n4
+  integer :: ncid, v, n, n3, n4
   logical :: is_root
 
   is_root = (mpp_pe() == self%reader_pe)
   if (.not. is_root) return
 
-  call get_read_ncid(self%filename, ncid, file_idx)
+  call ncc(nf90_open(self%filename, NF90_NOWRITE, ncid), &
+      'nf90_open '//trim(self%filename))
 
   do v = 1, self%nvars
     select case (self%vars(v)%ndims)
     case (1)
       n = size(self%vars(v)%data1d)
-      call read_var_strided(ncid, file_idx, self%vars(v)%name, &
+      call read_var_strided(ncid, self%vars(v)%name, &
           1, 1, n, 1, dst1=self%vars(v)%data1d)
     case (2)
       if (.not. allocated(self%vars(v)%gbuf_2d)) &
           allocate(self%vars(v)%gbuf_2d(self%nx_g, self%ny_g))
-      call read_var_strided(ncid, file_idx, self%vars(v)%name, &
+      call read_var_strided(ncid, self%vars(v)%name, &
           1, 1, self%nx_g, self%ny_g, dst2=self%vars(v)%gbuf_2d)
     case (3)
       n3 = size(self%vars(v)%data3d, 3)
       if (.not. allocated(self%vars(v)%gbuf_3d)) &
           allocate(self%vars(v)%gbuf_3d(self%nx_g, self%ny_g, n3))
-      call read_var_strided(ncid, file_idx, self%vars(v)%name, &
+      call read_var_strided(ncid, self%vars(v)%name, &
           1, 1, self%nx_g, self%ny_g, dst3=self%vars(v)%gbuf_3d)
     case (4)
       n3 = size(self%vars(v)%data4d, 3)
       n4 = size(self%vars(v)%data4d, 4)
       if (.not. allocated(self%vars(v)%gbuf_4d)) &
           allocate(self%vars(v)%gbuf_4d(self%nx_g, self%ny_g, n3, n4))
-      call read_var_strided(ncid, file_idx, self%vars(v)%name, &
+      call read_var_strided(ncid, self%vars(v)%name, &
           1, 1, self%nx_g, self%ny_g, dst4=self%vars(v)%gbuf_4d)
     end select
   end do
+
+  call ncc(nf90_close(ncid), 'nf90_close '//trim(self%filename))
 end subroutine reader_stage_read
 
 
@@ -1520,110 +1523,6 @@ end subroutine reader_stage_distribute_all_async
 
 
 !==============================================================================
-! Look up (or open and cache) the read handle for filename. Returns ncid and
-! file_idx into read_cache() so read_var_strided can find per-var cached
-! metadata. Per-PE cache.
-!==============================================================================
-subroutine get_read_ncid(filename, ncid, file_idx)
-  character(len=*), intent(in)  :: filename
-  integer,          intent(out) :: ncid, file_idx
-  integer :: i
-
-  do i = 1, n_read_cached
-    if (allocated(read_cache(i)%filename)) then
-      if (read_cache(i)%filename == filename) then
-        ncid     = read_cache(i)%ncid
-        file_idx = i
-        return
-      end if
-    end if
-  end do
-
-  if (n_read_cached >= MAX_CACHED_OPENS) call mpp_error(FATAL, &
-      'soca_io_mod get_read_ncid: cache full (increase MAX_CACHED_OPENS)')
-  call ncc(nf90_open(filename, NF90_NOWRITE, ncid), 'nf90_open '//trim(filename))
-  n_read_cached = n_read_cached + 1
-  read_cache(n_read_cached)%filename = filename
-  read_cache(n_read_cached)%ncid     = ncid
-  allocate(read_cache(n_read_cached)%vars(VAR_CACHE_INIT))
-  read_cache(n_read_cached)%nvars    = 0
-  file_idx = n_read_cached
-end subroutine get_read_ncid
-
-
-!==============================================================================
-! Fetch cached metadata for (file_idx, varname), or do the inq calls and cache
-! on first use. middle_dims(3..ndims-1) holds file dim sizes for the layer /
-! category / "extra" axes.
-!==============================================================================
-subroutine get_var_meta(file_idx, name, varid, file_ndims, middle_dims)
-  integer,          intent(in)  :: file_idx
-  character(len=*), intent(in)  :: name
-  integer,          intent(out) :: varid, file_ndims
-  integer,          intent(out) :: middle_dims(MAX_FILE_NDIMS)
-
-  integer :: i, dd, sz, ncid, nv
-  integer :: file_dimids(MAX_FILE_NDIMS)
-  type(cached_var), allocatable :: tmp(:)
-
-  nv = read_cache(file_idx)%nvars
-  do i = 1, nv
-    if (read_cache(file_idx)%vars(i)%name == name) then
-      varid       = read_cache(file_idx)%vars(i)%varid
-      file_ndims  = read_cache(file_idx)%vars(i)%file_ndims
-      middle_dims = read_cache(file_idx)%vars(i)%middle_dims
-      return
-    end if
-  end do
-
-  ! First-touch -- do the inq calls and stash the result.
-  ncid = read_cache(file_idx)%ncid
-  call ncc(nf90_inq_varid(ncid, trim(name), varid), 'inq '//trim(name))
-  call ncc(nf90_inquire_variable(ncid, varid, ndims=file_ndims, dimids=file_dimids), &
-           'inquire '//trim(name))
-  if (file_ndims > MAX_FILE_NDIMS) call mpp_error(FATAL, &
-      'soca_io_mod get_var_meta: '//trim(name)//' exceeds MAX_FILE_NDIMS')
-  middle_dims = 1
-  do dd = 3, file_ndims - 1
-    call ncc(nf90_inquire_dimension(ncid, file_dimids(dd), len=sz), 'dim '//trim(name))
-    middle_dims(dd) = sz
-  end do
-
-  if (nv >= size(read_cache(file_idx)%vars)) then
-    allocate(tmp(2 * size(read_cache(file_idx)%vars)))
-    tmp(1:nv) = read_cache(file_idx)%vars(1:nv)
-    call move_alloc(tmp, read_cache(file_idx)%vars)
-  end if
-  nv = nv + 1
-  read_cache(file_idx)%nvars               = nv
-  read_cache(file_idx)%vars(nv)%name        = name
-  read_cache(file_idx)%vars(nv)%varid       = varid
-  read_cache(file_idx)%vars(nv)%file_ndims  = file_ndims
-  read_cache(file_idx)%vars(nv)%middle_dims = middle_dims
-end subroutine get_var_meta
-
-
-!==============================================================================
-! Close every cached read handle and drop the table. Call from soca_geom%end
-! so the next geometry opens files fresh, and so a writer that re-creates a
-! previously-read file won't hit a stale ncid on a deleted inode.
-!==============================================================================
-subroutine soca_io_close_all()
-  integer :: i
-  do i = 1, n_read_cached
-    if (read_cache(i)%ncid >= 0) then
-      call ncc(nf90_close(read_cache(i)%ncid), 'soca_io_close_all nf90_close')
-      read_cache(i)%ncid = -1
-    end if
-    if (allocated(read_cache(i)%filename)) deallocate(read_cache(i)%filename)
-    if (allocated(read_cache(i)%vars))     deallocate(read_cache(i)%vars)
-    read_cache(i)%nvars = 0
-  end do
-  n_read_cached = 0
-end subroutine soca_io_close_all
-
-
-!==============================================================================
 ! Find an existing axis matching (size, domain_key) or append a new one.
 ! Sets `idx` to the (1-based) position in the axes() array.
 !==============================================================================
@@ -1742,9 +1641,9 @@ end function soca_io_var_exists
 !   - 5D CICE Tsnz_h(time, nc=5, nksnow=1, nj, ni) -> 3D tile (nx, ny, 5)
 !     file_ndims=5, count=[nx, ny, 1, 5, 1] = [nx, ny, nksnow, nc, time].
 !==============================================================================
-subroutine read_var_strided(ncid, file_idx, name, i_start, j_start, nx, ny, &
+subroutine read_var_strided(ncid, name, i_start, j_start, nx, ny, &
                             dst1, dst2, dst3, dst4)
-  integer,                       intent(in)  :: ncid, file_idx
+  integer,                       intent(in)  :: ncid
   integer,                       intent(in)  :: i_start, j_start, nx, ny
   character(len=*),              intent(in)  :: name
   real(kind=kind_real), optional, intent(out) :: dst1(:)
@@ -1752,32 +1651,72 @@ subroutine read_var_strided(ncid, file_idx, name, i_start, j_start, nx, ny, &
   real(kind=kind_real), optional, intent(out) :: dst3(:,:,:)
   real(kind=kind_real), optional, intent(out) :: dst4(:,:,:,:)
 
-  integer :: varid, file_ndims, dd
-  integer :: middle_dims(MAX_FILE_NDIMS)
+  integer :: varid, file_ndims, dd, sz, dst_rank
+  integer :: file_dimids(MAX_FILE_NDIMS)
   integer :: st(MAX_FILE_NDIMS), ct(MAX_FILE_NDIMS)
+  integer :: total_ct, expected_total
+  character(len=8) :: total_str
 
-  call get_var_meta(file_idx, name, varid, file_ndims, middle_dims)
+  call ncc(nf90_inq_varid(ncid, trim(name), varid), 'inq '//trim(name))
+  call ncc(nf90_inquire_variable(ncid, varid, ndims=file_ndims, dimids=file_dimids), &
+           'inquire '//trim(name))
+  if (file_ndims > MAX_FILE_NDIMS) call mpp_error(FATAL, &
+      'soca_io_mod read_var_strided: '//trim(name)//' exceeds MAX_FILE_NDIMS')
+
+  if (present(dst1)) then
+    dst_rank = 1
+  else if (present(dst2)) then
+    dst_rank = 2
+  else if (present(dst3)) then
+    dst_rank = 3
+  else if (present(dst4)) then
+    dst_rank = 4
+  else
+    call mpp_error(FATAL, 'soca_io_mod read_var_strided: no destination provided')
+  end if
+  if (file_ndims < dst_rank) call mpp_error(FATAL, &
+      'soca_io_mod read_var_strided: '//trim(name)//' has fewer file dims than destination rank')
+
   st(1:file_ndims) = 1
   ct(1:file_ndims) = 1
-  if (present(dst1)) then
-    ! 1D var: count(1)=nx, rest stays 1
+  if (dst_rank == 1) then
     ct(1) = nx
-    if (file_ndims >= 2) ct(file_ndims) = 1
   else
-    if (file_ndims < 2) call mpp_error(FATAL, &
-        'soca_io_mod read_var_strided: '//trim(name)//' has fewer than 2 file dims')
     st(1) = i_start
     st(2) = j_start
     ct(1) = nx
     ct(2) = ny
-    ! Trailing-time + middle dims case: ct(file_ndims)=1 plus middle dims from
-    ! the file (Salt's Layer, Tsnz_h's nc/nksnow). Pure 2D file: leading x/y
-    ! stride only.
-    if (file_ndims >= 3) then
+    if (file_ndims == dst_rank) then
+      ! All file dims are spatial (no trailing time/record). Fill from file.
+      do dd = 3, file_ndims
+        call ncc(nf90_inquire_dimension(ncid, file_dimids(dd), len=sz), &
+                 'inq dim '//trim(name))
+        ct(dd) = sz
+      end do
+    else
+      ! file_ndims > dst_rank: one trailing time/record dim plus any squeezable
+      ! middle dims (e.g. CICE Tsnz_h's nksnow=1 between (ni,nj) and nc).
       ct(file_ndims) = 1
       do dd = 3, file_ndims - 1
-        ct(dd) = middle_dims(dd)
+        call ncc(nf90_inquire_dimension(ncid, file_dimids(dd), len=sz), &
+                 'inq dim '//trim(name))
+        ct(dd) = sz
       end do
+    end if
+    ! Total-count check: catches both per-dim size mismatches (e.g. file
+    ! z=75 vs destination z=25) and the silent partial-fill that motivated
+    ! this rewrite.
+    total_ct = 1
+    do dd = 1, file_ndims
+      total_ct = total_ct * ct(dd)
+    end do
+    expected_total = nx * ny
+    if (present(dst3)) expected_total = expected_total * size(dst3, 3)
+    if (present(dst4)) expected_total = expected_total * size(dst4, 3) * size(dst4, 4)
+    if (total_ct /= expected_total) then
+      write(total_str, '(i0)') expected_total
+      call mpp_error(FATAL, 'soca_io_mod read_var_strided: '//trim(name)// &
+          ' file element count does not match destination ('//trim(total_str)//')')
     end if
   end if
 
@@ -1944,5 +1883,37 @@ function soca_io_ensemble_root_pe(m, nmembers) result(pe)
   integer :: pe
   pe = (m - 1) * mpp_npes() / nmembers
 end function soca_io_ensemble_root_pe
+
+
+!==============================================================================
+! Defensive buffer-shape checks, called from each enqueue. Catches an
+! unallocated actual (size 0) and a caller that mis-sized the data-domain
+! buffer (e.g. used compute extents instead of data-domain extents). Pure
+! integer comparisons -- no perf cost.
+!==============================================================================
+subroutine check_buf_1d(role, name, n)
+  character(len=*), intent(in) :: role, name
+  integer,          intent(in) :: n
+  character(len=32) :: ns
+  if (n <= 0) then
+    write(ns, '(I0)') n
+    call mpp_error(FATAL, 'soca_io_mod '//trim(role)//': buffer for "'// &
+        trim(name)//'" has non-positive size '//trim(ns)// &
+        ' (unallocated or empty?)')
+  end if
+end subroutine check_buf_1d
+
+subroutine check_buf_2d(role, name, n1, n2, expected_n1, expected_n2)
+  character(len=*), intent(in) :: role, name
+  integer,          intent(in) :: n1, n2, expected_n1, expected_n2
+  character(len=128) :: s
+  if (n1 /= expected_n1 .or. n2 /= expected_n2) then
+    write(s, '(A,I0,A,I0,A,I0,A,I0,A)') &
+        ' got (', n1, ',', n2, '); expected data-domain (', &
+        expected_n1, ',', expected_n2, ')'
+    call mpp_error(FATAL, 'soca_io_mod '//trim(role)//': buffer for "'// &
+        trim(name)//'" wrong shape -- '//trim(s))
+  end if
+end subroutine check_buf_2d
 
 end module soca_io_mod
