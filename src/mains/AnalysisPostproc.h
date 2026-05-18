@@ -22,7 +22,6 @@
 #include "oops/base/instantiateInflationFactory.h"
 #include "oops/base/StateSet.h"
 #include "oops/base/State.h"
-#include "oops/interface/VariableChange.h"
 #include "oops/mpi/mpi.h"
 #include "oops/runs/Application.h"
 #include "oops/util/ConfigFunctions.h"
@@ -30,6 +29,8 @@
 #include "oops/util/Logger.h"
 
 #include "soca/Geometry/FmsInput.h"
+#include "soca/PostProcess/PostProcessIce.h"
+#include "soca/State/State.h"
 #include "soca/Traits.h"
 #include "soca/Utils/incrqc/include/soca_incr_qc.h"
 
@@ -59,7 +60,6 @@ class AnalysisPostproc : public oops::Application {
   typedef oops::InflationBase<soca::Traits>  InflationBase_;
   typedef oops::InflationFactory<soca::Traits> InflationFactory_;
   typedef oops::StateSet<soca::Traits>       StateSet_;
-  typedef oops::VariableChange<soca::Traits> VariableChange_;
 
  public:
   // -----------------------------------------------------------------------------
@@ -268,8 +268,16 @@ class AnalysisPostproc : public oops::Application {
     eckit::LocalConfiguration outputIncrConfig(fullConfig, "output increments");
     incs.write(outputIncrConfig);
 
-    // Postprocess analysis (for CICE restarts) if needed
+    // Postprocess analysis (for CICE restarts) if needed. Uses the C++/atlas
+    // PostProcessIce path: for each ensemble member, read the per-category
+    // CICE background restart, treat the recentered/inflated ensemble state
+    // as the analysis, and write a per-member CICE restart file. Output paths
+    // carry a %mem% pattern that is substituted per member.
     if (fullConfig.has("analysis postprocessing")) {
+      const eckit::LocalConfiguration anPostprocConfig(fullConfig, "analysis postprocessing");
+      const std::string pattern = anPostprocConfig.getString("pattern");
+      const eckit::LocalConfiguration ppIceTemplate(anPostprocConfig, "postprocess ice");
+      const eckit::LocalConfiguration ciceBgTemplate(anPostprocConfig, "cice background state");
       for (size_t iens = 0; iens < incs.local_ens_size(); ++iens) {
         const size_t ensMember = incs.local_ens()[iens];
         oops::Log::info() << "updating ice state " << ensMember << ":" << ens[iens] << std::endl;
@@ -277,16 +285,19 @@ class AnalysisPostproc : public oops::Application {
           ens(itime, iens) += incs(itime, iens);
         }
         oops::Log::info() << "updated ice state " << ensMember << ":" << ens[iens] << std::endl;
-        // set up variable change
-        eckit::LocalConfiguration varchangeConfig(fullConfig,
-          "analysis postprocessing.sea ice variable change");
-        std::string pattern = varchangeConfig.getString("pattern");
-        util::seekAndReplace(varchangeConfig, pattern, ensMember+1, 0);
-        VariableChange_ varchange(varchangeConfig, geometry);
-        oops::Variables varout(varchangeConfig, "output variables");
-        // output happens inside soca2cice
+
+        // Per-member %mem% substitution in the postprocess-ice and CICE-bg configs.
+        eckit::LocalConfiguration ppIceConfig(ppIceTemplate);
+        util::seekAndReplace(ppIceConfig, pattern, ensMember+1, 0);
+        eckit::LocalConfiguration ciceBgConfig(ciceBgTemplate);
+        util::seekAndReplace(ciceBgConfig, pattern, ensMember+1, 0);
+
+        PostProcessIce ppIce(geometry.geometry(), ppIceConfig);
         for (size_t itime = 0; itime < ens.local_time_size(); ++itime) {
-          varchange.changeVar(ens(itime, iens), varout);
+          // Read the per-category CICE background restart for this member.
+          soca::State restart(geometry.geometry(), ciceBgConfig);
+          soca::State pproc(geometry.geometry(), restart);
+          ppIce.postProcess(pproc, restart, ens(itime, iens).state());
         }
       }
     }
