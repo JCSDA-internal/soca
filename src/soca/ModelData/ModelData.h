@@ -24,7 +24,7 @@ namespace soca {
 class ModelData : public util::Printable {
  public:
   static const std::string classname() {return "soca::ModelData";}
-  static const oops::Variables defaultVariables() {
+  oops::Variables defaultVariables() const {
     return oops::Variables(std::vector<std::string>({"skin_temperature_at_surface_where_sea",
             "sea_water_potential_temperature", "sea_water_salinity", "sea_water_cell_thickness",
             "distance_from_coast", "sea_area_fraction", "sea_ice_snow_thickness",
@@ -33,15 +33,11 @@ class ModelData : public util::Printable {
             "Particulate_inorganic_carbon", "colored_dissolved_organic_carbon",
             "diatom_concentration", "chlorophyte_concentration", "cyano-bacteria_concentration",
             "coccolithophore_concentration", "dinoflagellate_concentration",
-            "phaeocystis_concentration",
-            // atmospheric variables that will be removed later
-            "ozone_thickness", "water_vapor", "relative_humidity",
-            "cloud_area_fraction_in_atmosphere_layer", "cloud_liquid_water_path",
-            "aerosol_optical_thickness", "single_scattering_albedo", "asymmetry_parameter"}));
+            "phaeocystis_concentration"}));
   }
 
   explicit ModelData(const Geometry &) {}
-  ~ModelData() {}
+  ~ModelData() = default;
 
   const eckit::LocalConfiguration modelData() const {return eckit::LocalConfiguration();}
 
