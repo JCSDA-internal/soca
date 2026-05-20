@@ -17,9 +17,7 @@ use type_fieldset, only: fieldset_type
 
 ! mom6 / fms modules
 use fms_mod, only : fms_init, fms_end
-use fms_io_mod, only : fms_io_init, fms_io_exit, &
-                       register_restart_field, restart_file_type, &
-                       restore_state, free_restart_type, save_restart
+use soca_io_mod, only : soca_io_writer, soca_io_reader
 use MOM, only : MOM_control_struct, initialize_MOM, MOM_end, get_MOM_state_elements
 use MOM_restart, only :MOM_restart_CS ! NOTE remove this when updating MOM6
 use MOM_domains, only : MOM_domain_type, MOM_domains_init, MOM_infra_init, MOM_infra_end
@@ -52,9 +50,6 @@ private
 ! Note, it seems we had been using invalud halo points with lat/lon of 0,0
 ! oops!
 real(kind=kind_real), parameter :: INVALID_HALO = -999_kind_real
-
-!> counter for geometries, used to call fms_io
-integer, save, private :: global_soca_geom_counter = 0
 
 ! ------------------------------------------------------------------------------
 !> Geometry data structure
@@ -165,7 +160,7 @@ contains
 !!
 !! \related soca_geom_mod::soca_geom
 subroutine soca_geom_init(self, f_conf, f_comm, gen)
-  class(soca_geom),         intent(out) :: self
+  class(soca_geom), target, intent(out) :: self  ! target so self%lonh etc. are valid pointer targets for soca_io_reader enqueue
   type(fckit_configuration), intent(in) :: f_conf
   type(fckit_mpi_comm),   intent(in)    :: f_comm !< MPI communicator for this geometry
   logical,                  intent(in)  :: gen !< if true, we are doing a full init
@@ -180,8 +175,7 @@ subroutine soca_geom_init(self, f_conf, f_comm, gen)
   type(MOM_control_struct)  :: CSp
 
   ! variables needed for reading gridspec file
-  integer :: r
-  type(restart_file_type) :: geom_restart
+  type(soca_io_reader) :: greader
   character(len=:), allocatable :: str
 
   ! MPI communicator
@@ -190,10 +184,6 @@ subroutine soca_geom_init(self, f_conf, f_comm, gen)
   ! use MOM6 to setup domain decomposition
   call mpp_init(localcomm=f_comm%communicator())
   call fms_init()
-  if (global_soca_geom_counter .eq. 0) then
-    call fms_io_init()
-  endif
-  global_soca_geom_counter = global_soca_geom_counter + 1
   call Get_MOM_Input(param_file, dirs)
   call MOM_domains_init(self%Domain, param_file)
   call get_param(param_file, "soca_mom6", "NK", self%nzo, fail_if_missing=.true.)
@@ -240,26 +230,26 @@ subroutine soca_geom_init(self, f_conf, f_comm, gen)
     ! NOTE that we will rerad the gridspec file later for some of the variables
     ! once the altas FunctionSpace has been created.
     if (.not. f_conf%get("geom_grid_file", str)) str = "soca_gridspec.nc"
-    r = register_restart_field(geom_restart, str, "lonh",    self%lonh,      self%Domain%mpp_domain)
-    r = register_restart_field(geom_restart, str, "lath",    self%lath,      self%Domain%mpp_domain)
-    r = register_restart_field(geom_restart, str, "lonq",    self%lonq,      self%Domain%mpp_domain)
-    r = register_restart_field(geom_restart, str, "latq",    self%latq,      self%Domain%mpp_domain)
-    r = register_restart_field(geom_restart, str, "lon",     self%lon,       self%Domain%mpp_domain)
-    r = register_restart_field(geom_restart, str, "lat",     self%lat,       self%Domain%mpp_domain)
-    r = register_restart_field(geom_restart, str, "lonu",    self%lonu,      self%Domain%mpp_domain)
-    r = register_restart_field(geom_restart, str, "latu",    self%latu,      self%Domain%mpp_domain)
-    r = register_restart_field(geom_restart, str, "lonv",    self%lonv,      self%Domain%mpp_domain)
-    r = register_restart_field(geom_restart, str, "latv",    self%latv,      self%Domain%mpp_domain)
-    r = register_restart_field(geom_restart, str, "sin_rot", self%sin_rot,   self%Domain%mpp_domain)
-    r = register_restart_field(geom_restart, str, "cos_rot", self%cos_rot,   self%Domain%mpp_domain)
-    r = register_restart_field(geom_restart, str, "dx",      self%dx,        self%Domain%mpp_domain)
-    r = register_restart_field(geom_restart, str, "dy",      self%dy,        self%Domain%mpp_domain)
-    r = register_restart_field(geom_restart, str, "area",    self%cell_area, self%Domain%mpp_domain)
-    r = register_restart_field(geom_restart, str, "mask2d",  self%mask2d,    self%Domain%mpp_domain)
-    r = register_restart_field(geom_restart, str, "mask2du", self%mask2du,   self%Domain%mpp_domain)
-    r = register_restart_field(geom_restart, str, "mask2dv", self%mask2dv,   self%Domain%mpp_domain)
-    call restore_state(geom_restart, directory='')
-    call free_restart_type(geom_restart)
+    call greader%init(self%Domain%mpp_domain, str)
+    call greader%enqueue("lonh",    self%lonh)
+    call greader%enqueue("lath",    self%lath)
+    call greader%enqueue("lonq",    self%lonq)
+    call greader%enqueue("latq",    self%latq)
+    call greader%enqueue("lon",     self%lon)
+    call greader%enqueue("lat",     self%lat)
+    call greader%enqueue("lonu",    self%lonu)
+    call greader%enqueue("latu",    self%latu)
+    call greader%enqueue("lonv",    self%lonv)
+    call greader%enqueue("latv",    self%latv)
+    call greader%enqueue("sin_rot", self%sin_rot)
+    call greader%enqueue("cos_rot", self%cos_rot)
+    call greader%enqueue("dx",      self%dx)
+    call greader%enqueue("dy",      self%dy)
+    call greader%enqueue("area",    self%cell_area)
+    call greader%enqueue("mask2d",  self%mask2d)
+    call greader%enqueue("mask2du", self%mask2du)
+    call greader%enqueue("mask2dv", self%mask2dv)
+    call greader%commit()
   endif
 
   ! Fill halos
@@ -290,10 +280,6 @@ end subroutine soca_geom_init
 !! \related soca_geom_mod::soca_geom
 subroutine soca_geom_end(self)
   class(soca_geom), intent(out)  :: self
-  global_soca_geom_counter = global_soca_geom_counter - 1
-  if (global_soca_geom_counter .eq. 0) then
-    call fms_io_exit()
-  endif
   nullify(self%Domain)
   if (allocated(self%lonh))          deallocate(self%lonh)
   if (allocated(self%lath))          deallocate(self%lath)
@@ -328,7 +314,7 @@ end subroutine soca_geom_end
 !! some variables are being set from the C++ side as well.
 !! \related soca_geom_mod::soca_geom
 subroutine soca_geom_init_fieldset(self, f_conf, gen)
-  class(soca_geom),  intent(inout) :: self
+  class(soca_geom), target, intent(inout) :: self  ! target for soca_io_reader pointer assoc
   type(fckit_configuration), intent(in) :: f_conf
   logical,                  intent(in)  :: gen !< if true, we are doing a full init
 
@@ -339,13 +325,13 @@ subroutine soca_geom_init_fieldset(self, f_conf, gen)
   integer, pointer :: vGmask(:,:), vOwned(:,:)
 
   ! variables needed for reading in atlas fields from gridspec file
-  integer :: v, r
+  integer :: v
   character(len=:), allocatable :: str
-  type(restart_file_type) :: geom_restart
+  type(soca_io_reader) :: greader
   character(len=20), dimension(2) :: atlasVars
   type(atlas_field) :: aField
   real(kind=kind_real), pointer :: aFieldData(:,:)
-  real(kind=kind_real), allocatable :: fieldData(:,:), fieldDataVars(:,:,:)
+  real(kind=kind_real), allocatable, target :: fieldData(:,:), fieldDataVars(:,:,:)  ! target for soca_io pointer assoc
 
 
   ! some fields always have to be generated because they are dependant on the PE layout
@@ -444,11 +430,11 @@ subroutine soca_geom_init_fieldset(self, f_conf, gen)
     allocate(fieldDataVars(self%isd:self%ied, self%jsd:self%jed, size(atlasVars)))
 
     ! read in from gridspec file
+    call greader%init(self%Domain%mpp_domain, str)
     do v = 1, size(atlasVars)
-      r = register_restart_field(geom_restart, str, atlasVars(v), fieldDataVars(:,:,v), self%Domain%mpp_domain)
+      call greader%enqueue(trim(atlasVars(v)), fieldDataVars(:,:,v))
     end do
-    call restore_state(geom_restart, directory='')
-    call free_restart_type(geom_restart)
+    call greader%commit()
 
     ! copy from fortran array to atlas field
     do v = 1, size(atlasVars)
@@ -610,20 +596,19 @@ end subroutine
 !!
 !! \related soca_geom_mod::soca_geom
 subroutine soca_geom_write(self, f_conf)
-  class(soca_geom), intent(in) :: self
+  class(soca_geom), target, intent(in) :: self  ! target for soca_io_writer pointer assoc
   type(fckit_configuration), intent(in) :: f_conf
 
   ! variables needed for writing restart file
   character(len=:), allocatable :: str
-  integer :: r
-  type(restart_file_type) :: geom_restart
+  type(soca_io_writer) :: gwriter
 
   ! variables needed for writing atlas fields
   integer :: i, j, v
   character(len=20), dimension(2) :: atlasVars
   type(atlas_field) :: aField
   real(kind=kind_real), pointer :: aFieldData(:,:)
-  real(kind=kind_real), allocatable, dimension(:,:,:) :: fieldData
+  real(kind=kind_real), allocatable, target, dimension(:,:,:) :: fieldData  ! target for soca_io_writer pointer assoc
 
   ! variables for writing local domain
   logical :: save_local
@@ -632,45 +617,42 @@ subroutine soca_geom_write(self, f_conf)
 
   ! Save global domain
   if (.not. f_conf%get("geom_grid_file", str)) str = "soca_gridspec.nc"
-  r = register_restart_field(geom_restart, str, "lonh",    self%lonh,      self%Domain%mpp_domain)
-  r = register_restart_field(geom_restart, str, "lath",    self%lath,      self%Domain%mpp_domain)
-  r = register_restart_field(geom_restart, str, "lonq",    self%lonq,      self%Domain%mpp_domain)
-  r = register_restart_field(geom_restart, str, "latq",    self%latq,      self%Domain%mpp_domain)
-  r = register_restart_field(geom_restart, str, "lon",     self%lon,       self%Domain%mpp_domain)
-  r = register_restart_field(geom_restart, str, "lat",     self%lat,       self%Domain%mpp_domain)
-  r = register_restart_field(geom_restart, str, "lonu",    self%lonu,      self%Domain%mpp_domain)
-  r = register_restart_field(geom_restart, str, "latu",    self%latu,      self%Domain%mpp_domain)
-  r = register_restart_field(geom_restart, str, "lonv",    self%lonv,      self%Domain%mpp_domain)
-  r = register_restart_field(geom_restart, str, "latv",    self%latv,      self%Domain%mpp_domain)
-  r = register_restart_field(geom_restart, str, "sin_rot", self%sin_rot,   self%Domain%mpp_domain)
-  r = register_restart_field(geom_restart, str, "cos_rot", self%cos_rot,   self%Domain%mpp_domain)
-  r = register_restart_field(geom_restart, str, "dx",      self%dx,        self%Domain%mpp_domain)
-  r = register_restart_field(geom_restart, str, "dy",      self%dy,        self%Domain%mpp_domain)
-  r = register_restart_field(geom_restart, str, "area",    self%cell_area, self%Domain%mpp_domain)
-  r = register_restart_field(geom_restart, str, "mask2d",  self%mask2d,    self%Domain%mpp_domain)
-  r = register_restart_field(geom_restart, str, "mask2du", self%mask2du,   self%Domain%mpp_domain)
-  r = register_restart_field(geom_restart, str, "mask2dv", self%mask2dv,   self%Domain%mpp_domain)
 
-  ! write out a subset of the fields in the atlas fieldset
-  ! (note, someday *most* of the var listed above will be moved to atlas fieldsets)
+  call gwriter%init(self%Domain%mpp_domain, str)
+  call gwriter%enqueue("lonh",    self%lonh)
+  call gwriter%enqueue("lath",    self%lath)
+  call gwriter%enqueue("lonq",    self%lonq)
+  call gwriter%enqueue("latq",    self%latq)
+  call gwriter%enqueue("lon",     self%lon)
+  call gwriter%enqueue("lat",     self%lat)
+  call gwriter%enqueue("lonu",    self%lonu)
+  call gwriter%enqueue("latu",    self%latu)
+  call gwriter%enqueue("lonv",    self%lonv)
+  call gwriter%enqueue("latv",    self%latv)
+  call gwriter%enqueue("sin_rot", self%sin_rot)
+  call gwriter%enqueue("cos_rot", self%cos_rot)
+  call gwriter%enqueue("dx",      self%dx)
+  call gwriter%enqueue("dy",      self%dy)
+  call gwriter%enqueue("area",    self%cell_area)
+  call gwriter%enqueue("mask2d",  self%mask2d)
+  call gwriter%enqueue("mask2du", self%mask2du)
+  call gwriter%enqueue("mask2dv", self%mask2dv)
+
+  ! atlas-derived fields
   atlasVars = [character(len=20) :: "rossby_radius", "distance_from_coast"]
   allocate(fieldData(self%isd:self%ied, self%jsd:self%jed, size(atlasVars)))
   do v = 1, size(atlasVars)
-    ! copy from atlas, to our fortran array
     aField = self%fieldset%field(trim(atlasVars(v)))
     call aField%data(aFieldData)
     do j=self%jsc,self%jec
       do i=self%isc,self%iec
-        fieldData(i,j,v ) = aFieldData(1, self%atlas_ij2idx(i,j))
+        fieldData(i,j,v) = aFieldData(1, self%atlas_ij2idx(i,j))
       end do
     end do
-
-    ! register with FMS
-    r = register_restart_field(geom_restart, str, trim(atlasVars(v)), fieldData(:,:, v), self%Domain%mpp_domain)
+    call gwriter%enqueue(trim(atlasVars(v)), fieldData(:,:,v))
   end do
 
-  call save_restart(geom_restart, directory='')
-  call free_restart_type(geom_restart)
+  call gwriter%commit()
 
   ! Set output option for local geometry
   if ( .not. f_conf%get("save_local_domain", save_local) ) save_local = .false.
