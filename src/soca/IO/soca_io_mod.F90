@@ -628,7 +628,8 @@ subroutine commit_reader_scatter(self)
   class(soca_io_reader), intent(inout) :: self
 
   integer :: ncid, v, n, n3, n4, k4
-  integer :: nx_c, ny_c, i_off, j_off, ishift, jshift
+  integer :: nx_c, ny_c, i_off, j_off
+  integer :: is_f, ie_f, js_f, je_f  ! PE tile in 1-based file-space indices
   integer, allocatable :: pelist(:)
   real(kind=kind_real), allocatable :: gbuf2(:,:), gbuf3(:,:,:), gbuf4(:,:,:,:)
   real(kind=kind_real), allocatable :: tile2(:,:), tile3(:,:,:)
@@ -645,8 +646,13 @@ subroutine commit_reader_scatter(self)
   ny_c   = self%jec - self%jsc + 1
   i_off  = self%isc - self%isd + 1
   j_off  = self%jsc - self%jsd + 1
-  ishift = 1 - self%isg    ! maps PE compute indices (isc:iec) to 1-based global file indices
-  jshift = 1 - self%jsg
+  ! Map PE compute indices (isg-based) to 1-based file/global-buffer indices.
+  ! FMS 2025.02 removed the ishift/jshift optional args from mpp_scatter, so
+  ! we pre-apply the shift in the indices we pass.
+  is_f   = self%isc - self%isg + 1
+  ie_f   = self%iec - self%isg + 1
+  js_f   = self%jsc - self%jsg + 1
+  je_f   = self%jec - self%jsg + 1
 
   do v = 1, self%nvars
     select case (self%vars(v)%ndims)
@@ -666,9 +672,8 @@ subroutine commit_reader_scatter(self)
       else
         allocate(gbuf2(1, 1))  ! dummy: mpp_scatter only reads input_data on root
       end if
-      call mpp_scatter(self%isc, self%iec, self%jsc, self%jec, &
-                       pelist, tile2, gbuf2, is_root, &
-                       ishift=ishift, jshift=jshift)
+      call mpp_scatter(is_f, ie_f, js_f, je_f, &
+                       pelist, tile2, gbuf2, is_root)
       deallocate(gbuf2)
       self%vars(v)%data2d(i_off : i_off + nx_c - 1, &
                           j_off : j_off + ny_c - 1) = tile2
@@ -684,9 +689,8 @@ subroutine commit_reader_scatter(self)
       else
         allocate(gbuf3(1, 1, 1))
       end if
-      call mpp_scatter(self%isc, self%iec, self%jsc, self%jec, n3, &
-                       pelist, tile3, gbuf3, is_root, &
-                       ishift=ishift, jshift=jshift)
+      call mpp_scatter(is_f, ie_f, js_f, je_f, n3, &
+                       pelist, tile3, gbuf3, is_root)
       deallocate(gbuf3)
       self%vars(v)%data3d(i_off : i_off + nx_c - 1, &
                           j_off : j_off + ny_c - 1, :) = tile3
@@ -706,13 +710,11 @@ subroutine commit_reader_scatter(self)
       end if
       do k4 = 1, n4
         if (is_root) then
-          call mpp_scatter(self%isc, self%iec, self%jsc, self%jec, n3, &
-                           pelist, tile3, gbuf4(:,:,:,k4), is_root, &
-                           ishift=ishift, jshift=jshift)
+          call mpp_scatter(is_f, ie_f, js_f, je_f, n3, &
+                           pelist, tile3, gbuf4(:,:,:,k4), is_root)
         else
-          call mpp_scatter(self%isc, self%iec, self%jsc, self%jec, n3, &
-                           pelist, tile3, gbuf3, is_root, &
-                           ishift=ishift, jshift=jshift)
+          call mpp_scatter(is_f, ie_f, js_f, je_f, n3, &
+                           pelist, tile3, gbuf3, is_root)
         end if
         self%vars(v)%data4d(i_off : i_off + nx_c - 1, &
                             j_off : j_off + ny_c - 1, :, k4) = tile3
