@@ -271,13 +271,15 @@ class AnalysisPostproc : public oops::Application {
     // Postprocess analysis (for CICE restarts) if needed. Uses the C++/atlas
     // PostProcessIce path: for each ensemble member, read the per-category
     // CICE background restart, treat the recentered/inflated ensemble state
-    // as the analysis, and write a per-member CICE restart file. Output paths
-    // carry a %mem% pattern that is substituted per member.
+    // as the analysis, run PostProcessIce, and write the resulting per-member
+    // CICE restart via soca::State::write (update mode, `cice template`).
+    // Config paths carry a %mem% pattern that is substituted per member.
     if (fullConfig.has("analysis postprocessing")) {
       const eckit::LocalConfiguration anPostprocConfig(fullConfig, "analysis postprocessing");
       const std::string pattern = anPostprocConfig.getString("pattern");
       const eckit::LocalConfiguration ppIceTemplate(anPostprocConfig, "postprocess ice");
       const eckit::LocalConfiguration ciceBgTemplate(anPostprocConfig, "cice background state");
+      const eckit::LocalConfiguration restartOutTemplate(anPostprocConfig, "restart output");
       for (size_t iens = 0; iens < incs.local_ens_size(); ++iens) {
         const size_t ensMember = incs.local_ens()[iens];
         oops::Log::info() << "updating ice state " << ensMember << ":" << ens[iens] << std::endl;
@@ -286,11 +288,14 @@ class AnalysisPostproc : public oops::Application {
         }
         oops::Log::info() << "updated ice state " << ensMember << ":" << ens[iens] << std::endl;
 
-        // Per-member %mem% substitution in the postprocess-ice and CICE-bg configs.
+        // Per-member %mem% substitution in the postprocess-ice, CICE-bg and
+        // restart-output configs.
         eckit::LocalConfiguration ppIceConfig(ppIceTemplate);
         util::seekAndReplace(ppIceConfig, pattern, ensMember+1, 0);
         eckit::LocalConfiguration ciceBgConfig(ciceBgTemplate);
         util::seekAndReplace(ciceBgConfig, pattern, ensMember+1, 0);
+        eckit::LocalConfiguration restartOutConfig(restartOutTemplate);
+        util::seekAndReplace(restartOutConfig, pattern, ensMember+1, 0);
 
         PostProcessIce ppIce(geometry.geometry(), ppIceConfig);
         for (size_t itime = 0; itime < ens.local_time_size(); ++itime) {
@@ -298,6 +303,9 @@ class AnalysisPostproc : public oops::Application {
           soca::State restart(geometry.geometry(), ciceBgConfig);
           soca::State pproc(geometry.geometry(), restart);
           ppIce.postProcess(pproc, restart, ens(itime, iens).state());
+          // Write the postprocessed CICE restart (update mode preserves the
+          // CICE variables soca does not model -- see `cice template`).
+          pproc.write(restartOutConfig);
         }
       }
     }

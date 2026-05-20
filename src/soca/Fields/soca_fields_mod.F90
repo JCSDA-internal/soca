@@ -925,6 +925,7 @@ subroutine soca_fields_write_rst(self, f_conf, vdate)
 
   character(len=3), allocatable :: domains(:)
   character(len=:), allocatable :: domain_filename
+  character(len=:), allocatable :: cice_template
 
   type(varwrapper), allocatable, target :: vars(:)  ! target so vars(n)%data sections are valid pointer targets for soca_io enqueue
 
@@ -934,11 +935,27 @@ subroutine soca_fields_write_rst(self, f_conf, vdate)
     call f_conf%get_or_die("date colons", date_cols)
   end if
 
+  ! Optional CICE restart template. When set, the "ice" domain is written in
+  ! update mode: a copy of the template is overwritten in place, preserving the
+  ! ~40 CICE variables soca does not model. Per-category fields are grouped by
+  ! their CICE variable (io sup name) into one (ni,nj,ncat) write per variable.
+  if (f_conf%has("cice template")) then
+    call f_conf%get_or_die("cice template", cice_template)
+  end if
+
   ! Set up domain info
   domains = [character(len=3) :: "ocn", "sfc", "ice", "wav", "bio"]
 
   ! for each domain, get the fields to be written out and write them
   do d=1,size(domains)
+
+    ! "ice" domain in CICE-template update mode: grouped per-category write.
+    if (domains(d) == "ice" .and. allocated(cice_template)) then
+      call soca_fields_write_cice_rst(self, f_conf, vdate, date_cols, &
+                                      max_string_length, cice_template)
+      cycle
+    end if
+
     domain_filename = soca_genfilename(f_conf,max_string_length,vdate,date_cols,domains(d))
 
     ! count the number of vars that we will write in this file
@@ -993,6 +1010,111 @@ subroutine soca_fields_write_rst(self, f_conf, vdate)
     deallocate(vars)
   end do
 end subroutine soca_fields_write_rst
+
+
+! ------------------------------------------------------------------------------
+!> Write the "ice" domain as a CICE restart in update mode.
+!!
+!! Copies `cice_template` to the output path and overwrites only the modelled
+!! variables. Per-category atlas fields (categories > 0) are grouped by their
+!! CICE variable name (io sup name) and assembled into one (ni,nj,ncat) buffer
+!! per variable, so each CICE restart variable aicen / qice00N / ... is written
+!! with a single enqueue. Non-category ice fields, if any, are written by their
+!! io_name as usual.
+!!
+!! \relates soca_fields_mod::soca_fields
+subroutine soca_fields_write_cice_rst(self, f_conf, vdate, date_cols, &
+                                      max_string_length, cice_template)
+  class(soca_fields), target, intent(inout) :: self
+  type(fckit_configuration),  intent(in)    :: f_conf
+  type(datetime),             intent(inout) :: vdate
+  logical,                    intent(in)    :: date_cols
+  integer,                    intent(in)    :: max_string_length
+  character(len=*),           intent(in)    :: cice_template
+
+  type(soca_io_writer) :: writer
+  character(len=:), allocatable :: domain_filename
+  integer :: i, j, k, idx, f, g, ncat
+  integer :: nsup                                   ! number of unique io sup names
+  character(len=256), allocatable :: sup_names(:)    ! unique CICE variable names
+  type(varwrapper), allocatable, target :: vars(:)   ! one buffer per unique sup name
+  type(atlas_field) :: afield
+  real(kind=kind_real), pointer :: adata(:,:)
+
+  domain_filename = soca_genfilename(f_conf, max_string_length, vdate, date_cols, "ice")
+
+  ! 1. collect the unique CICE variable names (io sup name) across all
+  !    per-category ice fields.
+  nsup = 0
+  allocate(sup_names(64))
+  do f=1,size(self%fields)
+    if (self%fields(f)%metadata%io_file /= "ice") cycle
+    if (self%fields(f)%metadata%categories <= 0) cycle
+    if (any(sup_names(1:nsup) == self%fields(f)%metadata%io_sup_name)) cycle
+    nsup = nsup + 1
+    if (nsup > size(sup_names)) call abor1_ftn( &
+        "soca_fields_write_cice_rst: too many unique CICE variables")
+    sup_names(nsup) = self%fields(f)%metadata%io_sup_name
+  end do
+
+  if (nsup == 0) then
+    deallocate(sup_names)
+    return
+  end if
+
+  ! 2. for each unique CICE variable, build a (isd:ied, jsd:jed, ncat) buffer
+  !    by placing each per-category field into its category slab.
+  allocate(vars(nsup))
+  call writer%init(self%geom%Domain%mpp_domain, domain_filename, cice_template)
+
+  do g=1,nsup
+    ! ncat = number of category fields sharing this io sup name
+    ncat = 0
+    do f=1,size(self%fields)
+      if (self%fields(f)%metadata%io_file == "ice" .and. &
+          self%fields(f)%metadata%categories > 0 .and. &
+          self%fields(f)%metadata%io_sup_name == sup_names(g)) then
+        ncat = max(ncat, self%fields(f)%metadata%category)
+      end if
+    end do
+
+    allocate(vars(g)%data(self%geom%isd:self%geom%ied, &
+                          self%geom%jsd:self%geom%jed, ncat))
+    vars(g)%data = 0.0_kind_real
+
+    do f=1,size(self%fields)
+      if (self%fields(f)%metadata%io_file /= "ice") cycle
+      if (self%fields(f)%metadata%categories <= 0) cycle
+      if (self%fields(f)%metadata%io_sup_name /= sup_names(g)) cycle
+
+      k = self%fields(f)%metadata%category
+      afield = self%aFieldset%field(self%fields(f)%name)
+      call afield%data(adata)
+      if (associated(self%fields(f)%mask)) &
+          vars(g)%data(:,:,k) = self%fields(f)%metadata%fillvalue
+      do j=self%geom%jsc, self%geom%jec
+        do i=self%geom%isc, self%geom%iec
+          idx = self%geom%atlas_ij2idx(i,j)
+          if (associated(self%fields(f)%mask)) then
+            if (self%fields(f)%mask(i,j) == 0) cycle
+          end if
+          vars(g)%data(i,j,k) = adata(1, idx)
+        end do
+      end do
+      call afield%final()
+    end do
+
+    call writer%enqueue(trim(sup_names(g)), vars(g)%data(:,:,:))
+  end do
+
+  ! 3. write (copies the template, overwrites the enqueued variables in place).
+  call writer%commit()
+
+  do g=1,nsup
+    deallocate(vars(g)%data)
+  end do
+  deallocate(vars, sup_names)
+end subroutine soca_fields_write_cice_rst
 
 ! ------------------------------------------------------------------------------
 !> Interpolates from uv-points location to h-points.

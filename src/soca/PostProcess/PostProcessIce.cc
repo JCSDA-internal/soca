@@ -36,6 +36,46 @@
 namespace soca {
 
 // -----------------------------------------------------------------------------
+// Helpers to gather atlas array views for the per-category and
+// per-(category,layer) CICE thermo/pond fields. Field names follow the
+// convention declared in fields_metadata.yml:
+//   per-cat:        <prefix><c><suffix>           e.g. sea_ice_category3_pond_depth
+//   per-cat-layer:  <prefix><c><mid><l><suffix>   e.g. sea_ice_category3_layer5_enthalpy
+// Category and layer indices are 1-based in field names.
+
+namespace {
+
+std::vector<atlas::array::ArrayView<double, 2>> ppiCatViews(
+    const atlas::FieldSet & fset, std::size_t ncat,
+    const std::string & prefix, const std::string & suffix) {
+  std::vector<atlas::array::ArrayView<double, 2>> views;
+  views.reserve(ncat);
+  for (std::size_t k = 0; k < ncat; ++k) {
+    const std::string name = prefix + std::to_string(k + 1) + suffix;
+    views.push_back(atlas::array::make_view<double, 2>(fset.field(name)));
+  }
+  return views;
+}
+
+std::vector<std::vector<atlas::array::ArrayView<double, 2>>> ppiCatLevViews(
+    const atlas::FieldSet & fset, std::size_t ncat, std::size_t nlev,
+    const std::string & prefix, const std::string & mid,
+    const std::string & suffix) {
+  std::vector<std::vector<atlas::array::ArrayView<double, 2>>> views(ncat);
+  for (std::size_t k = 0; k < ncat; ++k) {
+    views[k].reserve(nlev);
+    for (std::size_t l = 0; l < nlev; ++l) {
+      const std::string name = prefix + std::to_string(k + 1) + mid
+                             + std::to_string(l + 1) + suffix;
+      views[k].push_back(atlas::array::make_view<double, 2>(fset.field(name)));
+    }
+  }
+  return views;
+}
+
+}  // namespace
+
+// -----------------------------------------------------------------------------
 
 PostProcessIce::PostProcessIce(const Geometry & geom,
                                const eckit::Configuration & conf)
@@ -288,28 +328,19 @@ void PostProcessIce::postProcess(State & pproc,
   size_t freeboard_failures = 0;
 
   // ---------------------------------------------------------------------------
-  // CICE restart input: open + read thermo before the per-cell loop so the
-  // shuffle path can copy donor thermo, and so the donor halo gather can pull
-  // per-cat Tsfcn from each rank's local frame.
-  const auto & ciceCfg = params_.ciceRestart.value();
-  CiceRestartIO ciceIO(geom_, ciceCfg.input.value(), ciceCfg.output.value());
-  auto frame = ciceIO.readThermo(ncat_, ice_lev, sno_lev);
-
-  // ownedNodeOf[jnode] = owned-node index (frame slot) for `jnode`, or -1 for
-  // ghost / non-owned cells. Mirrors CiceRestartIO::ownedGlobalIndices walk.
-  std::vector<std::int64_t> ownedNodeOf(field_size, -1);
-  {
-    const auto ghost  = atlas::array::make_view<int, 1>(fs.ghost());
-    const auto gindex = atlas::array::make_view<atlas::gidx_t, 1>(fs.global_index());
-    std::size_t on = 0;
-    for (std::size_t jnode = 0; jnode < ghost.size(); ++jnode) {
-      if (ghost(jnode)) continue;
-      if (gindex(jnode) <= 0) continue;
-      ownedNodeOf[jnode] = static_cast<std::int64_t>(on);
-      ++on;
-    }
-    ASSERT(on == frame.nOwnedNodes);
-  }
+  // CICE thermo/pond background views. These fields are carried as atlas Fields
+  // of the `restart` State (declared in fields_metadata.yml, listed in the
+  // State's `state variables`). `pproc = restart` already copied them into
+  // `pproc.fieldSet()`; the background copies below are read for the donor
+  // halo gather, while the per-cell loop and Stage C mutate `pproc.fieldSet()`.
+  const auto bg_tsfc_cat     = ppiCatViews(restart.fieldSet(), ncat_,
+                                           "sea_ice_category", "_surface_temperature");
+  const auto bg_qice_cat_lev = ppiCatLevViews(restart.fieldSet(), ncat_, ice_lev,
+                                              "sea_ice_category", "_layer", "_enthalpy");
+  const auto bg_sice_cat_lev = ppiCatLevViews(restart.fieldSet(), ncat_, ice_lev,
+                                              "sea_ice_category", "_layer", "_ice_salinity");
+  const auto bg_qsno_cat_lev = ppiCatLevViews(restart.fieldSet(), ncat_, sno_lev,
+                                              "sea_ice_snow_category", "_layer", "_enthalpy");
 
   // Sparse halo exchange for donor data (Phases A+B+C). K is the seed-new-ice
   // search radius; both donorMeanIce (in the NOICE2ICE branch) and seedNewIce
@@ -317,7 +348,8 @@ void PostProcessIce::postProcess(State & pproc,
   const std::size_t seedK = static_cast<std::size_t>(
       params_.thermo.value().seedSearchK.value());
   auto donorCache = gatherDonorHalo(seedK, bg_aice_cat, bg_vice_cat, bg_vsno_cat,
-                                    frame, ownedNodeOf, ice_lev, sno_lev);
+                                    bg_tsfc_cat, bg_qice_cat_lev, bg_sice_cat_lev,
+                                    bg_qsno_cat_lev, ice_lev, sno_lev);
 
   // Additional knobs picked up from the top-level parameters. seedK was
   // already computed above for the donor halo gather; reuse it here.
@@ -569,63 +601,57 @@ void PostProcessIce::postProcess(State & pproc,
   oops::Log::info() << " after pp restart: " << restart << std::endl;
 
   // ---------------------------------------------------------------------------
-  // Stage C: build NewIceMask, run applyThermoStage, optional seedNewIce,
-  // write CICE output + flush thermo. With the shuffle path removed, every
-  // (owned, k) cell that transitioned bg_aicen==0 -> new_aicen>0 needs thermo
-  // seeding from a KDTree donor.
+  // Stage C: build NewIceMask, run applyThermoStage, optional seedNewIce.
+  // With the shuffle path removed, every (jnode, k) cell that transitioned
+  // bg_aicen==0 -> new_aicen>0 needs thermo seeding from a KDTree donor.
+  // The masks are sized field_size*ncat and indexed by jnode (ghost cells
+  // are simply left zero).
   NewIceMask newIce;
   newIce.ncat = ncat_;
-  newIce.nOwnedNodes = frame.nOwnedNodes;
-  newIce.data.assign(newIce.nOwnedNodes * ncat_, 0);
+  newIce.nNodes = field_size;
+  newIce.data.assign(field_size * ncat_, 0);
   for (std::size_t jnode = 0; jnode < field_size; ++jnode) {
-    const std::int64_t on64 = ownedNodeOf[jnode];
-    if (on64 < 0) continue;
-    const std::size_t on = static_cast<std::size_t>(on64);
     for (std::size_t k = 0; k < ncat_; ++k) {
       const bool wasZero = (bg_aice_cat[k](jnode, 0) == 0.0);
       const bool nowPos  = (new_aice_cat[k](jnode, 0) > 0.0);
       if (wasZero && nowPos) {
-        newIce.data[on * ncat_ + k] = 1;
+        newIce.data[jnode * ncat_ + k] = 1;
       }
     }
   }
 
   const auto & thermoParams = params_.thermo.value();
 
-  // Build snowTouched mask: non-zero on (owned-node, k) slots where the snow
+  // Build snowTouched mask: non-zero on (jnode, k) slots where the snow
   // distribution modified vsnon vs the background restart. Drives the
   // apnd/hpnd reset in applyThermoStage; mirrors dd's policy of resetting
   // ponds only where snow was actually inserted.
   std::vector<std::uint8_t> snowTouched;
-  snowTouched.assign(frame.nOwnedNodes * ncat_, 0);
+  snowTouched.assign(field_size * ncat_, 0);
   const double snowTouchedTol = 1.0e-12;
   for (std::size_t jnode = 0; jnode < field_size; ++jnode) {
-    const std::int64_t on64 = ownedNodeOf[jnode];
-    if (on64 < 0) continue;
-    const std::size_t on = static_cast<std::size_t>(on64);
     for (std::size_t k = 0; k < ncat_; ++k) {
       const double dv = std::fabs(new_vsno_cat[k](jnode, 0)
                                   - bg_vsno_cat[k](jnode, 0));
       if (dv > snowTouchedTol) {
-        snowTouched[on * ncat_ + k] = 1;
+        snowTouched[jnode * ncat_ + k] = 1;
       }
     }
   }
 
-  applyThermoStage(frame, pproc.fieldSet(), snowTouched);
+  applyThermoStage(pproc.fieldSet(), snowTouched);
 
   if (thermoParams.seedNewIce.value()) {
-    const std::size_t fallbacks = seedNewIce(frame, newIce, donorCache,
-                                             ownedNodeOf, ice_lev, sno_lev);
+    const std::size_t fallbacks = seedNewIce(pproc.fieldSet(), newIce,
+                                             donorCache, ice_lev, sno_lev);
     if (fallbacks > 0) {
       oops::Log::warning() << "PostProcessIce: noice->ice seed fell back to "
                            << "Tfrz at " << fallbacks << " cells (no donor "
                            << "with ice within seedSearchK)." << std::endl;
     }
   }
-
-  ciceIO.write(pproc.fieldSet(), ncat_);
-  ciceIO.flushThermo(frame);
+  // `pproc` (now carrying the mutated ice + thermo/pond fields) is written by
+  // the caller via soca::State::write with a `cice template` key.
 }
 
 // -----------------------------------------------------------------------------
@@ -669,20 +695,15 @@ double PostProcessIce::meanHsno(const std::vector<atlas::array::ArrayView<double
 // -----------------------------------------------------------------------------
 
 void PostProcessIce::applyThermoStage(
-    CiceRestartIO::ThermoFrame & frame,
     const atlas::FieldSet & fset,
     const std::vector<std::uint8_t> & snowTouched) const {
   const auto & thermoParams = params_.thermo.value();
   const bool updateSnowThermo = thermoParams.updateSnowThermo.value();
   const bool resetPonds       = thermoParams.resetPonds.value();
   if (!updateSnowThermo && !resetPonds) return;
-  if (resetPonds) {
-    ASSERT(snowTouched.size() == frame.nOwnedNodes * ncat_);
-  }
 
-  ASSERT(frame.ncat == ncat_);
-  const std::size_t iceLev = frame.iceLev;
-  const std::size_t snoLev = frame.snoLev;
+  const std::size_t iceLev = params_.ice_lev.value();
+  const std::size_t snoLev = params_.sno_lev.value();
 
   const double maxTsfc = thermoParams.maxTsfc.value();
   const double minTsfc = thermoParams.minTsfc.value();
@@ -691,17 +712,22 @@ void PostProcessIce::applyThermoStage(
   const double qsnoLo  = std::min(qsnoMin, qsnoMax);
   const double qsnoHi  = std::max(qsnoMin, qsnoMax);
 
-  std::vector<atlas::array::ArrayView<double, 2>> aiceCat;
-  std::vector<atlas::array::ArrayView<double, 2>> vsnoCat;
-  aiceCat.reserve(ncat_);
-  vsnoCat.reserve(ncat_);
-  for (std::size_t icat = 0; icat < ncat_; ++icat) {
-    const std::string aname = "sea_ice_category" + std::to_string(icat+1)
-                              + "_area_fraction";
-    const std::string sname = "sea_ice_snow_category" + std::to_string(icat+1)
-                              + "_volume";
-    aiceCat.push_back(atlas::array::make_view<double, 2>(fset.field(aname)));
-    vsnoCat.push_back(atlas::array::make_view<double, 2>(fset.field(sname)));
+  auto aiceCat = ppiCatViews(fset, ncat_, "sea_ice_category", "_area_fraction");
+  auto vsnoCat = ppiCatViews(fset, ncat_, "sea_ice_snow_category", "_volume");
+  auto tsfcCat = ppiCatViews(fset, ncat_, "sea_ice_category", "_surface_temperature");
+  auto apndCat = ppiCatViews(fset, ncat_, "sea_ice_category", "_pond_area_fraction");
+  auto hpndCat = ppiCatViews(fset, ncat_, "sea_ice_category", "_pond_depth");
+  auto ipndCat = ppiCatViews(fset, ncat_, "sea_ice_category", "_pond_lid_thickness");
+  auto qiceCatLev = ppiCatLevViews(fset, ncat_, iceLev,
+                                   "sea_ice_category", "_layer", "_enthalpy");
+  auto siceCatLev = ppiCatLevViews(fset, ncat_, iceLev,
+                                   "sea_ice_category", "_layer", "_ice_salinity");
+  auto qsnoCatLev = ppiCatLevViews(fset, ncat_, snoLev,
+                                   "sea_ice_snow_category", "_layer", "_enthalpy");
+
+  const std::size_t field_size = aiceCat[0].shape(0);
+  if (resetPonds) {
+    ASSERT(snowTouched.size() == field_size * ncat_);
   }
 
   // Pre-compute layer-mean salinities so we can cap the surface ice layer.
@@ -712,32 +738,24 @@ void PostProcessIce::applyThermoStage(
   }
   const std::size_t lSurf = iceLev - 1;
 
-  const auto & fs    = geom_.functionSpace();
-  const auto ghost   = atlas::array::make_view<int, 1>(fs.ghost());
-  const auto gindex  = atlas::array::make_view<atlas::gidx_t, 1>(
-                          fs.global_index());
-
-  std::size_t ownedNode = 0;
-  for (std::size_t jnode = 0; jnode < ghost.size(); ++jnode) {
-    if (ghost(jnode)) continue;
-    if (gindex(jnode) <= 0) continue;
+  for (std::size_t jnode = 0; jnode < field_size; ++jnode) {
     for (std::size_t k = 0; k < ncat_; ++k) {
       const double aice = aiceCat[k](jnode, 0);
       if (aice <= 0.0) {
         // Cat lost its ice (ice2noice cell, rebin shuffle, or min-vice cleanup).
         // Clear stale thermo so cats without ice carry zeros rather than the
         // bg values they inherited from `pproc = restart`.
-        frame.at2(frame.Tsfcn, ownedNode, k) = 0.0;
+        tsfcCat[k](jnode, 0) = 0.0;
         for (std::size_t l = 0; l < snoLev; ++l) {
-          frame.at3(frame.qsno, snoLev, ownedNode, k, l) = 0.0;
+          qsnoCatLev[k][l](jnode, 0) = 0.0;
         }
         for (std::size_t l = 0; l < iceLev; ++l) {
-          frame.at3(frame.qice, iceLev, ownedNode, k, l) = 0.0;
-          frame.at3(frame.sice, iceLev, ownedNode, k, l) = 0.0;
+          qiceCatLev[k][l](jnode, 0) = 0.0;
+          siceCatLev[k][l](jnode, 0) = 0.0;
         }
-        frame.at2(frame.apnd, ownedNode, k) = 0.0;
-        frame.at2(frame.hpnd, ownedNode, k) = 0.0;
-        frame.at2(frame.ipnd, ownedNode, k) = 0.0;
+        apndCat[k](jnode, 0) = 0.0;
+        hpndCat[k](jnode, 0) = 0.0;
+        ipndCat[k](jnode, 0) = 0.0;
         continue;
       }
 
@@ -751,41 +769,38 @@ void PostProcessIce::applyThermoStage(
         // The opposite direction (back-deriving Tsfcn from a stale bg qsno
         // on cats that gained snow via redistribution) produced a +2.6 K
         // warm bias on the production grid.
-        double & T = frame.at2(frame.Tsfcn, ownedNode, k);
+        double & T = tsfcCat[k](jnode, 0);
         T = std::min(maxTsfc, std::max(minTsfc, T));
         if (vsno > 0.0) {
           const double qsfc = icephysics::snowEnthalpy(T);
           const double qClipped = std::min(qsnoHi, std::max(qsnoLo, qsfc));
           for (std::size_t l = 0; l < snoLev; ++l) {
-            frame.at3(frame.qsno, snoLev, ownedNode, k, l) = qClipped;
+            qsnoCatLev[k][l](jnode, 0) = qClipped;
           }
         } else {
           // No snow: zero qsno (matches Python; avoids stale-bg leakage).
           for (std::size_t l = 0; l < snoLev; ++l) {
-            frame.at3(frame.qsno, snoLev, ownedNode, k, l) = 0.0;
+            qsnoCatLev[k][l](jnode, 0) = 0.0;
           }
         }
         // Cap the surface ice layer enthalpy by iceEnthalpyBL99(Tsfcn, sice).
         if (T < 0.0) {
-          const double sice = frame.at3(frame.sice, iceLev,
-                                         ownedNode, k, lSurf);
+          const double sice = siceCatLev[k][lSurf](jnode, 0);
           const double sBL  = (sice > 0.0) ? sice : sLayer[lSurf];
           const double qCap = icephysics::iceEnthalpyBL99(T, sBL);
-          double & qIce = frame.at3(frame.qice, iceLev, ownedNode, k, lSurf);
+          double & qIce = qiceCatLev[k][lSurf](jnode, 0);
           qIce = std::min(qIce, qCap);
         }
       }
 
-      if (resetPonds && snowTouched[ownedNode * ncat_ + k]) {
+      if (resetPonds && snowTouched[jnode * ncat_ + k]) {
         // Match dd: only zero apnd/hpnd where snow was inserted. Never
         // touch ipnd (the refrozen-lid thickness is preserved from bg).
-        frame.at2(frame.apnd, ownedNode, k) = 0.0;
-        frame.at2(frame.hpnd, ownedNode, k) = 0.0;
+        apndCat[k](jnode, 0) = 0.0;
+        hpndCat[k](jnode, 0) = 0.0;
       }
     }
-    ++ownedNode;
   }
-  ASSERT(ownedNode == frame.nOwnedNodes);
 }
 
 // -----------------------------------------------------------------------------
@@ -796,8 +811,13 @@ PostProcessIce::gatherDonorHalo(
     const std::vector<atlas::array::ArrayView<double, 2>> & bg_aice_cat,
     const std::vector<atlas::array::ArrayView<double, 2>> & bg_vice_cat,
     const std::vector<atlas::array::ArrayView<double, 2>> & bg_vsno_cat,
-    const CiceRestartIO::ThermoFrame & frame,
-    const std::vector<std::int64_t> & ownedNodeOf,
+    const std::vector<atlas::array::ArrayView<double, 2>> & bg_tsfc_cat,
+    const std::vector<std::vector<atlas::array::ArrayView<double, 2>>> &
+        bg_qice_cat_lev,
+    const std::vector<std::vector<atlas::array::ArrayView<double, 2>>> &
+        bg_sice_cat_lev,
+    const std::vector<std::vector<atlas::array::ArrayView<double, 2>>> &
+        bg_qsno_cat_lev,
     std::size_t ice_lev,
     std::size_t sno_lev) const {
   const auto & comm = geom_.getComm();
@@ -859,23 +879,19 @@ PostProcessIce::gatherDonorHalo(
         rec[ncat_ + k]      = bg_vice_cat[k](jp, 0);
         rec[2 * ncat_ + k]  = bg_vsno_cat[k](jp, 0);
       }
-      // Tsfcn (per cat) from local frame.
-      const std::int64_t on = ownedNodeOf[jp];
+      // Tsfcn / per-layer qice/sice/qsno (per cat) from the background views.
       double * recTs = rec + 3 * ncat_;
       double * recQi = rec + 4 * ncat_;
       double * recSi = rec + 4 * ncat_ + ncat_ * ice_lev;
       double * recQs = rec + 4 * ncat_ + 2 * ncat_ * ice_lev;
-      if (on >= 0) {
-        const std::size_t onSt = static_cast<std::size_t>(on);
-        for (std::size_t k = 0; k < ncat_; ++k) {
-          recTs[k] = frame.at2(frame.Tsfcn, onSt, k);
-          for (std::size_t l = 0; l < ice_lev; ++l) {
-            recQi[k * ice_lev + l] = frame.at3(frame.qice, ice_lev, onSt, k, l);
-            recSi[k * ice_lev + l] = frame.at3(frame.sice, ice_lev, onSt, k, l);
-          }
-          for (std::size_t l = 0; l < sno_lev; ++l) {
-            recQs[k * sno_lev + l] = frame.at3(frame.qsno, sno_lev, onSt, k, l);
-          }
+      for (std::size_t k = 0; k < ncat_; ++k) {
+        recTs[k] = bg_tsfc_cat[k](jp, 0);
+        for (std::size_t l = 0; l < ice_lev; ++l) {
+          recQi[k * ice_lev + l] = bg_qice_cat_lev[k][l](jp, 0);
+          recSi[k * ice_lev + l] = bg_sice_cat_lev[k][l](jp, 0);
+        }
+        for (std::size_t l = 0; l < sno_lev; ++l) {
+          recQs[k * sno_lev + l] = bg_qsno_cat_lev[k][l](jp, 0);
         }
       }
       // mask
@@ -957,10 +973,9 @@ bool PostProcessIce::donorMeanIce(
 // -----------------------------------------------------------------------------
 
 std::size_t PostProcessIce::seedNewIce(
-    CiceRestartIO::ThermoFrame & frame,
+    const atlas::FieldSet & fset,
     const NewIceMask & mask,
     const std::unordered_map<std::int64_t, CatRecord> & donorCache,
-    const std::vector<std::int64_t> & ownedNodeOf,
     std::size_t ice_lev,
     std::size_t sno_lev) const {
   const auto & thermoParams = params_.thermo.value();
@@ -968,6 +983,14 @@ std::size_t PostProcessIce::seedNewIce(
   const double maxTsfc = std::min(thermoParams.maxTsfc.value(), -1e-6);
   const double minTsfc = thermoParams.minTsfc.value();
   const double Tfrz    = icephysics::Constants::Tfrz;
+
+  auto tsfcCat = ppiCatViews(fset, ncat_, "sea_ice_category", "_surface_temperature");
+  auto qiceCatLev = ppiCatLevViews(fset, ncat_, ice_lev,
+                                   "sea_ice_category", "_layer", "_enthalpy");
+  auto siceCatLev = ppiCatLevViews(fset, ncat_, ice_lev,
+                                   "sea_ice_category", "_layer", "_ice_salinity");
+  auto qsnoCatLev = ppiCatLevViews(fset, ncat_, sno_lev,
+                                   "sea_ice_snow_category", "_layer", "_enthalpy");
 
   const auto & fs   = geom_.functionSpace();
   const auto ghost  = atlas::array::make_view<int, 1>(fs.ghost());
@@ -977,13 +1000,10 @@ std::size_t PostProcessIce::seedNewIce(
   for (std::size_t jnode = 0; jnode < ghost.size(); ++jnode) {
     if (ghost(jnode)) continue;
     if (gindex(jnode) <= 0) continue;
-    const std::int64_t on64 = ownedNodeOf[jnode];
-    if (on64 < 0) continue;
-    const std::size_t on = static_cast<std::size_t>(on64);
 
     bool anyNew = false;
     for (std::size_t k = 0; k < ncat_; ++k) {
-      if (mask.at(on, k)) { anyNew = true; break; }
+      if (mask.at(jnode, k)) { anyNew = true; break; }
     }
     if (!anyNew) continue;
 
@@ -1019,17 +1039,17 @@ std::size_t PostProcessIce::seedNewIce(
     const double Tseed = std::min(maxTsfc, std::max(minTsfc, donorTsfc));
 
     for (std::size_t k = 0; k < ncat_; ++k) {
-      if (!mask.at(on, k)) continue;
-      frame.at2(frame.Tsfcn, on, k) = Tseed;
+      if (!mask.at(jnode, k)) continue;
+      tsfcCat[k](jnode, 0) = Tseed;
       const double qsnSeed = icephysics::snowEnthalpy(Tseed);
       for (std::size_t l = 0; l < sno_lev; ++l) {
-        frame.at3(frame.qsno, sno_lev, on, k, l) = qsnSeed;
+        qsnoCatLev[k][l](jnode, 0) = qsnSeed;
       }
       for (std::size_t l = 0; l < ice_lev; ++l) {
         const double sice_l = icephysics::siceLayerCice4(
             static_cast<int>(l) + 1, static_cast<int>(ice_lev));
-        frame.at3(frame.sice, ice_lev, on, k, l) = sice_l;
-        frame.at3(frame.qice, ice_lev, on, k, l) =
+        siceCatLev[k][l](jnode, 0) = sice_l;
+        qiceCatLev[k][l](jnode, 0) =
             icephysics::iceEnthalpyBL99(Tseed, sice_l);
       }
     }

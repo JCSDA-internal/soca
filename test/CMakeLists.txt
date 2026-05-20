@@ -879,23 +879,19 @@ ecbuild_add_test( TARGET  test_soca_icephysics
                   SOURCES executables/TestIcePhysics.cc
                   LIBS    soca )
 
-# CiceRestartIO unit tests (round-trip, selective overwrite, ncat mismatch).
-soca_add_test( NAME cice_restart_io
-              SRC  TestCiceRestartIO.cc
-              MPI 2
-              NOTRAPFPE
-              TEST_DEPENDS test_soca_gridgen )
-
 # Regression test: legacy Fortran Soca2Cice path vs new C++ PostProcessIce
 # path on the same inputs. Compares the two output CICE restarts and accepts
 # a small bounded number of differing cells (marginal-zone shuffle picks
-# different donors between the two implementations).
+# different donors between the two implementations). The 5th argument is the
+# input CICE template -- the script also verifies that the variables soca does
+# not model are passed through byte-identically by the update-mode writer.
 ecbuild_add_test(
     TARGET test_soca_postprocice_vs_soca2cice
     COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/postprocice_vs_soca2cice.sh
     ARGS
       ${CMAKE_CURRENT_BINARY_DIR}/test_workdir/convertstate_soca2cice/data_output/iced.2018-04-15-00000.nc
-      ${CMAKE_CURRENT_BINARY_DIR}/test_workdir/soca2cice_new/data_output/iced.postproc.nc
+      ${CMAKE_CURRENT_BINARY_DIR}/test_workdir/soca2cice_new/data_output/ice.cice_restart_postproc.an.2018-04-15T00:00:00Z.nc
       1e-10
       2
+      ${CMAKE_CURRENT_BINARY_DIR}/test_workdir/soca2cice_new/data_static/72x35x25/restarts/iced.2018-04-15-00000.nc
     TEST_DEPENDS test_soca_convertstate_soca2cice test_soca_soca2cice_new )

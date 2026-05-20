@@ -26,6 +26,102 @@ restart:
   - sea_ice_snow_category3_volume
   - sea_ice_snow_category4_volume
   - sea_ice_snow_category5_volume
+   # CICE restart thermo / pond variables
+  - sea_ice_category1_surface_temperature
+  - sea_ice_category2_surface_temperature
+  - sea_ice_category3_surface_temperature
+  - sea_ice_category4_surface_temperature
+  - sea_ice_category5_surface_temperature
+  - sea_ice_category1_pond_area_fraction
+  - sea_ice_category2_pond_area_fraction
+  - sea_ice_category3_pond_area_fraction
+  - sea_ice_category4_pond_area_fraction
+  - sea_ice_category5_pond_area_fraction
+  - sea_ice_category1_pond_depth
+  - sea_ice_category2_pond_depth
+  - sea_ice_category3_pond_depth
+  - sea_ice_category4_pond_depth
+  - sea_ice_category5_pond_depth
+  - sea_ice_category1_pond_lid_thickness
+  - sea_ice_category2_pond_lid_thickness
+  - sea_ice_category3_pond_lid_thickness
+  - sea_ice_category4_pond_lid_thickness
+  - sea_ice_category5_pond_lid_thickness
+  - sea_ice_category1_layer1_enthalpy
+  - sea_ice_category1_layer2_enthalpy
+  - sea_ice_category1_layer3_enthalpy
+  - sea_ice_category1_layer4_enthalpy
+  - sea_ice_category1_layer5_enthalpy
+  - sea_ice_category1_layer6_enthalpy
+  - sea_ice_category1_layer7_enthalpy
+  - sea_ice_category2_layer1_enthalpy
+  - sea_ice_category2_layer2_enthalpy
+  - sea_ice_category2_layer3_enthalpy
+  - sea_ice_category2_layer4_enthalpy
+  - sea_ice_category2_layer5_enthalpy
+  - sea_ice_category2_layer6_enthalpy
+  - sea_ice_category2_layer7_enthalpy
+  - sea_ice_category3_layer1_enthalpy
+  - sea_ice_category3_layer2_enthalpy
+  - sea_ice_category3_layer3_enthalpy
+  - sea_ice_category3_layer4_enthalpy
+  - sea_ice_category3_layer5_enthalpy
+  - sea_ice_category3_layer6_enthalpy
+  - sea_ice_category3_layer7_enthalpy
+  - sea_ice_category4_layer1_enthalpy
+  - sea_ice_category4_layer2_enthalpy
+  - sea_ice_category4_layer3_enthalpy
+  - sea_ice_category4_layer4_enthalpy
+  - sea_ice_category4_layer5_enthalpy
+  - sea_ice_category4_layer6_enthalpy
+  - sea_ice_category4_layer7_enthalpy
+  - sea_ice_category5_layer1_enthalpy
+  - sea_ice_category5_layer2_enthalpy
+  - sea_ice_category5_layer3_enthalpy
+  - sea_ice_category5_layer4_enthalpy
+  - sea_ice_category5_layer5_enthalpy
+  - sea_ice_category5_layer6_enthalpy
+  - sea_ice_category5_layer7_enthalpy
+  - sea_ice_category1_layer1_ice_salinity
+  - sea_ice_category1_layer2_ice_salinity
+  - sea_ice_category1_layer3_ice_salinity
+  - sea_ice_category1_layer4_ice_salinity
+  - sea_ice_category1_layer5_ice_salinity
+  - sea_ice_category1_layer6_ice_salinity
+  - sea_ice_category1_layer7_ice_salinity
+  - sea_ice_category2_layer1_ice_salinity
+  - sea_ice_category2_layer2_ice_salinity
+  - sea_ice_category2_layer3_ice_salinity
+  - sea_ice_category2_layer4_ice_salinity
+  - sea_ice_category2_layer5_ice_salinity
+  - sea_ice_category2_layer6_ice_salinity
+  - sea_ice_category2_layer7_ice_salinity
+  - sea_ice_category3_layer1_ice_salinity
+  - sea_ice_category3_layer2_ice_salinity
+  - sea_ice_category3_layer3_ice_salinity
+  - sea_ice_category3_layer4_ice_salinity
+  - sea_ice_category3_layer5_ice_salinity
+  - sea_ice_category3_layer6_ice_salinity
+  - sea_ice_category3_layer7_ice_salinity
+  - sea_ice_category4_layer1_ice_salinity
+  - sea_ice_category4_layer2_ice_salinity
+  - sea_ice_category4_layer3_ice_salinity
+  - sea_ice_category4_layer4_ice_salinity
+  - sea_ice_category4_layer5_ice_salinity
+  - sea_ice_category4_layer6_ice_salinity
+  - sea_ice_category4_layer7_ice_salinity
+  - sea_ice_category5_layer1_ice_salinity
+  - sea_ice_category5_layer2_ice_salinity
+  - sea_ice_category5_layer3_ice_salinity
+  - sea_ice_category5_layer4_ice_salinity
+  - sea_ice_category5_layer5_ice_salinity
+  - sea_ice_category5_layer6_ice_salinity
+  - sea_ice_category5_layer7_ice_salinity
+  - sea_ice_snow_category1_layer1_enthalpy
+  - sea_ice_snow_category2_layer1_enthalpy
+  - sea_ice_snow_category3_layer1_enthalpy
+  - sea_ice_snow_category4_layer1_enthalpy
+  - sea_ice_snow_category5_layer1_enthalpy
     # ocean variables
   - sea_water_potential_temperature
   - sea_water_salinity
@@ -34,6 +130,7 @@ restart output:
   datadir: data_output
   exp: cice_restart_postproc
   type: an
+  cice template: data_static/72x35x25/restarts/iced.2018-04-15-00000.nc
 
 # Analysis State carries only aice (no hice/hsno). Exercises the bg-fallback
 # path in PostProcessIce for both sea_ice_thickness and sea_ice_snow_thickness.
@@ -55,9 +152,6 @@ postprocess ice:
   sno_lev: 1
   analysis variables:
   - sea_ice_area_fraction
-  cice restart:
-    input:  data_static/72x35x25/restarts/iced.2018-04-15-00000.nc
-    output: data_output/iced.postproc.nc
 
 test:
   reference filename: testref/soca2cice_new_bgfallback.test

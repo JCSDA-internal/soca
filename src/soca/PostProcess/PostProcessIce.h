@@ -25,7 +25,6 @@
 #include "oops/util/parameters/Parameter.h"
 #include "oops/util/parameters/Parameters.h"
 #include "oops/util/parameters/RequiredParameter.h"
-#include "soca/PostProcess/CiceRestartIO.h"
 
 namespace soca {
 
@@ -108,9 +107,9 @@ class PostProcessIce: public util::Printable {
 
   // ---------------------------------------------------------------------------
   /// @brief Parameters for the Stage C thermo / pond pass. Operates on the CICE
-  /// restart's per-layer enthalpy, surface temperature, and melt-pond fields
-  /// (read directly via CiceRestartIO::readThermo, since these variables are
-  /// not part of the soca State / FieldSet pipeline).
+  /// restart's per-layer enthalpy, surface temperature, and melt-pond fields,
+  /// which are carried as atlas Fields of the State (listed in the State's
+  /// `state variables` and declared in fields_metadata.yml).
   class ThermoParameters : public oops::Parameters {
     OOPS_CONCRETE_PARAMETERS(ThermoParameters, oops::Parameters)
 
@@ -145,18 +144,6 @@ class PostProcessIce: public util::Printable {
   };
 
   // ---------------------------------------------------------------------------
-  /// @brief Input/output paths for the CICE restart that this postprocess pass
-  /// reads from and writes to. Both required.
-  class CiceRestartParameters : public oops::Parameters {
-    OOPS_CONCRETE_PARAMETERS(CiceRestartParameters, oops::Parameters)
-   public:
-    oops::RequiredParameter<std::string> input{"input",
-      "Path to the input CICE restart NetCDF file.", this};
-    oops::RequiredParameter<std::string> output{"output",
-      "Path to the output CICE restart NetCDF file (will be overwritten).", this};
-  };
-
-  // ---------------------------------------------------------------------------
   /// @brief Parameters for adding soca increment to CICE restart files
   class Parameters : public oops::Parameters {
     OOPS_CONCRETE_PARAMETERS(Parameters, oops::Parameters)
@@ -174,9 +161,6 @@ class PostProcessIce: public util::Printable {
       "Freeboard enforcement options.", {}, this};
     oops::Parameter<ThermoParameters> thermo{"thermo",
       "Stage C thermo / pond options.", {}, this};
-    oops::RequiredParameter<CiceRestartParameters> ciceRestart{"cice restart",
-      "Input/output paths for the CICE restart this pass reads and writes.",
-      this};
     oops::Parameter<double> minAice{"min aice",
             "minimum allowable ice concentration", 0.0, this, {oops::minConstraint(0.0)}};
     oops::Parameter<double> minVice{"min vice",
@@ -211,17 +195,15 @@ class PostProcessIce: public util::Printable {
   void postProcess(State & pproc, const State & restart,
                    const State & analysis) const;
 
-  /// Stage C thermo / pond pass. Mutates `frame` in place using the per-cat
-  /// aicen / vsnon fields from `fset`. Owned-node ordering must match the
-  /// CiceRestartIO traversal (ghost == 0 && global_index > 0). No-op when
-  /// neither `update snow thermo` nor `reset ponds` is enabled.
+  /// Stage C thermo / pond pass. Mutates the CICE thermo/pond fields of `fset`
+  /// in place, using the per-cat aicen / vsnon fields from the same `fset`.
+  /// No-op when neither `update snow thermo` nor `reset ponds` is enabled.
   ///
-  /// `snowTouched` is sized `nOwnedNodes * ncat`, indexed `[on * ncat + k]`,
+  /// `snowTouched` is sized `field_size * ncat`, indexed `[jnode * ncat + k]`,
   /// non-zero where the snow distribution step modified vsnon on that
-  /// (owned-node, cat) slot. Used to gate the apnd/hpnd reset; ipnd is never
+  /// (node, cat) slot. Used to gate the apnd/hpnd reset; ipnd is never
   /// reset. May be empty when `reset ponds` is off.
-  void applyThermoStage(CiceRestartIO::ThermoFrame & frame,
-                        const atlas::FieldSet & fset,
+  void applyThermoStage(const atlas::FieldSet & fset,
                         const std::vector<std::uint8_t> & snowTouched) const;
 
   /// @brief Per-cell donor record assembled by the sparse halo exchange. Holds
@@ -264,15 +246,15 @@ class PostProcessIce: public util::Printable {
   atlas::array::ArrayView<double, 2> lonlat_;
   atlas::array::ArrayView<double, 2> mask_;
 
-  /// @brief Mask of (ownedNode, k) cells that transitioned from
+  /// @brief Mask of (jnode, k) cells that transitioned from
   /// `bg_aicen[k] == 0` to `new_aicen[k] > 0` after Stages A/B. Indexed
-  /// `ownedNode * ncat + k`.
+  /// `jnode * ncat + k`.
   struct NewIceMask {
     std::size_t ncat = 0;
-    std::size_t nOwnedNodes = 0;
+    std::size_t nNodes = 0;
     std::vector<std::uint8_t> data;
-    bool at(std::size_t ownedNode, std::size_t k) const {
-      return data[ownedNode * ncat + k] != 0;
+    bool at(std::size_t jnode, std::size_t k) const {
+      return data[jnode * ncat + k] != 0;
     }
   };
 
@@ -280,15 +262,24 @@ class PostProcessIce: public util::Printable {
   /// `kdTree_.closestPoints(target, K)` to identify the global gidx of K
   /// nearest neighbors; deduplicate into a per-rank "wanted" set; sparse
   /// allToAllv to request donor data; pack reply records from local FieldSet
-  /// views and the local thermo frame; sparse allToAllv to receive replies.
+  /// views; sparse allToAllv to receive replies.
   /// Returns a map keyed by gidx with the donor's full CatRecord.
+  ///
+  /// The per-cat / per-(cat,layer) view vectors are all of the *background*
+  /// restart: `tsfc_cat` indexed `[k]`, `qice_cat_lev` / `sice_cat_lev` /
+  /// `qsno_cat_lev` indexed `[k][l]`.
   std::unordered_map<std::int64_t, CatRecord> gatherDonorHalo(
       std::size_t K,
       const std::vector<atlas::array::ArrayView<double, 2>> & bg_aice_cat,
       const std::vector<atlas::array::ArrayView<double, 2>> & bg_vice_cat,
       const std::vector<atlas::array::ArrayView<double, 2>> & bg_vsno_cat,
-      const CiceRestartIO::ThermoFrame & frame,
-      const std::vector<std::int64_t> & ownedNodeOf,
+      const std::vector<atlas::array::ArrayView<double, 2>> & bg_tsfc_cat,
+      const std::vector<std::vector<atlas::array::ArrayView<double, 2>>> &
+          bg_qice_cat_lev,
+      const std::vector<std::vector<atlas::array::ArrayView<double, 2>>> &
+          bg_sice_cat_lev,
+      const std::vector<std::vector<atlas::array::ArrayView<double, 2>>> &
+          bg_qsno_cat_lev,
       std::size_t ice_lev,
       std::size_t sno_lev) const;
 
@@ -306,16 +297,16 @@ class PostProcessIce: public util::Printable {
                     double & Tsfc_mean,
                     double & hice_mean) const;
 
-  /// Stage C noice→ice seeding. For each (ownedNode, k) flagged in `mask`,
+  /// Stage C noice→ice seeding. For each (jnode, k) flagged in `mask`,
   /// pick the global lat/lon nearest cell with any ice from `donorCache` and
   /// seed Tsfcn from its area-weighted mean Tsfc; synthesize qsno/qice/sice
   /// from CICE physics (snowEnthalpy, iceEnthalpyBL99, siceLayerCice4).
   /// Falls back to Tfrz physics seed when no donor is found within K.
-  /// Returns the count of fall-back cells for logging.
-  std::size_t seedNewIce(CiceRestartIO::ThermoFrame & frame,
+  /// Returns the count of fall-back cells for logging. Mutates the CICE
+  /// thermo fields of `fset` in place.
+  std::size_t seedNewIce(const atlas::FieldSet & fset,
                          const NewIceMask & mask,
                          const std::unordered_map<std::int64_t, CatRecord> & donorCache,
-                         const std::vector<std::int64_t> & ownedNodeOf,
                          std::size_t ice_lev,
                          std::size_t sno_lev) const;
 
