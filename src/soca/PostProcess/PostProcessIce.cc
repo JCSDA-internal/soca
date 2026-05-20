@@ -158,7 +158,7 @@ void PostProcessIce::postProcess(State & pproc,
   // Restart background fields (read-only)
   const atlas::FieldSet & bgfields = restart.fieldSet();
   // Analysis fields (read-only)
-  atlas::FieldSet anfields = analysis.fieldSet();
+  const atlas::FieldSet & anfields = analysis.fieldSet();
   pproc = restart;  // start from background state
   atlas::FieldSet & newfields = pproc.fieldSet();
   oops::Log::info() << " background restart: " << restart << std::endl;
@@ -328,28 +328,16 @@ void PostProcessIce::postProcess(State & pproc,
   size_t freeboard_failures = 0;
 
   // ---------------------------------------------------------------------------
-  // CICE thermo/pond background views. These fields are carried as atlas Fields
-  // of the `restart` State (declared in fields_metadata.yml, listed in the
-  // State's `state variables`). `pproc = restart` already copied them into
-  // `pproc.fieldSet()`; the background copies below are read for the donor
-  // halo gather, while the per-cell loop and Stage C mutate `pproc.fieldSet()`.
-  const auto bg_tsfc_cat     = ppiCatViews(restart.fieldSet(), ncat_,
-                                           "sea_ice_category", "_surface_temperature");
-  const auto bg_qice_cat_lev = ppiCatLevViews(restart.fieldSet(), ncat_, ice_lev,
-                                              "sea_ice_category", "_layer", "_enthalpy");
-  const auto bg_sice_cat_lev = ppiCatLevViews(restart.fieldSet(), ncat_, ice_lev,
-                                              "sea_ice_category", "_layer", "_ice_salinity");
-  const auto bg_qsno_cat_lev = ppiCatLevViews(restart.fieldSet(), ncat_, sno_lev,
-                                              "sea_ice_snow_category", "_layer", "_enthalpy");
-
   // Sparse halo exchange for donor data (Phases A+B+C). K is the seed-new-ice
   // search radius; both donorMeanIce (in the NOICE2ICE branch) and seedNewIce
-  // (Stage C) read from the same donorCache.
+  // (Stage C) read from the same donorCache. The donor record only carries
+  // per-cat aicen/vicen/Tsfcn — seedNewIce synthesizes the per-layer thermo
+  // from the donor mean Tsfc, so the per-layer fields are not gathered.
+  const auto bg_tsfc_cat = ppiCatViews(restart.fieldSet(), ncat_,
+                                       "sea_ice_category", "_surface_temperature");
   const std::size_t seedK = static_cast<std::size_t>(
       params_.thermo.value().seedSearchK.value());
-  auto donorCache = gatherDonorHalo(seedK, bg_aice_cat, bg_vice_cat, bg_vsno_cat,
-                                    bg_tsfc_cat, bg_qice_cat_lev, bg_sice_cat_lev,
-                                    bg_qsno_cat_lev, ice_lev, sno_lev);
+  auto donorCache = gatherDonorHalo(seedK, bg_aice_cat, bg_vice_cat, bg_tsfc_cat);
 
   // Additional knobs picked up from the top-level parameters. seedK was
   // already computed above for the donor halo gather; reuse it here.
@@ -707,7 +695,11 @@ void PostProcessIce::applyThermoStage(
 
   const double maxTsfc = thermoParams.maxTsfc.value();
   const double minTsfc = thermoParams.minTsfc.value();
-  const double qsnoMax = icephysics::snowEnthalpy(maxTsfc);
+  // The qsno enthalpy clip bound is a physical constraint (snow enthalpy at
+  // ~0 C), NOT the Tsfcn clamp. maxTsfc (= -1 C by default) is a deliberately
+  // tight production-grid fix for Tsfcn only; coupling the qsno clip to it
+  // would over-clip snow enthalpy. dd clips at snowEnth(-0.01 C).
+  const double qsnoMax = icephysics::snowEnthalpy(icephysics::Constants::Tsno_clip_max);
   const double qsnoMin = icephysics::snowEnthalpy(minTsfc);
   const double qsnoLo  = std::min(qsnoMin, qsnoMax);
   const double qsnoHi  = std::max(qsnoMin, qsnoMax);
@@ -810,16 +802,7 @@ PostProcessIce::gatherDonorHalo(
     std::size_t K,
     const std::vector<atlas::array::ArrayView<double, 2>> & bg_aice_cat,
     const std::vector<atlas::array::ArrayView<double, 2>> & bg_vice_cat,
-    const std::vector<atlas::array::ArrayView<double, 2>> & bg_vsno_cat,
-    const std::vector<atlas::array::ArrayView<double, 2>> & bg_tsfc_cat,
-    const std::vector<std::vector<atlas::array::ArrayView<double, 2>>> &
-        bg_qice_cat_lev,
-    const std::vector<std::vector<atlas::array::ArrayView<double, 2>>> &
-        bg_sice_cat_lev,
-    const std::vector<std::vector<atlas::array::ArrayView<double, 2>>> &
-        bg_qsno_cat_lev,
-    std::size_t ice_lev,
-    std::size_t sno_lev) const {
+    const std::vector<atlas::array::ArrayView<double, 2>> & bg_tsfc_cat) const {
   const auto & comm = geom_.getComm();
   const std::size_t nr = comm.size();
   const auto & fs   = geom_.functionSpace();
@@ -854,12 +837,8 @@ PostProcessIce::gatherDonorHalo(
 
   // Phase C: for each requested gidx received, pack a flat reply record. Each
   // record packs in this fixed layout (recLen doubles per record):
-  //   ncat aicen | ncat vicen | ncat vsnon | ncat Tsfcn |
-  //   ncat*iceLev qice | ncat*iceLev sice | ncat*snoLev qsno | 1 mask
-  const std::size_t recLen = ncat_ * 4
-                           + ncat_ * ice_lev * 2
-                           + ncat_ * sno_lev
-                           + 1;
+  //   ncat aicen | ncat vicen | ncat Tsfcn | 1 mask
+  const std::size_t recLen = ncat_ * 3 + 1;
   std::vector<std::vector<double>> sendRep(nr);
   for (std::size_t r = 0; r < nr; ++r) {
     sendRep[r].resize(recvReq[r].size() * recLen, 0.0);
@@ -873,28 +852,11 @@ PostProcessIce::gatherDonorHalo(
       }
       const std::size_t jp = it->second;
       double * rec = sendRep[r].data() + i * recLen;
-      // aicen, vicen, vsnon
       for (std::size_t k = 0; k < ncat_; ++k) {
-        rec[k]              = bg_aice_cat[k](jp, 0);
-        rec[ncat_ + k]      = bg_vice_cat[k](jp, 0);
-        rec[2 * ncat_ + k]  = bg_vsno_cat[k](jp, 0);
+        rec[k]             = bg_aice_cat[k](jp, 0);
+        rec[ncat_ + k]     = bg_vice_cat[k](jp, 0);
+        rec[2 * ncat_ + k] = bg_tsfc_cat[k](jp, 0);
       }
-      // Tsfcn / per-layer qice/sice/qsno (per cat) from the background views.
-      double * recTs = rec + 3 * ncat_;
-      double * recQi = rec + 4 * ncat_;
-      double * recSi = rec + 4 * ncat_ + ncat_ * ice_lev;
-      double * recQs = rec + 4 * ncat_ + 2 * ncat_ * ice_lev;
-      for (std::size_t k = 0; k < ncat_; ++k) {
-        recTs[k] = bg_tsfc_cat[k](jp, 0);
-        for (std::size_t l = 0; l < ice_lev; ++l) {
-          recQi[k * ice_lev + l] = bg_qice_cat_lev[k][l](jp, 0);
-          recSi[k * ice_lev + l] = bg_sice_cat_lev[k][l](jp, 0);
-        }
-        for (std::size_t l = 0; l < sno_lev; ++l) {
-          recQs[k * sno_lev + l] = bg_qsno_cat_lev[k][l](jp, 0);
-        }
-      }
-      // mask
       rec[recLen - 1] = mask_(jp, 0);
     }
   }
@@ -912,16 +874,9 @@ PostProcessIce::gatherDonorHalo(
       const std::int64_t g = static_cast<std::int64_t>(sendReq[r][i]);
       const double * rec = recvRep[r].data() + i * recLen;
       CatRecord cr;
-      cr.aicen.assign(rec,                rec + ncat_);
-      cr.vicen.assign(rec +     ncat_,    rec + 2 * ncat_);
-      cr.vsnon.assign(rec + 2 * ncat_,    rec + 3 * ncat_);
-      cr.Tsfcn.assign(rec + 3 * ncat_,    rec + 4 * ncat_);
-      const double * pQi = rec + 4 * ncat_;
-      const double * pSi = pQi + ncat_ * ice_lev;
-      const double * pQs = pSi + ncat_ * ice_lev;
-      cr.qice.assign(pQi, pQi + ncat_ * ice_lev);
-      cr.sice.assign(pSi, pSi + ncat_ * ice_lev);
-      cr.qsno.assign(pQs, pQs + ncat_ * sno_lev);
+      cr.aicen.assign(rec,             rec +     ncat_);
+      cr.vicen.assign(rec +    ncat_,  rec + 2 * ncat_);
+      cr.Tsfcn.assign(rec + 2 * ncat_, rec + 3 * ncat_);
       cr.mask = rec[recLen - 1];
       cache.emplace(g, std::move(cr));
     }
@@ -1037,6 +992,13 @@ std::size_t PostProcessIce::seedNewIce(
     if (!foundDonor) ++fallbackCount;
 
     const double Tseed = std::min(maxTsfc, std::max(minTsfc, donorTsfc));
+    // qice on the brand-new ice slots is seeded at the ocean freezing point
+    // (Tfrz - small offset), not the donor Tsfc. dd does the same
+    // (insert_iconc_ithkn_cice6_restart.py: tice_max = Tfrz - 0.01): a
+    // surface-temperature-based seed would give qice several MJ/m^3 warmer
+    // than physics warrants and spike near-surface melt energy on summer ice.
+    const double Tice_seed = icephysics::Constants::Tfrz
+                             - icephysics::Constants::Tice_seed_offset;
 
     for (std::size_t k = 0; k < ncat_; ++k) {
       if (!mask.at(jnode, k)) continue;
@@ -1050,7 +1012,7 @@ std::size_t PostProcessIce::seedNewIce(
             static_cast<int>(l) + 1, static_cast<int>(ice_lev));
         siceCatLev[k][l](jnode, 0) = sice_l;
         qiceCatLev[k][l](jnode, 0) =
-            icephysics::iceEnthalpyBL99(Tseed, sice_l);
+            icephysics::iceEnthalpyBL99(Tice_seed, sice_l);
       }
     }
   }

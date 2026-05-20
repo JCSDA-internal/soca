@@ -207,23 +207,17 @@ class PostProcessIce: public util::Printable {
                         const std::vector<std::uint8_t> & snowTouched) const;
 
   /// @brief Per-cell donor record assembled by the sparse halo exchange. Holds
-  /// the donor cell's per-category ice and thermo values so consumers
-  /// (donorMeanIce in the NOICE2ICE branch, seedNewIce in Stage C) can read
-  /// from them directly.
+  /// the donor cell's per-category ice values so consumers (donorMeanIce in
+  /// the NOICE2ICE branch, seedNewIce in Stage C) can read from them directly.
+  /// All three arrays are flat, indexed `[k]` over `ncat`.
   ///
-  /// All four arrays are flat, sized in terms of `ncat`, `iceLev`, `snoLev`
-  /// from `params_`. Layout:
-  ///   aicen, vicen, vsnon, Tsfcn: indexed [k]
-  ///   qice, sice:                 indexed [k * iceLev + l]
-  ///   qsno:                       indexed [k * snoLev + l]
+  /// seedNewIce only needs the donor's area-weighted mean Tsfc; it synthesizes
+  /// the per-layer qice/sice/qsno profiles from CICE physics. So the per-layer
+  /// thermo is deliberately NOT carried in this record.
   struct CatRecord {
     std::vector<double> aicen;       // ncat
     std::vector<double> vicen;       // ncat
-    std::vector<double> vsnon;       // ncat
     std::vector<double> Tsfcn;       // ncat
-    std::vector<double> qice;        // ncat * iceLev
-    std::vector<double> sice;        // ncat * iceLev
-    std::vector<double> qsno;        // ncat * snoLev
     double mask;
   };
 
@@ -263,25 +257,15 @@ class PostProcessIce: public util::Printable {
   /// nearest neighbors; deduplicate into a per-rank "wanted" set; sparse
   /// allToAllv to request donor data; pack reply records from local FieldSet
   /// views; sparse allToAllv to receive replies.
-  /// Returns a map keyed by gidx with the donor's full CatRecord.
+  /// Returns a map keyed by gidx with the donor's CatRecord.
   ///
-  /// The per-cat / per-(cat,layer) view vectors are all of the *background*
-  /// restart: `tsfc_cat` indexed `[k]`, `qice_cat_lev` / `sice_cat_lev` /
-  /// `qsno_cat_lev` indexed `[k][l]`.
+  /// The per-cat view vectors are all of the *background* restart, indexed `[k]`.
   std::unordered_map<std::int64_t, CatRecord> gatherDonorHalo(
       std::size_t K,
       const std::vector<atlas::array::ArrayView<double, 2>> & bg_aice_cat,
       const std::vector<atlas::array::ArrayView<double, 2>> & bg_vice_cat,
-      const std::vector<atlas::array::ArrayView<double, 2>> & bg_vsno_cat,
-      const std::vector<atlas::array::ArrayView<double, 2>> & bg_tsfc_cat,
-      const std::vector<std::vector<atlas::array::ArrayView<double, 2>>> &
-          bg_qice_cat_lev,
-      const std::vector<std::vector<atlas::array::ArrayView<double, 2>>> &
-          bg_sice_cat_lev,
-      const std::vector<std::vector<atlas::array::ArrayView<double, 2>>> &
-          bg_qsno_cat_lev,
-      std::size_t ice_lev,
-      std::size_t sno_lev) const;
+      const std::vector<atlas::array::ArrayView<double, 2>> & bg_tsfc_cat)
+      const;
 
   /// Area-weighted mean Tsfc and mean ice thickness across the K nearest
   /// KDTree neighbors that carry any ice. Used by the Stage A case-dispatch

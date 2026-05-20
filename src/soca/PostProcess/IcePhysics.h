@@ -27,6 +27,15 @@ struct Constants {
   static constexpr double msal       = 0.573;      // BZ99 profile shape
   static constexpr double Tmin       = -100.0;     // floor on internal T (C)
   static constexpr double Tfrz       = -1.86243522;  // sea-water freezing pt (C)
+  // New-ice qice seed temperature offset below Tfrz. Matches dd's
+  // insert_iconc_ithkn_cice6_restart.py (tice_max = Tfrz - 0.01): newly-iced
+  // category slots get the coldest reasonable enthalpy so CICE does not melt
+  // them on the first timestep.
+  static constexpr double Tice_seed_offset = 0.01;   // K below Tfrz
+  // Upper Tsfc-equivalent for the qsno enthalpy clip. A physical bound
+  // (snow enthalpy at ~0 C), independent of the Tsfcn production clamp.
+  // Matches dd's qsn_max ~ snowEnth(-0.01 C).
+  static constexpr double Tsno_clip_max    = -0.01;  // C
 };
 
 // ---------------------------------------------------------------------------
