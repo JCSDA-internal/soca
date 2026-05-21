@@ -31,7 +31,7 @@ use mpp_domains_mod, only : mpp_get_compute_domain, mpp_get_data_domain, &
                             mpp_get_global_domain, mpp_update_domains, &
                             CYCLIC_GLOBAL_DOMAIN, FOLD_NORTH_EDGE
 use mpp_mod,only : mpp_init
-use time_interp_external_mod, only : time_interp_external_init
+use time_interp_external2_mod, only : time_interp_external_init
 use time_manager_mod, only: time_type
 
 ! soca modules
