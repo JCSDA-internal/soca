@@ -23,12 +23,13 @@ use kinds, only: kind_real
 use oops_variables_mod, only: oops_variables
 
 ! MOM6 / FMS modules
-use fms_io_mod, only: register_restart_field, &
-                      restart_file_type, restore_state, free_restart_type, save_restart, &
-                      file_exist, field_exist
 use MOM_remapping, only : remapping_CS, initialize_remapping, remapping_core_h, &
                           end_remapping
 use mpp_domains_mod, only : mpp_update_domains
+
+! SOCA I/O
+use soca_io_mod, only : soca_io_reader, soca_io_writer, &
+                        soca_io_file_exists, soca_io_var_exists
 
 ! SOCA modules
 use soca_fields_metadata_mod, only : soca_field_metadata
@@ -469,12 +470,12 @@ subroutine soca_fields_read(self, f_conf, vdate)
 
   character(len=:), allocatable :: str, basename, filename
   integer :: iread = 0
-  real(kind=kind_real), allocatable :: h_common(:,:,:)    !< layer thickness to remap to
-  type(restart_file_type) :: restart
-  integer :: d, f, i, j, k, n, idx, idr
+  real(kind=kind_real), allocatable, target :: h_common(:,:,:)    !< layer thickness to remap to (target for soca_io_reader pointer association)
+  type(soca_io_reader) :: reader
+  integer :: d, f, i, j, k, n, idx
   type(remapping_CS)  :: remapCS
   type(oops_variables) :: seaice_categories_vars
-  type(varwrapper), allocatable :: vars(:)
+  type(varwrapper), allocatable, target :: vars(:)  ! target so vars(n)%data sections are valid pointer targets for soca_io enqueue
   type(atlas_field) :: afield1, afield2, afield3, afield4
   real(kind=kind_real), pointer :: adata1(:,:), adata2(:,:), adata3(:,:), adata4(:,:)
   real(kind=kind_real), allocatable :: h_common_ij(:), hocn_ij(:), varocn_ij(:), varocn2_ij(:)
@@ -493,10 +494,9 @@ subroutine soca_fields_read(self, f_conf, vdate)
      h_common = 0.0_kind_real
 
      ! Read common vertical coordinate from file
-     idr = register_restart_field(restart, str, 'h', h_common, &
-          domain=self%geom%Domain%mpp_domain)
-     call restore_state(restart, directory='')
-     call free_restart_type(restart)
+     call reader%init(self%geom%Domain%mpp_domain, str)
+     call reader%enqueue('h', h_common)
+     call reader%commit()
   end if
 
   ! Create unit increment
@@ -533,11 +533,11 @@ subroutine soca_fields_read(self, f_conf, vdate)
     if(f_conf%get("ice_filename", str)) then
       filename = trim(basename) // trim(str)
       field_meta = self%geom%fields_metadata%get("sea_ice_thickness")
-      if ((.not. field_exist(filename, field_meta%io_name))) then
+      if ((.not. soca_io_var_exists(filename, field_meta%io_name))) then
         compute_icethickness = .true.
       endif
       field_meta = self%geom%fields_metadata%get("sea_ice_snow_thickness")
-      if ((.not. field_exist(filename, field_meta%io_name))) then
+      if ((.not. soca_io_var_exists(filename, field_meta%io_name))) then
         compute_snowthickness = .true.
       endif
     endif
@@ -556,6 +556,7 @@ subroutine soca_fields_read(self, f_conf, vdate)
         allocate(vars(n))
 
         ! for each variable, setup to read
+        call reader%init(self%geom%Domain%mpp_domain, filename)
         n = 0
         do f=1,size(self%fields)
           if (self%fields(f)%metadata%io_file == domains(d)) then
@@ -563,7 +564,7 @@ subroutine soca_fields_read(self, f_conf, vdate)
               ! check if the file was constructed by soca or comes from the CICE history
               ! The CICE history aggregates the category and level in 1 array
               ! The SOCA io considers categories to be separate variables and will index the naming
-              if(file_exist(filename) .and. field_exist(filename, self%fields(f)%metadata%io_name)) then
+              if(soca_io_file_exists(filename) .and. soca_io_var_exists(filename, self%fields(f)%metadata%io_name)) then
               else
                 call seaice_categories_vars%push_back(self%fields(f)%name)
                 cycle
@@ -581,30 +582,21 @@ subroutine soca_fields_read(self, f_conf, vdate)
               ! ice concentration are available
               if ((self%fields(f)%metadata%name == "sea_ice_thickness") .and. compute_icethickness) then
                 field_meta = self%geom%fields_metadata%get("sea_ice_volume")
-                idr = register_restart_field(restart, filename, &
-                  field_meta%io_name, vars(n)%data(:,:,1), &
-                  domain=self%geom%Domain%mpp_domain)
+                call reader%enqueue(field_meta%io_name, vars(n)%data(:,:,1))
               elseif ((self%fields(f)%metadata%name == "sea_ice_snow_thickness") .and. compute_snowthickness) then
                 field_meta = self%geom%fields_metadata%get("sea_ice_snow_volume")
-                idr = register_restart_field(restart, filename, &
-                  field_meta%io_name, vars(n)%data(:,:,1), &
-                  domain=self%geom%Domain%mpp_domain)
+                call reader%enqueue(field_meta%io_name, vars(n)%data(:,:,1))
               else
-                idr = register_restart_field(restart, filename, &
-                  vars(n)%field%metadata%io_name, vars(n)%data(:,:,1), &
-                  domain=self%geom%Domain%mpp_domain)
+                call reader%enqueue(vars(n)%field%metadata%io_name, vars(n)%data(:,:,1))
               endif
             else
-              idr = register_restart_field(restart, filename, &
-                vars(n)%field%metadata%io_name, vars(n)%data(:,:,:), &
-                domain=self%geom%Domain%mpp_domain)
+              call reader%enqueue(vars(n)%field%metadata%io_name, vars(n)%data(:,:,:))
             end if
           end if
         end do
 
         ! read
-        call restore_state(restart, directory='')
-        call free_restart_type(restart)
+        call reader%commit()
 
         ! copy back into atlas fields, filling land with fillvalue
         do n=1,size(vars)
@@ -829,12 +821,13 @@ subroutine soca_fields_read_seaice(self, filename, seaice_categories_vars)
   type(oops_variables), intent(in) :: seaice_categories_vars
 
   type(oops_variables) :: cice_vars_cats, cice_vars_cats_levs
-  type(restart_file_type) :: restart
+  type(soca_io_reader) :: reader
   type(atlas_field) :: afield
   real(kind=kind_real), pointer :: adata(:,:)
 
-  integer :: i, j, k, f, ncat, icelevs, snowlevs, idr, cnt, io_index, idx
-  real(kind=kind_real), allocatable :: tmp3d(:,:,:,:), tmp4d(:,:,:,:,:)
+  integer :: i, j, k, f, ncat, icelevs, snowlevs, cnt, io_index, idx
+  ! `target` so soca_io_reader can pointer-associate to slices of these
+  real(kind=kind_real), allocatable, target :: tmp3d(:,:,:,:), tmp4d(:,:,:,:,:)
 
   ! check what cice variables with category dimension need to be read
   cice_vars_cats = oops_variables()  ! used to store the unique cice io variables with a category dimension
@@ -844,12 +837,11 @@ subroutine soca_fields_read_seaice(self, filename, seaice_categories_vars)
   if (cice_vars_cats%nvars() > 0) then
     allocate(tmp3d(self%geom%isd:self%geom%ied,self%geom%jsd:self%geom%jed,ncat,cice_vars_cats%nvars()))
     tmp3d = 0.0_kind_real
+    call reader%init(self%geom%Domain%mpp_domain, filename)
     do i=1,cice_vars_cats%nvars()
-      idr = register_restart_field(restart, filename, cice_vars_cats%variable(i), &
-                         tmp3d(:,:,:,i), domain=self%geom%Domain%mpp_domain)
+      call reader%enqueue(cice_vars_cats%variable(i), tmp3d(:,:,:,i))
     end do
-    call restore_state(restart, directory='')
-    call free_restart_type(restart)
+    call reader%commit()
 
     ! copy the variable into the corresponding field
     cnt = 1
@@ -883,12 +875,11 @@ subroutine soca_fields_read_seaice(self, filename, seaice_categories_vars)
     allocate(tmp4d(self%geom%isd:self%geom%ied,self%geom%jsd:self%geom%jed,icelevs,&
     &ncat,cice_vars_cats_levs%nvars()))
     tmp4d = 0.0_kind_real
+    call reader%init(self%geom%Domain%mpp_domain, filename)
     do i=1,cice_vars_cats_levs%nvars()
-      idr = register_restart_field(restart, filename, cice_vars_cats_levs%variable(i), &
-                         tmp4d(:,:,:,:,i), domain=self%geom%Domain%mpp_domain)
+      call reader%enqueue(cice_vars_cats_levs%variable(i), tmp4d(:,:,:,:,i))
     end do
-    call restore_state(restart, directory='')
-    call free_restart_type(restart)
+    call reader%commit()
 
     ! copy the variable into the corresponding field
     cnt = 1
@@ -927,15 +918,15 @@ subroutine soca_fields_write_rst(self, f_conf, vdate)
   type(datetime),             intent(inout) :: vdate    !< DateTime
 
   integer, parameter :: max_string_length=800
-    type(restart_file_type) :: restart
-  integer :: idr, i, j, k, idx, d, f, n
+  type(soca_io_writer) :: writer
+  integer :: i, j, k, idx, d, f, n
   type(soca_field), pointer :: field
   logical :: date_cols
 
   character(len=3), allocatable :: domains(:)
   character(len=:), allocatable :: domain_filename
 
-  type(varwrapper), allocatable :: vars(:)
+  type(varwrapper), allocatable, target :: vars(:)  ! target so vars(n)%data sections are valid pointer targets for soca_io enqueue
 
   ! Get date IO format (colons or not?)
   date_cols = .true.
@@ -958,8 +949,8 @@ subroutine soca_fields_write_rst(self, f_conf, vdate)
     if (n == 0) cycle
     allocate(vars(n))
 
-    ! create temporary fortran copies of the atlas fields so that the fms writer
-    ! can handle them.
+    ! copy atlas fields into per-PE compute-domain temporaries and enqueue with the writer
+    call writer%init(self%geom%Domain%mpp_domain, domain_filename)
     n=0
     do f=1,size(self%fields)
       if (self%fields(f)%metadata%io_file /= domains(d)) cycle
@@ -983,21 +974,18 @@ subroutine soca_fields_write_rst(self, f_conf, vdate)
         end do
       end do
 
-      ! register with restart write
+      ! enqueue with the writer
       if (vars(n)%afield%shape(1) == 1) then
-        idr = register_restart_field(restart, domain_filename, self%fields(f)%metadata%io_name, &
-            vars(n)%data(:,:,1), domain=self%geom%Domain%mpp_domain)
+        call writer%enqueue(self%fields(f)%metadata%io_name, vars(n)%data(:,:,1))
       else
-        idr = register_restart_field(restart, domain_filename, self%fields(f)%metadata%io_name, &
-            vars(n)%data(:,:,:), domain=self%geom%Domain%mpp_domain)
+        call writer%enqueue(self%fields(f)%metadata%io_name, vars(n)%data(:,:,:))
       end if
     end do
 
     ! write the file
-    call save_restart(restart, directory='')
+    call writer%commit()
 
     ! cleanup
-    call free_restart_type(restart)
     do n=1,size(vars)
       deallocate(vars(n)%data)
       call vars(n)%afield%final()
@@ -1184,8 +1172,8 @@ function soca_genfilename(f_conf,length,vdate,date_cols,domain_type)
        call datetime_diff(vdate,rdate,step)
        call duration_to_string(step,sstep)
      endif
-     lenfn = lenfn + 1 + LEN_TRIM(referencedate) + 1 + LEN_TRIM(sstep)
-     soca_genfilename = TRIM(prefix) // "." // TRIM(referencedate) // "." // TRIM(sstep)
+     lenfn = lenfn + 1 + LEN_TRIM(referencedate) + 1 + LEN_TRIM(sstep) + 3
+     soca_genfilename = TRIM(prefix) // "." // TRIM(referencedate) // "." // TRIM(sstep) // ".nc"
   endif
 
   if (typ=="an" .or. typ=="incr") then
@@ -1194,8 +1182,8 @@ function soca_genfilename(f_conf,length,vdate,date_cols,domain_type)
      else
        call datetime_to_string_io(vdate,validitydate)
      endif
-     lenfn = lenfn + 1 + LEN_TRIM(validitydate)
-     soca_genfilename = TRIM(prefix) // "." // TRIM(validitydate)
+     lenfn = lenfn + 1 + LEN_TRIM(validitydate) + 3
+     soca_genfilename = TRIM(prefix) // "." // TRIM(validitydate) // ".nc"
   endif
 
   if (lenfn>length) &
