@@ -14,6 +14,8 @@ use kinds, only: kind_real
 use oops_variables_mod, only : oops_variables
 
 ! soca modules
+use soca_fields_mod, only: soca_fields, soca_fields_ptr_t, &
+                           soca_fields_write_ensemble, soca_fields_read_ensemble
 use soca_geom_mod_c, only: soca_geom_registry
 use soca_geom_mod, only: soca_geom
 use soca_increment_mod, only : soca_increment
@@ -196,6 +198,65 @@ subroutine soca_increment_vert_scales_c(c_key_self, c_vert) bind(c,name='soca_in
   call f_self%vert_scales(c_vert)
 
 end subroutine soca_increment_vert_scales_c
+
+
+! ------------------------------------------------------------------------------
+!> C++ interface: bulk write multiple increments in one ensemble pass. Each
+!! member is gathered to a rotated writer PE and written concurrently with the
+!! others.
+subroutine soca_increment_write_ensemble_c(c_n, c_keys, c_confs, c_dts) &
+    bind(c, name='soca_increment_write_ensemble_f90')
+  integer(c_int),       intent(in) :: c_n
+  integer(c_int),       intent(in) :: c_keys(*)
+  type(c_ptr),          intent(in) :: c_confs(*)
+  type(c_ptr),          intent(in) :: c_dts(*)
+
+  type(soca_fields_ptr_t), allocatable :: fptrs(:)
+  type(c_ptr),             allocatable :: confs_local(:)
+  type(datetime),          allocatable :: fdates(:)
+  type(soca_increment), pointer :: fld
+  integer :: i
+
+  if (c_n <= 0) return
+  allocate(fptrs(c_n), confs_local(c_n), fdates(c_n))
+  do i = 1, c_n
+    call soca_increment_registry%get(c_keys(i), fld)
+    fptrs(i)%p => fld
+    confs_local(i) = c_confs(i)
+    call c_f_datetime(c_dts(i), fdates(i))
+  end do
+
+  call soca_fields_write_ensemble(fptrs, confs_local, fdates)
+end subroutine soca_increment_write_ensemble_c
+
+
+! ------------------------------------------------------------------------------
+!> C++ interface: bulk read multiple increments in one ensemble pass.
+subroutine soca_increment_read_ensemble_c(c_n, c_keys, c_confs, c_dts) &
+    bind(c, name='soca_increment_read_ensemble_f90')
+  integer(c_int),       intent(in) :: c_n
+  integer(c_int),       intent(in) :: c_keys(*)
+  type(c_ptr),          intent(in) :: c_confs(*)
+  type(c_ptr),       intent(inout) :: c_dts(*)
+
+  type(soca_fields_ptr_t), allocatable :: fptrs(:)
+  type(c_ptr),             allocatable :: confs_local(:)
+  type(datetime),          allocatable :: fdates(:)
+  type(soca_increment), pointer :: fld
+  integer :: i
+
+  if (c_n <= 0) return
+  allocate(fptrs(c_n), confs_local(c_n), fdates(c_n))
+  do i = 1, c_n
+    call soca_increment_registry%get(c_keys(i), fld)
+    fptrs(i)%p => fld
+    confs_local(i) = c_confs(i)
+    call c_f_datetime(c_dts(i), fdates(i))
+  end do
+
+  call soca_fields_read_ensemble(fptrs, confs_local, fdates)
+end subroutine soca_increment_read_ensemble_c
+
 
 ! ------------------------------------------------------------------------------
 end module

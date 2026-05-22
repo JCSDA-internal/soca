@@ -83,6 +83,21 @@ namespace soca {
       void read(const eckit::Configuration &);
       void write(const eckit::Configuration &) const;
 
+      /// Bulk parallel write across ensemble members. Each member is gathered
+      /// to a strided writer PE (assigned by soca_io_ensemble_root_pe in
+      /// soca_io_mod) and written in phase 2 with no MPI, so per-member
+      /// netCDF writes happen concurrently across writer PEs. See
+      /// soca_io_writers_commit_ensemble for the staging.
+      static void writeEnsemble(const std::vector<const State*> &,
+                                const std::vector<eckit::LocalConfiguration> &);
+
+      /// Bulk read across ensemble members. The implementation currently loops
+      /// per member; each member's read honors the geometry.io.'single state
+      /// read' YAML toggle (strided vs scatter). Parallel-across-members
+      /// reads using soca_io_readers_commit_ensemble are a follow-up.
+      static void readEnsemble(const std::vector<State*> &,
+                               const std::vector<eckit::LocalConfiguration> &);
+
       int & toFortran() {return keyFlds_;}
       const int & toFortran() const {return keyFlds_;}
 

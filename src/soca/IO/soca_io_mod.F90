@@ -24,12 +24,14 @@
 module soca_io_mod
 
 use netcdf
+use mpi
 use kinds, only: kind_real
 use mpp_mod, only: mpp_gather, mpp_scatter, mpp_broadcast, mpp_pe, mpp_root_pe, mpp_npes, &
-                   mpp_get_current_pelist, mpp_error, FATAL
+                   mpp_get_current_pelist, mpp_sync, mpp_error, FATAL
 use mpp_domains_mod, only: domain2D, &
                            mpp_get_compute_domain, mpp_get_global_domain, &
                            mpp_get_data_domain
+use fckit_configuration_module, only: fckit_configuration
 
 implicit none
 private
@@ -37,8 +39,25 @@ private
 public :: soca_io_writer
 public :: soca_io_reader
 public :: soca_io_file_exists, soca_io_var_exists
+public :: soca_io_config_from_yaml
+public :: soca_io_ensemble_write_parallel
+public :: soca_io_ensemble_read_scatter
+public :: soca_io_single_state_read_scatter
+public :: soca_io_async_mpi
+public :: soca_io_ensemble_root_pe
+public :: soca_io_writers_commit_ensemble
+public :: soca_io_readers_commit_ensemble
 
 integer, parameter :: MAX_NAME       = 256
+
+! Module-level I/O dispatch knobs, set once from geometry.io YAML at
+! soca_geom_init via soca_io_config_from_yaml; persist for the run. Defaults are
+! tuned for cluster-scale production (parallel write, scatter ensemble read,
+! async MPI); single-state read stays strided to preserve direct-io behavior.
+logical, save :: ensemble_write_parallel_   = .true.
+logical, save :: ensemble_read_scatter_     = .true.
+logical, save :: single_state_read_scatter_ = .false.
+logical, save :: async_mpi_enabled_         = .true.
 integer, parameter :: MAX_FILE_NDIMS = 8
 
 ! Reader is stateless across commits: every reader_commit nf90_opens the file,
@@ -63,6 +82,14 @@ type :: var_entry
   real(kind=kind_real), pointer :: data3d(:,:,:) => null()
   character(len=MAX_NAME) :: long_name = ''
   character(len=MAX_NAME) :: units = 'none'
+  ! Inter-stage gather buffers used by writer_stage_gather -> writer_stage_write.
+  ! Allocated lazily on the writer's root_pe in stage_gather (size nx_g x ny_g
+  ! for 2D, nx_g x ny_g x nlevels for 3D); freed in stage_close. Holding them
+  ! per-var (rather than per-writer reused) lets writer_stage_gather populate
+  ! every var before any disk write starts -- so in the ensemble path the
+  ! writes in stage_write can run concurrently across writer PEs with no MPI.
+  real(kind=kind_real), allocatable :: gbuf_2d(:,:)
+  real(kind=kind_real), allocatable :: gbuf_3d(:,:,:)
 end type var_entry
 
 ! Tracks one unique axis (X/Y/Z) by (size, domain_key) and remembers the netcdf
@@ -85,6 +112,18 @@ type :: soca_io_writer
   integer :: nx_g, ny_g                ! global x/y sizes
   type(var_entry), allocatable :: vars(:)
   integer :: nvars = 0
+  ! Writer's root PE: -1 sentinel means writer_init defaults it to mpp_root_pe()
+  ! at use time (single-shot path). The ensemble orchestrator sets a rotated
+  ! root_pe before stage dispatch so different members write from different PEs.
+  integer :: root_pe = -1
+  ! Inter-stage state populated by writer_stage_define and consumed by the later
+  ! stages. ncid is held open between define and close (only meaningful on root).
+  integer :: ncid = -1
+  integer, allocatable :: varids(:)
+  ! Per-direction unique-axis tables built in stage_define; stage_close frees.
+  type(axis_entry), allocatable :: x_axes(:), y_axes(:), z_axes(:)
+  integer, allocatable :: var_x_idx(:), var_y_idx(:), var_z_idx(:)
+  integer :: nx_axes = 0, ny_axes = 0, nz_axes = 0
 contains
   procedure :: init => writer_init
   procedure :: enqueue_1d => writer_enqueue_1d
@@ -104,6 +143,13 @@ type :: read_entry
   real(kind=kind_real), pointer :: data2d(:,:)     => null()
   real(kind=kind_real), pointer :: data3d(:,:,:)   => null()
   real(kind=kind_real), pointer :: data4d(:,:,:,:) => null()
+  ! Inter-stage staged buffers for the scatter path: reader_pe pulls the
+  ! WHOLE global field into these during reader_stage_read; reader_stage_distribute
+  ! ships the per-PE compute tile out via MPI_Scatterv and the buffers are freed
+  ! in reader_stage_close. Only allocated on reader_pe (1x1 dummies elsewhere).
+  real(kind=kind_real), allocatable :: gbuf_2d(:,:)
+  real(kind=kind_real), allocatable :: gbuf_3d(:,:,:)
+  real(kind=kind_real), allocatable :: gbuf_4d(:,:,:,:)
 end type read_entry
 
 type :: soca_io_reader
@@ -115,6 +161,10 @@ type :: soca_io_reader
   integer :: nx_g, ny_g                ! global x/y sizes
   type(read_entry), allocatable :: vars(:)
   integer :: nvars = 0
+  ! Reader's source PE for the scatter path: -1 sentinel means reader_init
+  ! defaults it to mpp_root_pe(). The ensemble orchestrator sets a rotated
+  ! reader_pe per member so different files are read concurrently across PEs.
+  integer :: reader_pe = -1
 contains
   procedure :: init => reader_init
   procedure :: enqueue_1d => reader_enqueue_1d
@@ -129,12 +179,15 @@ contains
 
 !==============================================================================
 ! init: prepare a writer for a specific file. The domain pointer is stored, so
-! the caller must keep the domain alive until commit returns.
+! the caller must keep the domain alive until commit returns. Optional root_pe
+! overrides the default mpp_root_pe() target for gather+write; the ensemble
+! orchestrator uses this to stride writes across writer PEs.
 !==============================================================================
-subroutine writer_init(self, domain, filename)
+subroutine writer_init(self, domain, filename, root_pe)
   class(soca_io_writer), intent(inout) :: self
   type(domain2D), target, intent(in)   :: domain
   character(len=*),       intent(in)   :: filename
+  integer, optional,      intent(in)   :: root_pe
 
   self%filename = filename
   self%domain => domain
@@ -148,6 +201,16 @@ subroutine writer_init(self, domain, filename)
   if (allocated(self%vars)) deallocate(self%vars)
   allocate(self%vars(64))
   self%nvars = 0
+
+  if (present(root_pe)) then
+    self%root_pe = root_pe
+  else
+    self%root_pe = mpp_root_pe()
+  end if
+  self%ncid = -1
+  self%nx_axes = 0
+  self%ny_axes = 0
+  self%nz_axes = 0
 end subroutine writer_init
 
 
@@ -236,27 +299,141 @@ end subroutine grow_if_needed
 
 
 !==============================================================================
-! commit: PE 0 creates the file structure, then each var is mpp_gather'd and
-! PE 0 writes via nf90_put_var. Equivalent to FMS mpp_io threading=MPP_SINGLE
-! -- the goal is a clean, debuggable, FMS-free baseline, not a speedup.
+! commit: single-shot orchestrator. Sequences the four stages on one writer
+! (define -> gather -> write -> close). The original monolithic writer_commit
+! was split into stages so the ensemble path (soca_io_writers_commit_ensemble)
+! can interleave them across multiple writers: define-all -> gather-all ->
+! write-all -> close-all. Single-shot semantics are unchanged.
 !==============================================================================
 subroutine writer_commit(self)
   class(soca_io_writer), intent(inout) :: self
 
-  integer :: ncid, dimid_t, varid_t, v
-  integer, allocatable :: varids(:)
-  integer, allocatable :: var_x_idx(:), var_y_idx(:), var_z_idx(:)
-  type(axis_entry), allocatable :: x_axes(:), y_axes(:), z_axes(:)
-  integer :: nx_axes, ny_axes, nz_axes
-  logical :: is_root
-  real(kind=kind_real), allocatable :: gbuf2d(:,:), gbuf3d(:,:,:)
-  integer, allocatable :: pelist(:)
-  integer :: dom_key
-  integer, parameter :: MAX_AXES_PER_DIR = 32
-  integer :: nx_c, ny_c, i_off, j_off, nlev
-  real(kind=kind_real), allocatable :: tile2(:,:), tile3(:,:,:)
+  call writer_stage_define(self)
+  call writer_stage_gather(self)
+  call writer_stage_write(self)
+  call writer_stage_close(self)
+end subroutine writer_commit
 
-  is_root = (mpp_pe() == mpp_root_pe())
+
+!==============================================================================
+! Stage 1 (define): build axis tables, then on the writer's root_pe create the
+! netCDF file, define every dim/coord-var/data-var, exit define mode, and write
+! the Time + axis coord-var data. Across multiple writers with different
+! root_pes (ensemble path), the file-create work runs concurrently because each
+! writer's root is on a different rank and no MPI is involved.
+!==============================================================================
+subroutine writer_stage_define(self)
+  type(soca_io_writer), intent(inout) :: self
+
+  integer, parameter :: MAX_AXES_PER_DIR = 32
+  integer :: v, dom_key, dimid_t, varid_t
+  logical :: is_root
+
+  is_root = (mpp_pe() == self%root_pe)
+
+  ! Allocate per-direction unique-axis tables on every PE (cheap; need them on
+  ! every PE because find_or_add_axis is invoked outside the is_root branch).
+  if (allocated(self%x_axes)) deallocate(self%x_axes)
+  if (allocated(self%y_axes)) deallocate(self%y_axes)
+  if (allocated(self%z_axes)) deallocate(self%z_axes)
+  if (allocated(self%var_x_idx)) deallocate(self%var_x_idx)
+  if (allocated(self%var_y_idx)) deallocate(self%var_y_idx)
+  if (allocated(self%var_z_idx)) deallocate(self%var_z_idx)
+  allocate(self%x_axes(MAX_AXES_PER_DIR), self%y_axes(MAX_AXES_PER_DIR), self%z_axes(MAX_AXES_PER_DIR))
+  allocate(self%var_x_idx(self%nvars), self%var_y_idx(self%nvars), self%var_z_idx(self%nvars))
+  self%var_x_idx = 0; self%var_y_idx = 0; self%var_z_idx = 0
+  self%nx_axes = 0; self%ny_axes = 0; self%nz_axes = 0
+
+  do v = 1, self%nvars
+    ! 1D vars: no domain (key=0; global on every PE). 2D/3D vars share self%domain (key=1).
+    dom_key = 1
+    if (self%vars(v)%ndims == 1) dom_key = 0
+    select case (self%vars(v)%ndims)
+    case (1)
+      call find_or_add_axis(self%x_axes, self%nx_axes, &
+                            size(self%vars(v)%data1d), dom_key, self%var_x_idx(v))
+    case (2)
+      call find_or_add_axis(self%x_axes, self%nx_axes, self%nx_g, dom_key, self%var_x_idx(v))
+      call find_or_add_axis(self%y_axes, self%ny_axes, self%ny_g, dom_key, self%var_y_idx(v))
+    case (3)
+      call find_or_add_axis(self%x_axes, self%nx_axes, self%nx_g, dom_key, self%var_x_idx(v))
+      call find_or_add_axis(self%y_axes, self%ny_axes, self%ny_g, dom_key, self%var_y_idx(v))
+      call find_or_add_axis(self%z_axes, self%nz_axes, &
+                            size(self%vars(v)%data3d, 3), dom_key, self%var_z_idx(v))
+    end select
+  end do
+
+  if (.not. is_root) return
+
+  if (allocated(self%varids)) deallocate(self%varids)
+  allocate(self%varids(self%nvars))
+
+  call ncc(nf90_create(self%filename, &
+      ior(NF90_CLOBBER, ior(NF90_NETCDF4, NF90_CLASSIC_MODEL)), self%ncid), &
+      'nf90_create '//trim(self%filename))
+
+  call define_axis_dims_and_coords(self%ncid, self%x_axes, self%nx_axes, 'xaxis_', 'X')
+  call define_axis_dims_and_coords(self%ncid, self%y_axes, self%ny_axes, 'yaxis_', 'Y')
+  call define_axis_dims_and_coords(self%ncid, self%z_axes, self%nz_axes, 'zaxis_', 'Z')
+
+  call ncc(nf90_def_dim(self%ncid, 'Time', NF90_UNLIMITED, dimid_t), 'def_dim Time')
+  call ncc(nf90_def_var(self%ncid, 'Time', NF90_DOUBLE, [dimid_t], varid_t), 'def_var Time')
+  call ncc(nf90_put_att(self%ncid, varid_t, 'long_name',     'Time'),       'att Time:long_name')
+  call ncc(nf90_put_att(self%ncid, varid_t, 'units',         'time level'), 'att Time:units')
+  call ncc(nf90_put_att(self%ncid, varid_t, 'cartesian_axis','T'),          'att Time:cartesian_axis')
+
+  do v = 1, self%nvars
+    select case (self%vars(v)%ndims)
+    case (1)
+      call ncc(nf90_def_var(self%ncid, trim(self%vars(v)%name), NF90_DOUBLE, &
+          [self%x_axes(self%var_x_idx(v))%dimid, dimid_t], self%varids(v)), &
+          'def_var '//trim(self%vars(v)%name))
+    case (2)
+      call ncc(nf90_def_var(self%ncid, trim(self%vars(v)%name), NF90_DOUBLE, &
+          [self%x_axes(self%var_x_idx(v))%dimid, &
+           self%y_axes(self%var_y_idx(v))%dimid, dimid_t], &
+          self%varids(v)), 'def_var '//trim(self%vars(v)%name))
+    case (3)
+      call ncc(nf90_def_var(self%ncid, trim(self%vars(v)%name), NF90_DOUBLE, &
+          [self%x_axes(self%var_x_idx(v))%dimid, &
+           self%y_axes(self%var_y_idx(v))%dimid, &
+           self%z_axes(self%var_z_idx(v))%dimid, dimid_t], &
+          self%varids(v)), 'def_var '//trim(self%vars(v)%name))
+    end select
+    call ncc(nf90_put_att(self%ncid, self%varids(v), 'long_name', trim(self%vars(v)%long_name)), &
+        'att '//trim(self%vars(v)%name)//':long_name')
+    call ncc(nf90_put_att(self%ncid, self%varids(v), 'units',     trim(self%vars(v)%units)), &
+        'att '//trim(self%vars(v)%name)//':units')
+  end do
+
+  call ncc(nf90_enddef(self%ncid), 'enddef')
+
+  call ncc(nf90_put_var(self%ncid, varid_t, [1.0_kind_real], start=[1], count=[1]), 'put Time')
+  call put_axis_coord_data(self%ncid, self%x_axes, self%nx_axes)
+  call put_axis_coord_data(self%ncid, self%y_axes, self%ny_axes)
+  call put_axis_coord_data(self%ncid, self%z_axes, self%nz_axes)
+end subroutine writer_stage_define
+
+
+!==============================================================================
+! Stage 2 (gather): for each 2D/3D var, extract the compute-domain tile from
+! the caller's halo-inclusive buffer and mpp_gather it to self%root_pe; the
+! gathered global field lands in self%vars(v)%gbuf_2d / gbuf_3d (held until
+! stage_write). 1D vars are global on every PE and stage_write reads them
+! directly; this stage is a no-op for 1D.
+!
+! Non-root PEs allocate 1x1 dummies so the recv buffer argument to mpp_gather
+! is allocated (Fortran assumed-shape contract).
+!==============================================================================
+subroutine writer_stage_gather(self)
+  type(soca_io_writer), intent(inout) :: self
+
+  integer, allocatable :: pelist(:)
+  integer :: v, nx_c, ny_c, i_off, j_off, nlev
+  real(kind=kind_real), allocatable :: tile2(:,:), tile3(:,:,:)
+  logical :: is_root
+
+  is_root = (mpp_pe() == self%root_pe)
   call mpi_pelist(pelist)
 
   nx_c  = self%iec - self%isc + 1
@@ -264,172 +441,417 @@ subroutine writer_commit(self)
   i_off = self%isc - self%isd + 1
   j_off = self%jsc - self%jsd + 1
 
-  ! Build per-direction unique-axis tables (FMS algorithm): match each var's
-  ! dim against existing axes by (size, domain_key); reuse on match, append on
-  ! miss.
-  allocate(x_axes(MAX_AXES_PER_DIR), y_axes(MAX_AXES_PER_DIR), z_axes(MAX_AXES_PER_DIR))
-  allocate(var_x_idx(self%nvars), var_y_idx(self%nvars), var_z_idx(self%nvars))
-  var_x_idx = 0; var_y_idx = 0; var_z_idx = 0
-  nx_axes = 0; ny_axes = 0; nz_axes = 0
-
   do v = 1, self%nvars
-    ! 1D vars: no domain (global on every PE, key=0). 2D/3D vars share
-    ! self%domain (key=1).
-    dom_key = 1
-    if (self%vars(v)%ndims == 1) dom_key = 0
-
-    ! Every var contributes an X axis (Fortran first dim). For 2D/3D the local
-    ! buffer is only the compute slice, so use the writer's GLOBAL extents for
-    ! the axis size; 1D buffers are already global.
     select case (self%vars(v)%ndims)
     case (1)
-      call find_or_add_axis(x_axes, nx_axes, size(self%vars(v)%data1d), dom_key, var_x_idx(v))
+      ! Nothing to do; data1d is global on every PE.
     case (2)
-      call find_or_add_axis(x_axes, nx_axes, self%nx_g, dom_key, var_x_idx(v))
-      call find_or_add_axis(y_axes, ny_axes, self%ny_g, dom_key, var_y_idx(v))
-    case (3)
-      call find_or_add_axis(x_axes, nx_axes, self%nx_g, dom_key, var_x_idx(v))
-      call find_or_add_axis(y_axes, ny_axes, self%ny_g, dom_key, var_y_idx(v))
-      call find_or_add_axis(z_axes, nz_axes, size(self%vars(v)%data3d, 3), dom_key, var_z_idx(v))
-    end select
-  end do
-
-  ! Phase 1: PE 0 defines the file structure -- dims, coord vars, data vars.
-  if (is_root) then
-    allocate(varids(self%nvars))
-
-    call ncc(nf90_create(self%filename, &
-        ior(NF90_CLOBBER, ior(NF90_NETCDF4, NF90_CLASSIC_MODEL)), ncid), &
-        'nf90_create '//trim(self%filename))
-
-    call define_axis_dims_and_coords(ncid, x_axes, nx_axes, 'xaxis_', 'X')
-    call define_axis_dims_and_coords(ncid, y_axes, ny_axes, 'yaxis_', 'Y')
-    call define_axis_dims_and_coords(ncid, z_axes, nz_axes, 'zaxis_', 'Z')
-
-    call ncc(nf90_def_dim(ncid, 'Time', NF90_UNLIMITED, dimid_t), 'def_dim Time')
-    call ncc(nf90_def_var(ncid, 'Time', NF90_DOUBLE, [dimid_t], varid_t), 'def_var Time')
-    call ncc(nf90_put_att(ncid, varid_t, 'long_name',     'Time'),       'att Time:long_name')
-    call ncc(nf90_put_att(ncid, varid_t, 'units',         'time level'), 'att Time:units')
-    call ncc(nf90_put_att(ncid, varid_t, 'cartesian_axis','T'),          'att Time:cartesian_axis')
-
-    do v = 1, self%nvars
-      select case (self%vars(v)%ndims)
-      case (1)
-        ! Fortran dim list: [xaxis, Time] -> file order (Time, xaxis)
-        call ncc(nf90_def_var(ncid, trim(self%vars(v)%name), NF90_DOUBLE, &
-            [x_axes(var_x_idx(v))%dimid, dimid_t], varids(v)), &
-            'def_var '//trim(self%vars(v)%name))
-      case (2)
-        ! Fortran [xaxis, yaxis, Time] -> file (Time, yaxis, xaxis)
-        call ncc(nf90_def_var(ncid, trim(self%vars(v)%name), NF90_DOUBLE, &
-            [x_axes(var_x_idx(v))%dimid, y_axes(var_y_idx(v))%dimid, dimid_t], &
-            varids(v)), 'def_var '//trim(self%vars(v)%name))
-      case (3)
-        ! Fortran [xaxis, yaxis, zaxis, Time] -> file (Time, zaxis, yaxis, xaxis)
-        call ncc(nf90_def_var(ncid, trim(self%vars(v)%name), NF90_DOUBLE, &
-            [x_axes(var_x_idx(v))%dimid, y_axes(var_y_idx(v))%dimid, &
-             z_axes(var_z_idx(v))%dimid, dimid_t], varids(v)), &
-            'def_var '//trim(self%vars(v)%name))
-      end select
-      call ncc(nf90_put_att(ncid, varids(v), 'long_name', trim(self%vars(v)%long_name)), &
-          'att '//trim(self%vars(v)%name)//':long_name')
-      call ncc(nf90_put_att(ncid, varids(v), 'units',     trim(self%vars(v)%units)), &
-          'att '//trim(self%vars(v)%name)//':units')
-    end do
-
-    call ncc(nf90_enddef(ncid), 'enddef')
-
-    ! Coordinate-var data is just the index sequence 1..size, matching FMS.
-    call ncc(nf90_put_var(ncid, varid_t, [1.0_kind_real], start=[1], count=[1]), 'put Time')
-    call put_axis_coord_data(ncid, x_axes, nx_axes)
-    call put_axis_coord_data(ncid, y_axes, ny_axes)
-    call put_axis_coord_data(ncid, z_axes, nz_axes)
-  end if
-
-  ! Phase 2: gather and write each user variable. The compute-domain tile is
-  ! extracted from the caller's halo-inclusive buffer one var (and, for 3D,
-  ! one level) at a time, so peak local memory is a single (nx_c, ny_c) tile.
-  ! Non-root allocates a 1x1 dummy for gbuf2d so the actual argument to
-  ! mpp_gather is always allocated (assumed-shape dummy requires it).
-  if (is_root) then
-    allocate(gbuf2d(self%nx_g, self%ny_g))
-  else
-    allocate(gbuf2d(1, 1))
-  end if
-  allocate(tile2(nx_c, ny_c))
-
-  do v = 1, self%nvars
-    if (self%vars(v)%ndims == 1) then
+      if (.not. allocated(tile2)) allocate(tile2(nx_c, ny_c))
       if (is_root) then
-        call ncc(nf90_put_var(ncid, varids(v), self%vars(v)%data1d, &
-            start=[1, 1], count=[size(self%vars(v)%data1d), 1]), &
-            'put '//trim(self%vars(v)%name))
+        if (.not. allocated(self%vars(v)%gbuf_2d)) &
+            allocate(self%vars(v)%gbuf_2d(self%nx_g, self%ny_g))
+      else
+        if (.not. allocated(self%vars(v)%gbuf_2d)) allocate(self%vars(v)%gbuf_2d(1, 1))
       end if
-    else if (self%vars(v)%ndims == 2) then
       tile2 = self%vars(v)%data2d(i_off : i_off + nx_c - 1, &
                                   j_off : j_off + ny_c - 1)
       call mpp_gather(self%isc, self%iec, self%jsc, self%jec, pelist, &
-                      tile2, gbuf2d, is_root)
-      if (is_root) then
-        call ncc(nf90_put_var(ncid, varids(v), gbuf2d, &
-            start=[1, 1, 1], count=[self%nx_g, self%ny_g, 1]), &
-            'put '//trim(self%vars(v)%name))
-      end if
-    else
-      ! Single 3D mpp_gather per 3D var: one collective replaces nlevels 2D
-      ! gathers, and root receives the assembled global field directly into
-      ! gbuf3d (no per-level gbuf2d->gbuf3d memcpy). Reuse tile3/gbuf3d across
-      ! 3D vars when nlevels matches (typical for ocean state).
+                      tile2, self%vars(v)%gbuf_2d, is_root)
+    case (3)
       nlev = self%vars(v)%nlevels
-      if (is_root) then
-        if (allocated(gbuf3d)) then
-          if (size(gbuf3d, 3) /= nlev) deallocate(gbuf3d)
-        end if
-        if (.not. allocated(gbuf3d)) allocate(gbuf3d(self%nx_g, self%ny_g, nlev))
-      else
-        ! Non-root dummy so the actual argument to mpp_gather is allocated.
-        if (.not. allocated(gbuf3d)) allocate(gbuf3d(1, 1, 1))
-      end if
       if (allocated(tile3)) then
         if (size(tile3, 3) /= nlev) deallocate(tile3)
       end if
       if (.not. allocated(tile3)) allocate(tile3(nx_c, ny_c, nlev))
+      if (is_root) then
+        if (.not. allocated(self%vars(v)%gbuf_3d)) &
+            allocate(self%vars(v)%gbuf_3d(self%nx_g, self%ny_g, nlev))
+      else
+        if (.not. allocated(self%vars(v)%gbuf_3d)) allocate(self%vars(v)%gbuf_3d(1, 1, 1))
+      end if
       tile3 = self%vars(v)%data3d(i_off : i_off + nx_c - 1, &
                                   j_off : j_off + ny_c - 1, :)
+      ! Single 3D mpp_gather per 3D var: one collective replaces nlevels 2D
+      ! gathers, and root receives the assembled global field directly.
       call mpp_gather(self%isc, self%iec, self%jsc, self%jec, nlev, pelist, &
-                      tile3, gbuf3d, is_root)
-      if (is_root) then
-        call ncc(nf90_put_var(ncid, varids(v), gbuf3d, &
-            start=[1, 1, 1, 1], count=[self%nx_g, self%ny_g, nlev, 1]), &
-            'put '//trim(self%vars(v)%name))
+                      tile3, self%vars(v)%gbuf_3d, is_root)
+    end select
+  end do
+
+  if (allocated(tile2))  deallocate(tile2)
+  if (allocated(tile3))  deallocate(tile3)
+  if (allocated(pelist)) deallocate(pelist)
+end subroutine writer_stage_gather
+
+
+!==============================================================================
+! Stage 3 (write): on self%root_pe, dump each var to disk via nf90_put_var.
+! For 1D vars the source is data1d directly (global on every PE; root just
+! reads its own copy). For 2D/3D the source is the gbuf_2d / gbuf_3d that
+! stage_gather assembled. No MPI -> across multiple writers with different
+! root_pes (ensemble path) this stage runs concurrently per PE.
+!==============================================================================
+subroutine writer_stage_write(self)
+  type(soca_io_writer), intent(inout) :: self
+
+  integer :: v, nlev
+  logical :: is_root
+
+  is_root = (mpp_pe() == self%root_pe)
+  if (.not. is_root) return
+
+  do v = 1, self%nvars
+    select case (self%vars(v)%ndims)
+    case (1)
+      call ncc(nf90_put_var(self%ncid, self%varids(v), self%vars(v)%data1d, &
+          start=[1, 1], count=[size(self%vars(v)%data1d), 1]), &
+          'put '//trim(self%vars(v)%name))
+    case (2)
+      call ncc(nf90_put_var(self%ncid, self%varids(v), self%vars(v)%gbuf_2d, &
+          start=[1, 1, 1], count=[self%nx_g, self%ny_g, 1]), &
+          'put '//trim(self%vars(v)%name))
+    case (3)
+      nlev = self%vars(v)%nlevels
+      call ncc(nf90_put_var(self%ncid, self%varids(v), self%vars(v)%gbuf_3d, &
+          start=[1, 1, 1, 1], count=[self%nx_g, self%ny_g, nlev, 1]), &
+          'put '//trim(self%vars(v)%name))
+    end select
+  end do
+end subroutine writer_stage_write
+
+
+!==============================================================================
+! Stage 4 (close): on self%root_pe close the file; everyone deallocates the
+! inter-stage buffers and the writer's working set. No MPI -> concurrent across
+! writers in the ensemble path.
+!==============================================================================
+subroutine writer_stage_close(self)
+  type(soca_io_writer), intent(inout) :: self
+
+  integer :: v
+  logical :: is_root
+
+  is_root = (mpp_pe() == self%root_pe)
+
+  if (is_root .and. self%ncid >= 0) then
+    call ncc(nf90_close(self%ncid), 'nf90_close')
+  end if
+  self%ncid = -1
+
+  if (allocated(self%varids))    deallocate(self%varids)
+  if (allocated(self%x_axes))    deallocate(self%x_axes)
+  if (allocated(self%y_axes))    deallocate(self%y_axes)
+  if (allocated(self%z_axes))    deallocate(self%z_axes)
+  if (allocated(self%var_x_idx)) deallocate(self%var_x_idx)
+  if (allocated(self%var_y_idx)) deallocate(self%var_y_idx)
+  if (allocated(self%var_z_idx)) deallocate(self%var_z_idx)
+  self%nx_axes = 0; self%ny_axes = 0; self%nz_axes = 0
+
+  if (allocated(self%vars)) then
+    do v = 1, self%nvars
+      if (allocated(self%vars(v)%gbuf_2d)) deallocate(self%vars(v)%gbuf_2d)
+      if (allocated(self%vars(v)%gbuf_3d)) deallocate(self%vars(v)%gbuf_3d)
+    end do
+    deallocate(self%vars)
+  end if
+  self%nvars = 0
+end subroutine writer_stage_close
+
+
+!==============================================================================
+! Bulk-write orchestrator: take an array of pre-configured writers (each one
+! init'd against the same domain with its own filename and rotated root_pe)
+! and run all four stages across the whole set with mpp_sync between phases.
+!
+! Phase ordering:
+!   1. define-all  (each writer's root_pe creates its file; concurrent, no MPI)
+!   2. gather-all  (sync: per-writer per-var mpp_gather -- world collectives
+!                   sequenced; async: all (writer, var) MPI_Igatherv batched
+!                   into one wave + MPI_Waitall so the runtime can overlap)
+!   3. write-all   (each writer's root_pe nf90_put_var's its data; concurrent)
+!   4. close-all   (concurrent nf90_close)
+!
+! mpp_sync between phases so the wall-time profile lines up across ranks (the
+! reported t_* on rank 0 then equals the max-across-ranks phase wall time).
+!
+! Memory: each writer's root_pe holds one member's worth of every var's
+! gbuf_2d/gbuf_3d between phases 2 and 3 -- peak ~global state size per writer.
+!==============================================================================
+subroutine soca_io_writers_commit_ensemble(writers)
+  type(soca_io_writer), intent(inout) :: writers(:)
+
+  integer :: m
+  integer(kind=8) :: c0, c1, rate
+  real(kind=kind_real) :: t_define, t_gather, t_write, t_close
+
+  if (size(writers) == 0) return
+  do m = 1, size(writers)
+    if (writers(m)%root_pe < 0) writers(m)%root_pe = mpp_root_pe()
+  end do
+
+  call system_clock(count_rate=rate)
+  call mpp_sync()
+
+  ! Phase 1: file create + dim/var defs. Concurrent across root_pes; no MPI.
+  call system_clock(c0)
+  do m = 1, size(writers)
+    call writer_stage_define(writers(m))
+  end do
+  call mpp_sync()
+  call system_clock(c1)
+  t_define = real(c1 - c0, kind=kind_real) / real(rate, kind=kind_real)
+
+  ! Phase 2: gather. Sync path issues per-writer per-var mpp_gather (each is a
+  ! world-comm collective, so they serialize across writers). Async path
+  ! batches every (writer, var) MPI_Igatherv into one wave + MPI_Waitall.
+  call system_clock(c0)
+  if (async_mpi_enabled_) then
+    call writer_stage_gather_all_async(writers)
+  else
+    do m = 1, size(writers)
+      call writer_stage_gather(writers(m))
+    end do
+  end if
+  call mpp_sync()
+  call system_clock(c1)
+  t_gather = real(c1 - c0, kind=kind_real) / real(rate, kind=kind_real)
+
+  ! Phase 3: each root_pe writes its writer's data. No MPI -> concurrent disk.
+  call system_clock(c0)
+  do m = 1, size(writers)
+    call writer_stage_write(writers(m))
+  end do
+  call mpp_sync()
+  call system_clock(c1)
+  t_write = real(c1 - c0, kind=kind_real) / real(rate, kind=kind_real)
+
+  ! Phase 4: each root_pe closes its file. No MPI -> concurrent.
+  call system_clock(c0)
+  do m = 1, size(writers)
+    call writer_stage_close(writers(m))
+  end do
+  call mpp_sync()
+  call system_clock(c1)
+  t_close = real(c1 - c0, kind=kind_real) / real(rate, kind=kind_real)
+
+  if (mpp_pe() == mpp_root_pe()) then
+    write(*, '(A,I0,4(A,F0.4))') &
+        'OOPS_PERF soca_io writer_ensemble nm=', size(writers), &
+        ' define=', t_define, ' gather=', t_gather, &
+        ' write=',  t_write,  ' close=',  t_close
+  end if
+end subroutine soca_io_writers_commit_ensemble
+
+
+!==============================================================================
+! Async cross-writer gather: pack every PE's compute-domain tile for every
+! (writer, 2D-or-3D var) into a per-(request) send buffer, post one
+! MPI_Igatherv per (writer, var) targeted at writers(m)%root_pe, MPI_Waitall,
+! then each root unpacks its received tiles into the var's gbuf. The runtime
+! can overlap Igathers whose roots differ; sync mpp_gather would force one
+! world-comm collective per gather, serializing the whole batch.
+!
+! Each 3D var ships as a single block (i fastest, then j, then k); 2D vars get
+! one Igatherv each. Per-sender memory cost is the sum of (writers, vars) of
+! compute-tile-size * nz_var bytes -- the whole batch in flight at once.
+!==============================================================================
+subroutine writer_stage_gather_all_async(writers)
+  type(soca_io_writer), intent(inout) :: writers(:)
+
+  integer :: nprocs, ierr, r, m, v, idx, rq_count, max_reqs, req_idx
+  integer :: my_isc, my_iec, my_jsc, my_jec, my_count2d
+  integer :: nz_v, full_count, isg, jsg, nx_g, ny_g
+  integer :: i, j, k, ig, jg, kk, mp_comm
+  integer, allocatable :: all_isc(:), all_iec(:), all_jsc(:), all_jec(:)
+  integer, allocatable :: tile_counts2d(:), pelist(:)
+  integer, allocatable :: reqs(:)
+  integer, allocatable :: req_writer(:), req_var(:)
+  integer, allocatable :: rc(:), disp(:)
+  type :: gather_buf_t
+    real(kind=kind_real), allocatable :: buf(:)
+  end type
+  type(gather_buf_t), allocatable :: sends(:), recvs(:)
+  logical :: is_root_for_this
+
+  if (size(writers) == 0) return
+  call mpi_pelist_and_comm(pelist, mp_comm)
+  nprocs = mpp_npes()
+
+  ! All writers in the ensemble share the same FMS domain (the geometry's),
+  ! so allgather the compute-domain bounds once and reuse for every Igatherv.
+  call mpp_get_compute_domain(writers(1)%domain, my_isc, my_iec, my_jsc, my_jec)
+  allocate(all_isc(nprocs), all_iec(nprocs), all_jsc(nprocs), all_jec(nprocs))
+  call MPI_Allgather(my_isc, 1, MPI_INTEGER, all_isc, 1, MPI_INTEGER, mp_comm, ierr)
+  call MPI_Allgather(my_iec, 1, MPI_INTEGER, all_iec, 1, MPI_INTEGER, mp_comm, ierr)
+  call MPI_Allgather(my_jsc, 1, MPI_INTEGER, all_jsc, 1, MPI_INTEGER, mp_comm, ierr)
+  call MPI_Allgather(my_jec, 1, MPI_INTEGER, all_jec, 1, MPI_INTEGER, mp_comm, ierr)
+
+  allocate(tile_counts2d(nprocs))
+  do r = 1, nprocs
+    tile_counts2d(r) = (all_iec(r) - all_isc(r) + 1) * (all_jec(r) - all_jsc(r) + 1)
+  end do
+  my_count2d = (my_iec - my_isc + 1) * (my_jec - my_jsc + 1)
+
+  ! Allocate the gbufs on each writer's root_pe up front (one per 2D/3D var).
+  ! These buffers persist through stage_write and are freed in stage_close.
+  do m = 1, size(writers)
+    is_root_for_this = (mpp_pe() == writers(m)%root_pe)
+    if (.not. is_root_for_this) cycle
+    do v = 1, writers(m)%nvars
+      select case (writers(m)%vars(v)%ndims)
+      case (2)
+        if (.not. allocated(writers(m)%vars(v)%gbuf_2d)) &
+            allocate(writers(m)%vars(v)%gbuf_2d(writers(m)%nx_g, writers(m)%ny_g))
+      case (3)
+        if (.not. allocated(writers(m)%vars(v)%gbuf_3d)) &
+            allocate(writers(m)%vars(v)%gbuf_3d( &
+                writers(m)%nx_g, writers(m)%ny_g, writers(m)%vars(v)%nlevels))
+      end select
+    end do
+  end do
+
+  ! Count requests: one per (writer, gatherable var). 1D vars contribute no
+  ! request (data1d is global on every PE).
+  max_reqs = 0
+  do m = 1, size(writers)
+    do v = 1, writers(m)%nvars
+      if (writers(m)%vars(v)%ndims >= 2) max_reqs = max_reqs + 1
+    end do
+  end do
+  if (max_reqs == 0) goto 9999
+
+  allocate(reqs(max_reqs))
+  allocate(req_writer(max_reqs), req_var(max_reqs))
+  allocate(sends(max_reqs), recvs(max_reqs))
+  allocate(rc(nprocs), disp(nprocs))
+  rq_count = 0
+
+  ! Phase A/B: pack send + post Igatherv per (writer, var).
+  do m = 1, size(writers)
+    is_root_for_this = (mpp_pe() == writers(m)%root_pe)
+    do v = 1, writers(m)%nvars
+      if (writers(m)%vars(v)%ndims < 2) cycle
+      rq_count = rq_count + 1
+      req_writer(rq_count) = m
+      req_var(rq_count)    = v
+
+      if (writers(m)%vars(v)%ndims == 2) then
+        nz_v = 1
+      else
+        nz_v = writers(m)%vars(v)%nlevels
       end if
+
+      do r = 1, nprocs
+        rc(r) = tile_counts2d(r) * nz_v
+      end do
+      disp(1) = 0
+      do r = 2, nprocs
+        disp(r) = disp(r-1) + rc(r-1)
+      end do
+
+      allocate(sends(rq_count)%buf(my_count2d * nz_v))
+      idx = 0
+      if (writers(m)%vars(v)%ndims == 2) then
+        do j = 1, my_jec - my_jsc + 1
+          do i = 1, my_iec - my_isc + 1
+            idx = idx + 1
+            sends(rq_count)%buf(idx) = writers(m)%vars(v)%data2d( &
+                writers(m)%isc - writers(m)%isd + i, &
+                writers(m)%jsc - writers(m)%jsd + j)
+          end do
+        end do
+      else
+        do k = 1, nz_v
+          do j = 1, my_jec - my_jsc + 1
+            do i = 1, my_iec - my_isc + 1
+              idx = idx + 1
+              sends(rq_count)%buf(idx) = writers(m)%vars(v)%data3d( &
+                  writers(m)%isc - writers(m)%isd + i, &
+                  writers(m)%jsc - writers(m)%jsd + j, k)
+            end do
+          end do
+        end do
+      end if
+
+      if (is_root_for_this) then
+        full_count = 0
+        do r = 1, nprocs
+          full_count = full_count + rc(r)
+        end do
+        allocate(recvs(rq_count)%buf(full_count))
+      end if
+
+      call MPI_Igatherv(sends(rq_count)%buf, my_count2d * nz_v, MPI_DOUBLE_PRECISION, &
+          recvs(rq_count)%buf, rc, disp, MPI_DOUBLE_PRECISION, &
+          writers(m)%root_pe, mp_comm, reqs(rq_count), ierr)
+    end do
+  end do
+
+  ! Phase C: wait for everything.
+  call MPI_Waitall(rq_count, reqs, MPI_STATUSES_IGNORE, ierr)
+
+  ! Phase D: each root unpacks its tiles into the per-var gbuf. The pack loop
+  ! above wrote each sender's tile contiguously; Igatherv lays them back-to-
+  ! back at disp(r) in the recvbuf in rank order.
+  do req_idx = 1, rq_count
+    m = req_writer(req_idx)
+    v = req_var(req_idx)
+    if (mpp_pe() /= writers(m)%root_pe) cycle
+    isg = writers(m)%isg
+    jsg = writers(m)%jsg
+    nx_g = writers(m)%nx_g
+    ny_g = writers(m)%ny_g
+    if (writers(m)%vars(v)%ndims == 2) then
+      idx = 0
+      do r = 1, nprocs
+        do jg = all_jsc(r), all_jec(r)
+          do ig = all_isc(r), all_iec(r)
+            idx = idx + 1
+            writers(m)%vars(v)%gbuf_2d(ig - isg + 1, jg - jsg + 1) = recvs(req_idx)%buf(idx)
+          end do
+        end do
+      end do
+    else
+      idx = 0
+      do r = 1, nprocs
+        do kk = 1, writers(m)%vars(v)%nlevels
+          do jg = all_jsc(r), all_jec(r)
+            do ig = all_isc(r), all_iec(r)
+              idx = idx + 1
+              writers(m)%vars(v)%gbuf_3d(ig - isg + 1, jg - jsg + 1, kk) = recvs(req_idx)%buf(idx)
+            end do
+          end do
+        end do
+      end do
     end if
   end do
 
-  ! Phase 3: close.
-  if (is_root) then
-    call ncc(nf90_close(ncid), 'nf90_close')
-    deallocate(varids)
-  end if
-  deallocate(gbuf2d, tile2, pelist, x_axes, y_axes, z_axes, var_x_idx, var_y_idx, var_z_idx)
-  if (allocated(gbuf3d)) deallocate(gbuf3d)
-  if (allocated(tile3)) deallocate(tile3)
+  do i = 1, rq_count
+    if (allocated(sends(i)%buf)) deallocate(sends(i)%buf)
+    if (allocated(recvs(i)%buf)) deallocate(recvs(i)%buf)
+  end do
+  deallocate(reqs, req_writer, req_var, sends, recvs, rc, disp)
 
-  ! drop pointer entries; caller's data is unaffected
-  if (allocated(self%vars)) deallocate(self%vars)
-  self%nvars = 0
-end subroutine writer_commit
+9999 continue
+  deallocate(all_isc, all_iec, all_jsc, all_jec, tile_counts2d)
+  if (allocated(pelist)) deallocate(pelist)
+end subroutine writer_stage_gather_all_async
 
 
 !==============================================================================
 ! Reader: init / enqueue_* / commit. Caller buffer stays in place; enqueue
 ! records a pointer, commit fills the compute-domain interior. Halos are left
 ! untouched -- the caller refreshes them via mpp_update_domains (same as FMS).
+!
+! Optional reader_pe sets the source PE for the scatter path (defaults to
+! mpp_root_pe() in single-state mode); the ensemble orchestrator pre-sets a
+! rotated reader_pe per member so different files are read concurrently.
 !==============================================================================
-subroutine reader_init(self, domain, filename)
+subroutine reader_init(self, domain, filename, reader_pe)
   class(soca_io_reader), intent(inout) :: self
   type(domain2D), target, intent(in)   :: domain
   character(len=*),       intent(in)   :: filename
+  integer, optional,      intent(in)   :: reader_pe
 
   self%filename = filename
   self%domain => domain
@@ -443,6 +865,12 @@ subroutine reader_init(self, domain, filename)
   if (allocated(self%vars)) deallocate(self%vars)
   allocate(self%vars(64))
   self%nvars = 0
+
+  if (present(reader_pe)) then
+    self%reader_pe = reader_pe
+  else
+    self%reader_pe = mpp_root_pe()
+  end if
 end subroutine reader_init
 
 
@@ -528,20 +956,27 @@ end subroutine grow_reader_if_needed
 
 
 !==============================================================================
-! Read all enqueued vars. Every PE opens the file NF90_NOWRITE and pulls only
-! its compute-domain tile via nf90_get_var(start, count) -- mirrors FMS's
-! MPP_READ_2DDECOMP: no PE-0 bottleneck, no mpp_broadcast, N parallel reads.
-! Classic / 64-bit-offset netcdf allows concurrent read-only opens; library
-! state is process-local. 1D vars also read independently on every PE.
+! Read all enqueued vars. Single-state path dispatches on the YAML knob
+! geometry.io.'single state read': 'strided' (default, every PE reads its own
+! tile direct) or 'scatter' (reader_pe reads the whole field then MPI_Scatterv
+! to tile owners). The strided path mirrors FMS MPP_READ_2DDECOMP -- no PE-0
+! bottleneck, N parallel reads. The scatter path concentrates the disk read
+! on one PE: useful when 200-500 PEs concurrently striding the same file
+! stresses the filesystem.
 !==============================================================================
 subroutine reader_commit(self)
   class(soca_io_reader), intent(inout) :: self
 
-  call commit_reader_strided(self)
-
-  ! release pointers; caller's buffers untouched (they hold the read data)
-  if (allocated(self%vars)) deallocate(self%vars)
-  self%nvars = 0
+  if (single_state_read_scatter_) then
+    call reader_stage_read(self)
+    call reader_stage_distribute(self)
+    call reader_stage_close(self)
+  else
+    call commit_reader_strided(self)
+    ! release pointers; caller's buffers untouched (they hold the read data)
+    if (allocated(self%vars)) deallocate(self%vars)
+    self%nvars = 0
+  end if
 end subroutine reader_commit
 
 
@@ -616,119 +1051,473 @@ end subroutine commit_reader_strided
 
 
 !==============================================================================
-! PE-0 read + per-PE scatter. PE 0 nf90_get_var's the global field; mpp_scatter
-! sends each PE its compute-domain slice (1D vars are broadcast). Mirrors FMS
-! 2024.02 fms_netcdf_domain_io.F90:domain_read_3d.
+! Stage 1 (read): on self%reader_pe, pull the whole global field for every
+! enqueued var into a per-var staged buffer. No MPI -> across multiple readers
+! with different reader_pes (ensemble path) this stage runs concurrently per
+! PE (independent files, independent disk I/O).
 !
-! TODO: currently unused -- single-state reads use commit_reader_strided. Will
-! be exercised by parallel-ensemble I/O, where one reader PE per member
-! scatters that member to its compute-PE group.
+! 1D vars: read directly into data1d on reader_pe (reader_stage_distribute
+! broadcasts it). 2D/3D/4D: alloc gbuf_{2,3,4}d on reader_pe; non-reader PEs
+! hold nothing (the scatter recvbuf is allocated on the fly in distribute).
 !==============================================================================
-subroutine commit_reader_scatter(self)
-  class(soca_io_reader), intent(inout) :: self
+subroutine reader_stage_read(self)
+  type(soca_io_reader), intent(inout) :: self
 
-  integer :: ncid, v, n, n3, n4, k4
-  integer :: nx_c, ny_c, i_off, j_off
-  integer :: is_f, ie_f, js_f, je_f  ! PE tile in 1-based file-space indices
-  integer, allocatable :: pelist(:)
-  real(kind=kind_real), allocatable :: gbuf2(:,:), gbuf3(:,:,:), gbuf4(:,:,:,:)
-  real(kind=kind_real), allocatable :: tile2(:,:), tile3(:,:,:)
+  integer :: ncid, v, n, n3, n4
   logical :: is_root
 
-  is_root = (mpp_pe() == mpp_root_pe())
-  call mpi_pelist(pelist)
+  is_root = (mpp_pe() == self%reader_pe)
+  if (.not. is_root) return
 
-  ncid = -1
-  if (is_root) call ncc(nf90_open(self%filename, NF90_NOWRITE, ncid), &
+  call ncc(nf90_open(self%filename, NF90_NOWRITE, ncid), &
       'nf90_open '//trim(self%filename))
-
-  nx_c   = self%iec - self%isc + 1
-  ny_c   = self%jec - self%jsc + 1
-  i_off  = self%isc - self%isd + 1
-  j_off  = self%jsc - self%jsd + 1
-  ! Map PE compute indices (isg-based) to 1-based file/global-buffer indices.
-  ! FMS 2025.02 removed the ishift/jshift optional args from mpp_scatter, so
-  ! we pre-apply the shift in the indices we pass.
-  is_f   = self%isc - self%isg + 1
-  ie_f   = self%iec - self%isg + 1
-  js_f   = self%jsc - self%jsg + 1
-  je_f   = self%jec - self%jsg + 1
 
   do v = 1, self%nvars
     select case (self%vars(v)%ndims)
     case (1)
-      ! Global on every PE: PE 0 reads, broadcasts.
       n = size(self%vars(v)%data1d)
-      if (is_root) call read_var_strided(ncid, self%vars(v)%name, &
+      call read_var_strided(ncid, self%vars(v)%name, &
           1, 1, n, 1, dst1=self%vars(v)%data1d)
-      call mpp_broadcast(self%vars(v)%data1d, n, mpp_root_pe())
-
     case (2)
-      allocate(tile2(nx_c, ny_c))
-      if (is_root) then
-        allocate(gbuf2(self%nx_g, self%ny_g))
-        call read_var_strided(ncid, self%vars(v)%name, &
-            1, 1, self%nx_g, self%ny_g, dst2=gbuf2)
-      else
-        allocate(gbuf2(1, 1))  ! dummy: mpp_scatter only reads input_data on root
-      end if
-      call mpp_scatter(is_f, ie_f, js_f, je_f, &
-                       pelist, tile2, gbuf2, is_root)
-      deallocate(gbuf2)
-      self%vars(v)%data2d(i_off : i_off + nx_c - 1, &
-                          j_off : j_off + ny_c - 1) = tile2
-      deallocate(tile2)
-
+      if (.not. allocated(self%vars(v)%gbuf_2d)) &
+          allocate(self%vars(v)%gbuf_2d(self%nx_g, self%ny_g))
+      call read_var_strided(ncid, self%vars(v)%name, &
+          1, 1, self%nx_g, self%ny_g, dst2=self%vars(v)%gbuf_2d)
     case (3)
       n3 = size(self%vars(v)%data3d, 3)
-      allocate(tile3(nx_c, ny_c, n3))
-      if (is_root) then
-        allocate(gbuf3(self%nx_g, self%ny_g, n3))
-        call read_var_strided(ncid, self%vars(v)%name, &
-            1, 1, self%nx_g, self%ny_g, dst3=gbuf3)
-      else
-        allocate(gbuf3(1, 1, 1))
-      end if
-      call mpp_scatter(is_f, ie_f, js_f, je_f, n3, &
-                       pelist, tile3, gbuf3, is_root)
-      deallocate(gbuf3)
-      self%vars(v)%data3d(i_off : i_off + nx_c - 1, &
-                          j_off : j_off + ny_c - 1, :) = tile3
-      deallocate(tile3)
-
+      if (.not. allocated(self%vars(v)%gbuf_3d)) &
+          allocate(self%vars(v)%gbuf_3d(self%nx_g, self%ny_g, n3))
+      call read_var_strided(ncid, self%vars(v)%name, &
+          1, 1, self%nx_g, self%ny_g, dst3=self%vars(v)%gbuf_3d)
     case (4)
-      ! mpp_scatter is 2D/3D only; loop the outer (4th) dim and call 3D scatter.
       n3 = size(self%vars(v)%data4d, 3)
       n4 = size(self%vars(v)%data4d, 4)
-      allocate(tile3(nx_c, ny_c, n3))
-      if (is_root) then
-        allocate(gbuf4(self%nx_g, self%ny_g, n3, n4))
-        call read_var_strided(ncid, self%vars(v)%name, &
-            1, 1, self%nx_g, self%ny_g, dst4=gbuf4)
-      else
-        allocate(gbuf3(1, 1, 1))  ! dummy for non-root in the 3D scatter call
-      end if
-      do k4 = 1, n4
-        if (is_root) then
-          call mpp_scatter(is_f, ie_f, js_f, je_f, n3, &
-                           pelist, tile3, gbuf4(:,:,:,k4), is_root)
-        else
-          call mpp_scatter(is_f, ie_f, js_f, je_f, n3, &
-                           pelist, tile3, gbuf3, is_root)
-        end if
-        self%vars(v)%data4d(i_off : i_off + nx_c - 1, &
-                            j_off : j_off + ny_c - 1, :, k4) = tile3
-      end do
-      if (is_root) deallocate(gbuf4)
-      if (allocated(gbuf3)) deallocate(gbuf3)
-      deallocate(tile3)
+      if (.not. allocated(self%vars(v)%gbuf_4d)) &
+          allocate(self%vars(v)%gbuf_4d(self%nx_g, self%ny_g, n3, n4))
+      call read_var_strided(ncid, self%vars(v)%name, &
+          1, 1, self%nx_g, self%ny_g, dst4=self%vars(v)%gbuf_4d)
     end select
   end do
 
-  if (is_root) call ncc(nf90_close(ncid), 'nf90_close '//trim(self%filename))
+  call ncc(nf90_close(ncid), 'nf90_close '//trim(self%filename))
+end subroutine reader_stage_read
 
+
+!==============================================================================
+! Stage 2 (distribute, sync): per-var send the relevant slice from reader_pe
+! to every PE in the world communicator. 1D vars are MPI_Bcast. 2D/3D/4D vars
+! are packed rank-ordered on reader_pe and shipped via MPI_Scatterv; each
+! receiver unpacks its compute tile into data2d/data3d/data4d.
+!
+! Per-var Allgather of the compute-domain bounds: needed because the pack
+! order on reader_pe must match the unpack order on every receiver. The
+! Allgather happens once per (reader, var); for the async batched path the
+! same bounds are reused across all vars (see reader_stage_distribute_all_async).
+!==============================================================================
+subroutine reader_stage_distribute(self)
+  type(soca_io_reader), intent(inout) :: self
+
+  integer :: nprocs, ierr, v, r, i, j, k, k4, n3, n4, idx, full_count
+  integer :: my_isc, my_iec, my_jsc, my_jec, my_count2d
+  integer :: nx_c, ny_c, i_off, j_off, mp_comm
+  integer, allocatable :: all_isc(:), all_iec(:), all_jsc(:), all_jec(:)
+  integer, allocatable :: tile_counts2d(:), rc(:), disp(:), pelist(:)
+  real(kind=kind_real), allocatable :: sendbuf(:), recvbuf(:)
+  logical :: is_root
+
+  is_root = (mpp_pe() == self%reader_pe)
+  nprocs  = mpp_npes()
+  call mpi_pelist_and_comm(pelist, mp_comm)
+
+  call mpp_get_compute_domain(self%domain, my_isc, my_iec, my_jsc, my_jec)
+  allocate(all_isc(nprocs), all_iec(nprocs), all_jsc(nprocs), all_jec(nprocs))
+  call MPI_Allgather(my_isc, 1, MPI_INTEGER, all_isc, 1, MPI_INTEGER, mp_comm, ierr)
+  call MPI_Allgather(my_iec, 1, MPI_INTEGER, all_iec, 1, MPI_INTEGER, mp_comm, ierr)
+  call MPI_Allgather(my_jsc, 1, MPI_INTEGER, all_jsc, 1, MPI_INTEGER, mp_comm, ierr)
+  call MPI_Allgather(my_jec, 1, MPI_INTEGER, all_jec, 1, MPI_INTEGER, mp_comm, ierr)
+
+  allocate(tile_counts2d(nprocs))
+  do r = 1, nprocs
+    tile_counts2d(r) = (all_iec(r) - all_isc(r) + 1) * (all_jec(r) - all_jsc(r) + 1)
+  end do
+  my_count2d = (my_iec - my_isc + 1) * (my_jec - my_jsc + 1)
+
+  nx_c  = self%iec - self%isc + 1
+  ny_c  = self%jec - self%jsc + 1
+  i_off = self%isc - self%isd + 1
+  j_off = self%jsc - self%jsd + 1
+
+  allocate(rc(nprocs), disp(nprocs))
+
+  do v = 1, self%nvars
+    select case (self%vars(v)%ndims)
+    case (1)
+      ! 1D: every PE wants the same global vector. Bcast directly into data1d.
+      call MPI_Bcast(self%vars(v)%data1d, size(self%vars(v)%data1d), &
+          MPI_DOUBLE_PRECISION, self%reader_pe, mp_comm, ierr)
+
+    case (2, 3, 4)
+      if (self%vars(v)%ndims == 2) then
+        n3 = 1; n4 = 1
+      else if (self%vars(v)%ndims == 3) then
+        n3 = size(self%vars(v)%data3d, 3); n4 = 1
+      else
+        n3 = size(self%vars(v)%data4d, 3); n4 = size(self%vars(v)%data4d, 4)
+      end if
+
+      do r = 1, nprocs
+        rc(r) = tile_counts2d(r) * n3 * n4
+      end do
+      disp(1) = 0
+      do r = 2, nprocs
+        disp(r) = disp(r-1) + rc(r-1)
+      end do
+
+      if (is_root) then
+        full_count = 0
+        do r = 1, nprocs
+          full_count = full_count + rc(r)
+        end do
+        allocate(sendbuf(full_count))
+        idx = 0
+        ! Pack rank-by-rank, k4 fastest-outer, then k, then j, then i (matches unpack)
+        do r = 1, nprocs
+          do k4 = 1, n4
+            do k = 1, n3
+              do j = all_jsc(r), all_jec(r)
+                do i = all_isc(r), all_iec(r)
+                  idx = idx + 1
+                  select case (self%vars(v)%ndims)
+                  case (2)
+                    sendbuf(idx) = self%vars(v)%gbuf_2d(i - self%isg + 1, j - self%jsg + 1)
+                  case (3)
+                    sendbuf(idx) = self%vars(v)%gbuf_3d(i - self%isg + 1, j - self%jsg + 1, k)
+                  case (4)
+                    sendbuf(idx) = self%vars(v)%gbuf_4d(i - self%isg + 1, j - self%jsg + 1, k, k4)
+                  end select
+                end do
+              end do
+            end do
+          end do
+        end do
+      else
+        allocate(sendbuf(1))
+      end if
+
+      allocate(recvbuf(my_count2d * n3 * n4))
+      call MPI_Scatterv(sendbuf, rc, disp, MPI_DOUBLE_PRECISION, &
+          recvbuf, my_count2d * n3 * n4, MPI_DOUBLE_PRECISION, &
+          self%reader_pe, mp_comm, ierr)
+
+      ! Unpack recvbuf into the caller's data buffer compute slice. Halos
+      ! untouched (caller refreshes via mpp_update_domains).
+      idx = 0
+      do k4 = 1, n4
+        do k = 1, n3
+          do j = 1, ny_c
+            do i = 1, nx_c
+              idx = idx + 1
+              select case (self%vars(v)%ndims)
+              case (2)
+                self%vars(v)%data2d(i_off + i - 1, j_off + j - 1) = recvbuf(idx)
+              case (3)
+                self%vars(v)%data3d(i_off + i - 1, j_off + j - 1, k) = recvbuf(idx)
+              case (4)
+                self%vars(v)%data4d(i_off + i - 1, j_off + j - 1, k, k4) = recvbuf(idx)
+              end select
+            end do
+          end do
+        end do
+      end do
+
+      deallocate(sendbuf, recvbuf)
+    end select
+  end do
+
+  deallocate(all_isc, all_iec, all_jsc, all_jec, tile_counts2d, rc, disp)
   if (allocated(pelist)) deallocate(pelist)
-end subroutine commit_reader_scatter
+end subroutine reader_stage_distribute
+
+
+!==============================================================================
+! Stage 3 (close): drop the staged global buffers and the reader's working set.
+!==============================================================================
+subroutine reader_stage_close(self)
+  type(soca_io_reader), intent(inout) :: self
+  integer :: v
+  if (allocated(self%vars)) then
+    do v = 1, self%nvars
+      if (allocated(self%vars(v)%gbuf_2d)) deallocate(self%vars(v)%gbuf_2d)
+      if (allocated(self%vars(v)%gbuf_3d)) deallocate(self%vars(v)%gbuf_3d)
+      if (allocated(self%vars(v)%gbuf_4d)) deallocate(self%vars(v)%gbuf_4d)
+    end do
+    deallocate(self%vars)
+  end if
+  self%nvars = 0
+end subroutine reader_stage_close
+
+
+!==============================================================================
+! Bulk-read orchestrator. Two modes governed by the geometry.io knob
+! 'ensemble read':
+!   - strided: loop readers, each one does commit_reader_strided (every PE
+!     reads its compute-domain tile direct from that member's file). All
+!     members done sequentially; per-member read is parallel across PEs.
+!   - scatter: read-all -> distribute-all. Phase 1: every reader_pe reads its
+!     member's whole global field into staged buffers, no MPI -> reader PEs
+!     hit different files concurrently. Phase 2: per-reader MPI_Scatterv from
+!     reader_pe (sync: per-reader collectives serialize; async: all
+!     (reader, var) Iscatterv + Waitall batched).
+!==============================================================================
+subroutine soca_io_readers_commit_ensemble(readers)
+  type(soca_io_reader), intent(inout) :: readers(:)
+
+  integer :: m
+  integer(kind=8) :: c0, c1, rate
+  real(kind=kind_real) :: t_read, t_distrib
+
+  if (size(readers) == 0) return
+  do m = 1, size(readers)
+    if (readers(m)%reader_pe < 0) readers(m)%reader_pe = mpp_root_pe()
+  end do
+
+  call system_clock(count_rate=rate)
+  call mpp_sync()
+
+  if (.not. ensemble_read_scatter_) then
+    ! Strided ensemble path: loop members, run the existing per-PE strided
+    ! reader for each. Members are sequenced; within each member every PE
+    ! reads its own tile.
+    call system_clock(c0)
+    do m = 1, size(readers)
+      call commit_reader_strided(readers(m))
+      if (allocated(readers(m)%vars)) deallocate(readers(m)%vars)
+      readers(m)%nvars = 0
+    end do
+    call mpp_sync()
+    call system_clock(c1)
+    t_read = real(c1 - c0, kind=kind_real) / real(rate, kind=kind_real)
+    if (mpp_pe() == mpp_root_pe()) then
+      write(*, '(A,I0,A,F0.4)') &
+          'OOPS_PERF soca_io reader_ensemble (strided) nm=', size(readers), &
+          ' read+distribute=', t_read
+    end if
+    return
+  end if
+
+  ! Scatter ensemble path.
+  ! Phase 1: each reader_pe reads its file. No MPI -> reads concurrent.
+  call system_clock(c0)
+  do m = 1, size(readers)
+    call reader_stage_read(readers(m))
+  end do
+  call mpp_sync()
+  call system_clock(c1)
+  t_read = real(c1 - c0, kind=kind_real) / real(rate, kind=kind_real)
+
+  ! Phase 2: scatter. Sync per-reader serializes; async batches all
+  ! (reader, var) Iscatterv/Ibcast + Waitall.
+  call system_clock(c0)
+  if (async_mpi_enabled_) then
+    call reader_stage_distribute_all_async(readers)
+  else
+    do m = 1, size(readers)
+      call reader_stage_distribute(readers(m))
+    end do
+  end if
+  call mpp_sync()
+  call system_clock(c1)
+  t_distrib = real(c1 - c0, kind=kind_real) / real(rate, kind=kind_real)
+
+  ! Phase 3: free staged buffers + drop working set.
+  do m = 1, size(readers)
+    call reader_stage_close(readers(m))
+  end do
+
+  if (mpp_pe() == mpp_root_pe()) then
+    write(*, '(A,I0,2(A,F0.4))') &
+        'OOPS_PERF soca_io reader_ensemble (scatter) nm=', size(readers), &
+        ' read=', t_read, ' distribute=', t_distrib
+  end if
+end subroutine soca_io_readers_commit_ensemble
+
+
+!==============================================================================
+! Async cross-reader scatter: per (reader, var) pack the relevant rank-ordered
+! slices on the reader_pe, post one MPI_Iscatterv per var (MPI_Ibcast for 1D),
+! MPI_Waitall, then each receiver unpacks its recvbuf into the caller buffer
+! compute slice. Sync mpp/MPI_Scatterv serializes across readers because each
+! is a world-comm collective; async batches them so the runtime can overlap
+! scatters whose roots differ.
+!==============================================================================
+subroutine reader_stage_distribute_all_async(readers)
+  type(soca_io_reader), intent(inout) :: readers(:)
+
+  integer :: nprocs, ierr, r, m, v, idx, full_count
+  integer :: my_isc, my_iec, my_jsc, my_jec, my_count2d, mp_comm
+  integer :: n3, n4, i, j, k, k4, nx_c, ny_c, i_off, j_off
+  integer, allocatable :: all_isc(:), all_iec(:), all_jsc(:), all_jec(:)
+  integer, allocatable :: tile_counts2d(:), rc(:), disp(:), pelist(:)
+  integer :: rq_count, max_reqs, ux
+  integer, allocatable :: reqs(:), req_reader(:), req_var(:)
+  type :: scatter_buf_t
+    real(kind=kind_real), allocatable :: buf(:)
+  end type
+  type(scatter_buf_t), allocatable :: sends(:), recvs(:)
+  logical :: is_root_for_this
+
+  if (size(readers) == 0) return
+  call mpi_pelist_and_comm(pelist, mp_comm)
+  nprocs = mpp_npes()
+
+  call mpp_get_compute_domain(readers(1)%domain, my_isc, my_iec, my_jsc, my_jec)
+  allocate(all_isc(nprocs), all_iec(nprocs), all_jsc(nprocs), all_jec(nprocs))
+  call MPI_Allgather(my_isc, 1, MPI_INTEGER, all_isc, 1, MPI_INTEGER, mp_comm, ierr)
+  call MPI_Allgather(my_iec, 1, MPI_INTEGER, all_iec, 1, MPI_INTEGER, mp_comm, ierr)
+  call MPI_Allgather(my_jsc, 1, MPI_INTEGER, all_jsc, 1, MPI_INTEGER, mp_comm, ierr)
+  call MPI_Allgather(my_jec, 1, MPI_INTEGER, all_jec, 1, MPI_INTEGER, mp_comm, ierr)
+
+  allocate(tile_counts2d(nprocs))
+  do r = 1, nprocs
+    tile_counts2d(r) = (all_iec(r) - all_isc(r) + 1) * (all_jec(r) - all_jsc(r) + 1)
+  end do
+  my_count2d = (my_iec - my_isc + 1) * (my_jec - my_jsc + 1)
+
+  ! Count requests: one per (reader, var). 1D and 2D/3D/4D all count.
+  max_reqs = 0
+  do m = 1, size(readers)
+    max_reqs = max_reqs + readers(m)%nvars
+  end do
+  if (max_reqs == 0) goto 9999
+
+  allocate(reqs(max_reqs), req_reader(max_reqs), req_var(max_reqs))
+  allocate(sends(max_reqs), recvs(max_reqs))
+  allocate(rc(nprocs), disp(nprocs))
+  rq_count = 0
+
+  ! Phase A: pack send buffers + post Iscatterv / Ibcast.
+  do m = 1, size(readers)
+    is_root_for_this = (mpp_pe() == readers(m)%reader_pe)
+    do v = 1, readers(m)%nvars
+      rq_count = rq_count + 1
+      req_reader(rq_count) = m
+      req_var(rq_count)    = v
+
+      if (readers(m)%vars(v)%ndims == 1) then
+        ! 1D: post a single MPI_Ibcast of data1d (every PE wants the same).
+        call MPI_Ibcast(readers(m)%vars(v)%data1d, size(readers(m)%vars(v)%data1d), &
+            MPI_DOUBLE_PRECISION, readers(m)%reader_pe, mp_comm, reqs(rq_count), ierr)
+        cycle
+      end if
+
+      if (readers(m)%vars(v)%ndims == 2) then
+        n3 = 1; n4 = 1
+      else if (readers(m)%vars(v)%ndims == 3) then
+        n3 = size(readers(m)%vars(v)%data3d, 3); n4 = 1
+      else
+        n3 = size(readers(m)%vars(v)%data4d, 3); n4 = size(readers(m)%vars(v)%data4d, 4)
+      end if
+
+      do r = 1, nprocs
+        rc(r) = tile_counts2d(r) * n3 * n4
+      end do
+      disp(1) = 0
+      do r = 2, nprocs
+        disp(r) = disp(r-1) + rc(r-1)
+      end do
+
+      if (is_root_for_this) then
+        full_count = 0
+        do r = 1, nprocs
+          full_count = full_count + rc(r)
+        end do
+        allocate(sends(rq_count)%buf(full_count))
+        idx = 0
+        do r = 1, nprocs
+          do k4 = 1, n4
+            do k = 1, n3
+              do j = all_jsc(r), all_jec(r)
+                do i = all_isc(r), all_iec(r)
+                  idx = idx + 1
+                  select case (readers(m)%vars(v)%ndims)
+                  case (2)
+                    sends(rq_count)%buf(idx) = readers(m)%vars(v)%gbuf_2d( &
+                        i - readers(m)%isg + 1, j - readers(m)%jsg + 1)
+                  case (3)
+                    sends(rq_count)%buf(idx) = readers(m)%vars(v)%gbuf_3d( &
+                        i - readers(m)%isg + 1, j - readers(m)%jsg + 1, k)
+                  case (4)
+                    sends(rq_count)%buf(idx) = readers(m)%vars(v)%gbuf_4d( &
+                        i - readers(m)%isg + 1, j - readers(m)%jsg + 1, k, k4)
+                  end select
+                end do
+              end do
+            end do
+          end do
+        end do
+      else
+        allocate(sends(rq_count)%buf(1))
+      end if
+
+      allocate(recvs(rq_count)%buf(my_count2d * n3 * n4))
+      call MPI_Iscatterv(sends(rq_count)%buf, rc, disp, MPI_DOUBLE_PRECISION, &
+          recvs(rq_count)%buf, my_count2d * n3 * n4, MPI_DOUBLE_PRECISION, &
+          readers(m)%reader_pe, mp_comm, reqs(rq_count), ierr)
+    end do
+  end do
+
+  ! Phase B: wait.
+  call MPI_Waitall(rq_count, reqs, MPI_STATUSES_IGNORE, ierr)
+
+  ! Phase C: unpack recvbufs into caller compute slices (1D was bcast in-place).
+  do idx = 1, rq_count
+    m = req_reader(idx)
+    v = req_var(idx)
+    if (readers(m)%vars(v)%ndims == 1) cycle
+
+    if (readers(m)%vars(v)%ndims == 2) then
+      n3 = 1; n4 = 1
+    else if (readers(m)%vars(v)%ndims == 3) then
+      n3 = size(readers(m)%vars(v)%data3d, 3); n4 = 1
+    else
+      n3 = size(readers(m)%vars(v)%data4d, 3); n4 = size(readers(m)%vars(v)%data4d, 4)
+    end if
+
+    nx_c  = readers(m)%iec - readers(m)%isc + 1
+    ny_c  = readers(m)%jec - readers(m)%jsc + 1
+    i_off = readers(m)%isc - readers(m)%isd + 1
+    j_off = readers(m)%jsc - readers(m)%jsd + 1
+
+    ux = 0
+    do k4 = 1, n4
+      do k = 1, n3
+        do j = 1, ny_c
+          do i = 1, nx_c
+            ux = ux + 1
+            select case (readers(m)%vars(v)%ndims)
+            case (2)
+              readers(m)%vars(v)%data2d(i_off + i - 1, j_off + j - 1) = recvs(idx)%buf(ux)
+            case (3)
+              readers(m)%vars(v)%data3d(i_off + i - 1, j_off + j - 1, k) = recvs(idx)%buf(ux)
+            case (4)
+              readers(m)%vars(v)%data4d(i_off + i - 1, j_off + j - 1, k, k4) = recvs(idx)%buf(ux)
+            end select
+          end do
+        end do
+      end do
+    end do
+  end do
+
+  do idx = 1, size(sends)
+    if (allocated(sends(idx)%buf)) deallocate(sends(idx)%buf)
+    if (allocated(recvs(idx)%buf)) deallocate(recvs(idx)%buf)
+  end do
+  deallocate(reqs, req_reader, req_var, sends, recvs, rc, disp)
+
+9999 continue
+  deallocate(all_isc, all_iec, all_jsc, all_jec, tile_counts2d)
+  if (allocated(pelist)) deallocate(pelist)
+end subroutine reader_stage_distribute_all_async
 
 
 
@@ -960,6 +1749,22 @@ end subroutine mpi_pelist
 
 
 !==============================================================================
+! Fetch the MPI communicator handle that the current mpp pelist sits on. Used
+! by the async ensemble I/O paths so MPI_I{gatherv,scatterv,bcast} run on the
+! same comm as mpp's collectives (== the geometry's f_comm). Using
+! MPI_COMM_WORLD here would deadlock in the LETKF "nens per MPI task" split
+! where each task has its own size-1 mpp world.
+!==============================================================================
+subroutine mpi_pelist_and_comm(pelist, mp_comm)
+  integer, allocatable, intent(out) :: pelist(:)
+  integer,              intent(out) :: mp_comm
+  character(len=128) :: name
+  allocate(pelist(mpp_npes()))
+  call mpp_get_current_pelist(pelist, name, mp_comm)
+end subroutine mpi_pelist_and_comm
+
+
+!==============================================================================
 ! Netcdf error check. Aborts on error with mpp_error(FATAL, ...).
 !==============================================================================
 subroutine ncc(status, where)
@@ -969,6 +1774,115 @@ subroutine ncc(status, where)
     call mpp_error(FATAL, 'soca_io_mod ['//trim(where)//']: '//trim(nf90_strerror(status)))
   end if
 end subroutine ncc
+
+
+!==============================================================================
+! Resolve the module-level I/O dispatch knobs from the geometry YAML. Looked-up
+! keys (all optional, defaults retained on miss):
+!     io:
+!       ensemble write: parallel | sequential   (default parallel)
+!       ensemble read:  scatter  | strided      (default scatter)
+!       single state read: strided | scatter    (default strided)
+!       async mpi: true | false                 (default true)
+! Called once from soca_geom_init with the geometry's fckit_configuration; the
+! resolved values persist module-level for the rest of the run.
+!==============================================================================
+subroutine soca_io_config_from_yaml(f_conf)
+  type(fckit_configuration), intent(in) :: f_conf
+  type(fckit_configuration) :: io_conf
+  character(len=:), allocatable :: sval
+  logical :: lval, ok
+
+  if (.not. f_conf%has("io")) return
+  ok = f_conf%get("io", io_conf)
+  if (.not. ok) return
+
+  if (io_conf%has("ensemble write")) then
+    ok = io_conf%get("ensemble write", sval)
+    if (ok) then
+      select case (trim(sval))
+      case ("parallel");   ensemble_write_parallel_ = .true.
+      case ("sequential"); ensemble_write_parallel_ = .false.
+      case default
+        call mpp_error(FATAL, "soca_io_mod: geometry.io.'ensemble write' must be " // &
+            "'parallel' or 'sequential', got '" // trim(sval) // "'")
+      end select
+    end if
+  end if
+
+  if (io_conf%has("ensemble read")) then
+    ok = io_conf%get("ensemble read", sval)
+    if (ok) then
+      select case (trim(sval))
+      case ("scatter"); ensemble_read_scatter_ = .true.
+      case ("strided"); ensemble_read_scatter_ = .false.
+      case default
+        call mpp_error(FATAL, "soca_io_mod: geometry.io.'ensemble read' must be " // &
+            "'scatter' or 'strided', got '" // trim(sval) // "'")
+      end select
+    end if
+  end if
+
+  if (io_conf%has("single state read")) then
+    ok = io_conf%get("single state read", sval)
+    if (ok) then
+      select case (trim(sval))
+      case ("scatter"); single_state_read_scatter_ = .true.
+      case ("strided"); single_state_read_scatter_ = .false.
+      case default
+        call mpp_error(FATAL, "soca_io_mod: geometry.io.'single state read' must be " // &
+            "'scatter' or 'strided', got '" // trim(sval) // "'")
+      end select
+    end if
+  end if
+
+  if (io_conf%has("async mpi")) then
+    ok = io_conf%get("async mpi", lval)
+    if (ok) async_mpi_enabled_ = lval
+  end if
+end subroutine soca_io_config_from_yaml
+
+
+!==============================================================================
+! Public getters for the module-level dispatch knobs. Consumed by the writer /
+! reader orchestrators (next commits) and by fields_mod when it picks between
+! single-shot and ensemble paths.
+!==============================================================================
+logical function soca_io_ensemble_write_parallel()
+  soca_io_ensemble_write_parallel = ensemble_write_parallel_
+end function soca_io_ensemble_write_parallel
+
+logical function soca_io_ensemble_read_scatter()
+  soca_io_ensemble_read_scatter = ensemble_read_scatter_
+end function soca_io_ensemble_read_scatter
+
+logical function soca_io_single_state_read_scatter()
+  soca_io_single_state_read_scatter = single_state_read_scatter_
+end function soca_io_single_state_read_scatter
+
+logical function soca_io_async_mpi()
+  soca_io_async_mpi = async_mpi_enabled_
+end function soca_io_async_mpi
+
+
+!==============================================================================
+! Strided writer/reader-PE rotation: map a 1-based member index m to a rank in
+! [0, mpp_npes()-1] using floor((m-1) * npes / nmembers). Spreads ensemble
+! members across the world communicator so concurrent disk I/O does not
+! collide on PE 0; when nmembers > npes the surplus members wrap onto earlier
+! PEs in stride. Reused by the writer and reader ensemble orchestrators.
+!
+! Examples (npes=8):
+!   nmembers=4  -> roots [0, 2, 4, 6]
+!   nmembers=8  -> roots [0..7]
+!   nmembers=20 -> roots [0,0,0,1,1,2,2,2,3,3,4,4,4,5,5,6,6,6,7,7]
+!==============================================================================
+function soca_io_ensemble_root_pe(m, nmembers) result(pe)
+  integer, intent(in) :: m
+  integer, intent(in) :: nmembers
+  integer :: pe
+  pe = (m - 1) * mpp_npes() / nmembers
+end function soca_io_ensemble_root_pe
 
 
 !==============================================================================
