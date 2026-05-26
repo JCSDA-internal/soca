@@ -24,9 +24,11 @@
 #include "atlas/mesh/actions/BuildCellCentres.h"
 #include "atlas/util/Point.h"
 
+#include "eckit/config/LocalConfiguration.h"
 #include "eckit/exception/Exceptions.h"
 
 #include "oops/mpi/mpi.h"
+#include "oops/util/DateTime.h"
 #include "oops/util/Logger.h"
 
 #include "soca/Geometry/Geometry.h"
@@ -84,6 +86,8 @@ PostProcessIce::PostProcessIce(const Geometry & geom,
     mask_(atlas::array::make_view<double, 2>(geom.fields().field("interp_mask"))) {
   params_.deserialize(conf);
   ncat_ = params_.ncat.value();
+  iceLev_ = params_.ice_lev.value();
+  snoLev_ = params_.sno_lev.value();
 
   // Build a global lat/lon KDTree across all ranks. Payload is the 1-based
   // atlas global_index (gidx). Pattern adapted from oops::GeometryData::setGlobalTree.
@@ -161,6 +165,15 @@ void PostProcessIce::postProcess(State & pproc,
   const atlas::FieldSet & anfields = analysis.fieldSet();
   pproc = restart;  // start from background state
   atlas::FieldSet & newfields = pproc.fieldSet();
+  // Copy ocean T/S off the analysis onto pproc. Two roles:
+  //   1. ice2noice cells need a writable ocean SST to apply the SST update.
+  //      `pproc` came from `restart` which carries only ice fields (after
+  //      readRestart); the ocean fields are added here from the analysis.
+  //   2. The SST adjustment then mutates pproc.T on ice2noice cells only,
+  //      so `pproc.T - analysis.T` == 0 everywhere except ice2noice, where
+  //      it equals the dT applied below. Downstream callers (gdasapp) can
+  //      fold that delta back into the MOM6 IAU increment.
+  copyOceanFields(analysis, pproc);
   oops::Log::info() << " background restart: " << restart << std::endl;
   oops::Log::info() << " analysis: " << analysis << std::endl;
   oops::Log::info() << " pproc before " << pproc << std::endl;
@@ -640,6 +653,111 @@ void PostProcessIce::postProcess(State & pproc,
   }
   // `pproc` (now carrying the mutated ice + thermo/pond fields) is written by
   // the caller via soca::State::write with a `cice template` key.
+}
+
+// -----------------------------------------------------------------------------
+
+oops::Variables PostProcessIce::ciceRestartVariables(int ncat,
+                                                    int iceLev,
+                                                    int snoLev) {
+  std::vector<std::string> v;
+  auto cat = [](const std::string & pre, int k, const std::string & suf) {
+    return pre + std::to_string(k) + suf;
+  };
+  auto catLev = [](const std::string & pre, int k, const std::string & mid,
+                   int l, const std::string & suf) {
+    return pre + std::to_string(k) + mid + std::to_string(l) + suf;
+  };
+  for (int k = 1; k <= ncat; ++k) {
+    v.push_back(cat("sea_ice_category", k, "_area_fraction"));
+    v.push_back(cat("sea_ice_category", k, "_volume"));
+    v.push_back(cat("sea_ice_snow_category", k, "_volume"));
+    v.push_back(cat("sea_ice_category", k, "_surface_temperature"));
+    v.push_back(cat("sea_ice_category", k, "_pond_area_fraction"));
+    v.push_back(cat("sea_ice_category", k, "_pond_depth"));
+    v.push_back(cat("sea_ice_category", k, "_pond_lid_thickness"));
+  }
+  for (int k = 1; k <= ncat; ++k) {
+    for (int l = 1; l <= iceLev; ++l) {
+      v.push_back(catLev("sea_ice_category", k, "_layer", l, "_enthalpy"));
+      v.push_back(catLev("sea_ice_category", k, "_layer", l, "_ice_salinity"));
+    }
+  }
+  for (int k = 1; k <= ncat; ++k) {
+    for (int l = 1; l <= snoLev; ++l) {
+      v.push_back(catLev("sea_ice_snow_category", k, "_layer", l, "_enthalpy"));
+    }
+  }
+  return oops::Variables(v);
+}
+
+// -----------------------------------------------------------------------------
+
+State PostProcessIce::readRestart(const Geometry & geom,
+                                  const util::DateTime & validTime) const {
+  // Build a State read config from the configured CICE restart input path,
+  // injecting the per-cat / per-(cat,layer) variable list so the caller does
+  // not have to enumerate ~115 names in yaml. Only ice variables are listed;
+  // soca_fields_mod keys per-variable on `io_file` so only the ice file is
+  // opened. The caller is responsible for merging ocean T/S in (see Postproc.h
+  // / AnalysisPostproc.h) so applyThermoStage's SST-on-ice2noice branch has
+  // somewhere to write.
+  // soca_fields_mod's reader builds `filename = trim(basename) // trim(ice_filename)`,
+  // so we leave basename empty and put the full path in ice_filename.
+  eckit::LocalConfiguration cfg;
+  cfg.set("read_from_file", 1);
+  cfg.set("basename", "");
+  cfg.set("ice_filename", params_.ciceRestart.value().input.value());
+  cfg.set("date", validTime.toString());
+  cfg.set("state variables",
+          ciceRestartVariables(static_cast<int>(ncat_),
+                               static_cast<int>(iceLev_),
+                               static_cast<int>(snoLev_)).variables());
+  return State(geom, cfg);
+}
+
+// -----------------------------------------------------------------------------
+
+void PostProcessIce::writeRestart(const State & pproc,
+                                  const util::DateTime & validTime) const {
+  // Update-mode write: byte-copy the input restart (the template) to the
+  // output path, reopen for write, overwrite only the variables soca models.
+  // The ~40 unmodelled CICE variables pass through.
+  eckit::LocalConfiguration cfg;
+  cfg.set("output filename", params_.ciceRestart.value().output.value());
+  cfg.set("cice template",   params_.ciceRestart.value().input.value());
+  cfg.set("date",            validTime.toString());
+  pproc.write(cfg);
+}
+
+// -----------------------------------------------------------------------------
+
+void PostProcessIce::copyOceanFields(const State & src, State & dst) {
+  // Copy the two ocean fields PostProcessIce needs. If `dst`'s atlas FieldSet
+  // does not already carry the field (it won't, when `dst` came from
+  // readRestart which only loads ice variables), add a clone from `src` so
+  // postProcess's writable view onto sea_water_potential_temperature
+  // resolves. The cloned fields are atlas-only -- they bypass soca::Fields'
+  // tracked-fields list -- which is fine because PostProcessIce only ever
+  // accesses them through atlas views.
+  for (const std::string & name :
+       {"sea_water_potential_temperature", "sea_water_salinity"}) {
+    if (!src.fieldSet().has(name)) continue;
+    if (!dst.fieldSet().has(name)) {
+      dst.fieldSet().add(src.fieldSet().field(name).clone());
+      continue;
+    }
+    const auto srcView = atlas::array::make_view<double, 2>(
+        src.fieldSet().field(name));
+    auto dstView = atlas::array::make_view<double, 2>(
+        dst.fieldSet().field(name));
+    const auto shape = srcView.shape();
+    for (atlas::idx_t j = 0; j < shape[0]; ++j) {
+      for (atlas::idx_t l = 0; l < shape[1]; ++l) {
+        dstView(j, l) = srcView(j, l);
+      }
+    }
+  }
 }
 
 // -----------------------------------------------------------------------------

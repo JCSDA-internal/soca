@@ -3,155 +3,38 @@ geometry: &geom
   mom6_input_nml: data_static/72x35x25/input.nml
   fields metadata: data_static/fields_metadata.yml
 
-restart:
+background:
   read_from_file: 1
   basename: data_static/72x35x25/restarts/
-  ice_filename: iced.2018-04-15-00000.nc
   ocn_filename: MOM.res.nc
-  date: 2018-04-15T00:00:00Z
-  state variables:
-   # ice category variables
-  - sea_ice_category1_area_fraction
-  - sea_ice_category2_area_fraction
-  - sea_ice_category3_area_fraction
-  - sea_ice_category4_area_fraction
-  - sea_ice_category5_area_fraction
-  - sea_ice_category1_volume
-  - sea_ice_category2_volume
-  - sea_ice_category3_volume
-  - sea_ice_category4_volume
-  - sea_ice_category5_volume
-  - sea_ice_snow_category1_volume
-  - sea_ice_snow_category2_volume
-  - sea_ice_snow_category3_volume
-  - sea_ice_snow_category4_volume
-  - sea_ice_snow_category5_volume
-   # CICE restart thermo / pond variables
-  - sea_ice_category1_surface_temperature
-  - sea_ice_category2_surface_temperature
-  - sea_ice_category3_surface_temperature
-  - sea_ice_category4_surface_temperature
-  - sea_ice_category5_surface_temperature
-  - sea_ice_category1_pond_area_fraction
-  - sea_ice_category2_pond_area_fraction
-  - sea_ice_category3_pond_area_fraction
-  - sea_ice_category4_pond_area_fraction
-  - sea_ice_category5_pond_area_fraction
-  - sea_ice_category1_pond_depth
-  - sea_ice_category2_pond_depth
-  - sea_ice_category3_pond_depth
-  - sea_ice_category4_pond_depth
-  - sea_ice_category5_pond_depth
-  - sea_ice_category1_pond_lid_thickness
-  - sea_ice_category2_pond_lid_thickness
-  - sea_ice_category3_pond_lid_thickness
-  - sea_ice_category4_pond_lid_thickness
-  - sea_ice_category5_pond_lid_thickness
-  - sea_ice_category1_layer1_enthalpy
-  - sea_ice_category1_layer2_enthalpy
-  - sea_ice_category1_layer3_enthalpy
-  - sea_ice_category1_layer4_enthalpy
-  - sea_ice_category1_layer5_enthalpy
-  - sea_ice_category1_layer6_enthalpy
-  - sea_ice_category1_layer7_enthalpy
-  - sea_ice_category2_layer1_enthalpy
-  - sea_ice_category2_layer2_enthalpy
-  - sea_ice_category2_layer3_enthalpy
-  - sea_ice_category2_layer4_enthalpy
-  - sea_ice_category2_layer5_enthalpy
-  - sea_ice_category2_layer6_enthalpy
-  - sea_ice_category2_layer7_enthalpy
-  - sea_ice_category3_layer1_enthalpy
-  - sea_ice_category3_layer2_enthalpy
-  - sea_ice_category3_layer3_enthalpy
-  - sea_ice_category3_layer4_enthalpy
-  - sea_ice_category3_layer5_enthalpy
-  - sea_ice_category3_layer6_enthalpy
-  - sea_ice_category3_layer7_enthalpy
-  - sea_ice_category4_layer1_enthalpy
-  - sea_ice_category4_layer2_enthalpy
-  - sea_ice_category4_layer3_enthalpy
-  - sea_ice_category4_layer4_enthalpy
-  - sea_ice_category4_layer5_enthalpy
-  - sea_ice_category4_layer6_enthalpy
-  - sea_ice_category4_layer7_enthalpy
-  - sea_ice_category5_layer1_enthalpy
-  - sea_ice_category5_layer2_enthalpy
-  - sea_ice_category5_layer3_enthalpy
-  - sea_ice_category5_layer4_enthalpy
-  - sea_ice_category5_layer5_enthalpy
-  - sea_ice_category5_layer6_enthalpy
-  - sea_ice_category5_layer7_enthalpy
-  - sea_ice_category1_layer1_ice_salinity
-  - sea_ice_category1_layer2_ice_salinity
-  - sea_ice_category1_layer3_ice_salinity
-  - sea_ice_category1_layer4_ice_salinity
-  - sea_ice_category1_layer5_ice_salinity
-  - sea_ice_category1_layer6_ice_salinity
-  - sea_ice_category1_layer7_ice_salinity
-  - sea_ice_category2_layer1_ice_salinity
-  - sea_ice_category2_layer2_ice_salinity
-  - sea_ice_category2_layer3_ice_salinity
-  - sea_ice_category2_layer4_ice_salinity
-  - sea_ice_category2_layer5_ice_salinity
-  - sea_ice_category2_layer6_ice_salinity
-  - sea_ice_category2_layer7_ice_salinity
-  - sea_ice_category3_layer1_ice_salinity
-  - sea_ice_category3_layer2_ice_salinity
-  - sea_ice_category3_layer3_ice_salinity
-  - sea_ice_category3_layer4_ice_salinity
-  - sea_ice_category3_layer5_ice_salinity
-  - sea_ice_category3_layer6_ice_salinity
-  - sea_ice_category3_layer7_ice_salinity
-  - sea_ice_category4_layer1_ice_salinity
-  - sea_ice_category4_layer2_ice_salinity
-  - sea_ice_category4_layer3_ice_salinity
-  - sea_ice_category4_layer4_ice_salinity
-  - sea_ice_category4_layer5_ice_salinity
-  - sea_ice_category4_layer6_ice_salinity
-  - sea_ice_category4_layer7_ice_salinity
-  - sea_ice_category5_layer1_ice_salinity
-  - sea_ice_category5_layer2_ice_salinity
-  - sea_ice_category5_layer3_ice_salinity
-  - sea_ice_category5_layer4_ice_salinity
-  - sea_ice_category5_layer5_ice_salinity
-  - sea_ice_category5_layer6_ice_salinity
-  - sea_ice_category5_layer7_ice_salinity
-  - sea_ice_snow_category1_layer1_enthalpy
-  - sea_ice_snow_category2_layer1_enthalpy
-  - sea_ice_snow_category3_layer1_enthalpy
-  - sea_ice_snow_category4_layer1_enthalpy
-  - sea_ice_snow_category5_layer1_enthalpy
-    # ocean variables
-  - sea_water_potential_temperature
-  - sea_water_salinity
-
-restart output:
-  datadir: data_output
-  exp: cice_restart_postproc
-  type: an
-  cice template: data_static/72x35x25/restarts/iced.2018-04-15-00000.nc
-
-# Analysis State carries only aice (no hice/hsno). Exercises the bg-fallback
-# path in PostProcessIce for both sea_ice_thickness and sea_ice_snow_thickness.
-analysis:
-  read_from_file: 1
-  basename: data_generated/3dvar/
-  ocn_filename: ocn.3dvar.an.2018-04-15T00:00:00Z.nc
-  ice_filename: ice.3dvar.an.2018-04-15T00:00:00Z.nc
-  date: 2018-04-15T00:00:00Z
-  state variables:
-  - sea_water_potential_temperature
-  - sea_water_salinity
-  - sea_water_cell_thickness
+  ice_filename: cice.res.nc
+  date: &bkg_date 2018-04-15T00:00:00Z
+  state variables: &bg_vars
   - sea_ice_area_fraction
+  - sea_ice_thickness
+  - sea_ice_snow_thickness
+  - sea_water_potential_temperature
+  - sea_water_salinity
 
+increment:
+  date: *bkg_date
+  basename: data_generated/3dvar/
+  ocn_filename: ocn.3dvar.iter1.incr.2018-04-15T00:00:00Z.nc
+  ice_filename: ice.3dvar.iter1.incr.2018-04-15T00:00:00Z.nc
+
+# Exercises the bg-fallback path: `analysis variables:` declares that only
+# sea_ice_area_fraction is analyzed, so PostProcessIce never consults the
+# analysis State's hice/hsno (which would otherwise be present from bg+incr).
+# Both sea_ice_thickness and sea_ice_snow_thickness fall back to bg.
 postprocess ice:
   ncat: 5
   ice_lev: 7
   sno_lev: 1
   analysis variables:
   - sea_ice_area_fraction
+  cice restart:
+    input:  data_static/72x35x25/restarts/iced.2018-04-15-00000.nc
+    output: data_output/ice.cice_restart_postproc.an.2018-04-15T00:00:00Z.nc
 
 test:
   reference filename: testref/soca2cice_new_bgfallback.test

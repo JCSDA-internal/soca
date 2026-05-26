@@ -272,14 +272,12 @@ class AnalysisPostproc : public oops::Application {
     // PostProcessIce path: for each ensemble member, read the per-category
     // CICE background restart, treat the recentered/inflated ensemble state
     // as the analysis, run PostProcessIce, and write the resulting per-member
-    // CICE restart via soca::State::write (update mode, `cice template`).
-    // Config paths carry a %mem% pattern that is substituted per member.
+    // CICE restart via PostProcessIce::writeRestart. Config paths carry a %mem%
+    // pattern that is substituted per member.
     if (fullConfig.has("analysis postprocessing")) {
       const eckit::LocalConfiguration anPostprocConfig(fullConfig, "analysis postprocessing");
       const std::string pattern = anPostprocConfig.getString("pattern");
       const eckit::LocalConfiguration ppIceTemplate(anPostprocConfig, "postprocess ice");
-      const eckit::LocalConfiguration ciceBgTemplate(anPostprocConfig, "cice background state");
-      const eckit::LocalConfiguration restartOutTemplate(anPostprocConfig, "restart output");
       for (size_t iens = 0; iens < incs.local_ens_size(); ++iens) {
         const size_t ensMember = incs.local_ens()[iens];
         oops::Log::info() << "updating ice state " << ensMember << ":" << ens[iens] << std::endl;
@@ -288,24 +286,22 @@ class AnalysisPostproc : public oops::Application {
         }
         oops::Log::info() << "updated ice state " << ensMember << ":" << ens[iens] << std::endl;
 
-        // Per-member %mem% substitution in the postprocess-ice, CICE-bg and
-        // restart-output configs.
+        // Per-member %mem% substitution in the postprocess-ice and CICE-bg
+        // (ocean) configs. The output filename now lives inside ppIceConfig
+        // under `cice restart: output:`.
         eckit::LocalConfiguration ppIceConfig(ppIceTemplate);
         util::seekAndReplace(ppIceConfig, pattern, ensMember+1, 0);
-        eckit::LocalConfiguration ciceBgConfig(ciceBgTemplate);
-        util::seekAndReplace(ciceBgConfig, pattern, ensMember+1, 0);
-        eckit::LocalConfiguration restartOutConfig(restartOutTemplate);
-        util::seekAndReplace(restartOutConfig, pattern, ensMember+1, 0);
 
         PostProcessIce ppIce(geometry.geometry(), ppIceConfig);
         for (size_t itime = 0; itime < ens.local_time_size(); ++itime) {
-          // Read the per-category CICE background restart for this member.
-          soca::State restart(geometry.geometry(), ciceBgConfig);
+          const util::DateTime validTime = ens(itime, iens).state().validTime();
+          // Per-category CICE restart read by PostProcessIce itself.
+          // postProcess copies ocean T/S off the ensemble state (the
+          // analysis arg) onto pproc internally.
+          soca::State restart = ppIce.readRestart(geometry.geometry(), validTime);
           soca::State pproc(geometry.geometry(), restart);
           ppIce.postProcess(pproc, restart, ens(itime, iens).state());
-          // Write the postprocessed CICE restart (update mode preserves the
-          // CICE variables soca does not model -- see `cice template`).
-          pproc.write(restartOutConfig);
+          ppIce.writeRestart(pproc, validTime);
         }
       }
     }

@@ -12,6 +12,7 @@
 #include "eckit/config/LocalConfiguration.h"
 
 #include "soca/Geometry/Geometry.h"
+#include "soca/Increment/Increment.h"
 #include "soca/PostProcess/PostProcessIce.h"
 #include "soca/State/State.h"
 #include "oops/mpi/mpi.h"
@@ -29,21 +30,36 @@ class Postproc : public oops::Application {
   static const std::string classname() {return "soca::Postproc";}
 
   // -----------------------------------------------------------------------------
-
+  /// @brief Standalone CICE-restart postprocessing driver.
+  ///
+  /// Reads the background and the analysis increment, forms the analysis as
+  /// `bg + incr`, then runs PostProcessIce on the per-category CICE restart.
+  /// PostProcessIce owns the CICE restart read/write (paths from the
+  /// `postprocess ice: cice restart:` block).
   int execute(const eckit::Configuration & fullConfig) const {
-    const eckit::LocalConfiguration geomConfig(fullConfig, "geometry");
-    const soca::Geometry geom(geomConfig, this->getComm());
-    const eckit::LocalConfiguration restartConfig(fullConfig, "restart");
-    const soca::State restart(geom, restartConfig);
-    const eckit::LocalConfiguration analysisConfig(fullConfig, "analysis");
-    const soca::State analysis(geom, analysisConfig);
-    soca::State pproc(geom, restart);
+    const soca::Geometry geom(fullConfig.getSubConfiguration("geometry"),
+                              this->getComm());
+
+    // Background -- aggregate ice + ocean (history-style ice file).
+    const soca::State bg(geom, fullConfig.getSubConfiguration("background"));
+
+    // 3DVar increment, read on the bg's variables and time.
+    soca::Increment incr(geom, bg.variables(), bg.validTime());
+    incr.read(fullConfig.getSubConfiguration("increment"));
+
+    // analysis = bg + incr
+    soca::State analysis(bg);
+    analysis += incr;
+
+    // Per-category CICE restart, read by PostProcessIce itself. postProcess
+    // internally copies ocean T/S off `analysis` onto pproc, so no caller-
+    // side ocean merge is needed -- the SST-on-ice2noice adjustment writes
+    // to pproc.T which starts at analysis.T.
     PostProcessIce ppIce(geom, fullConfig.getSubConfiguration("postprocess ice"));
+    soca::State restart = ppIce.readRestart(geom, analysis.validTime());
+    soca::State pproc(geom, restart);
     ppIce.postProcess(pproc, restart, analysis);
-    if (fullConfig.has("restart output")) {
-      const eckit::LocalConfiguration restartOutputConfig(fullConfig, "restart output");
-      pproc.write(restartOutputConfig);
-    }
+    ppIce.writeRestart(pproc, analysis.validTime());
     return 0;
   }
 

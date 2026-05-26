@@ -956,14 +956,14 @@ subroutine soca_fields_write_rst(self, f_conf, vdate)
       cycle
     end if
 
-    domain_filename = soca_genfilename(f_conf,max_string_length,vdate,date_cols,domains(d))
-
     ! count the number of vars that we will write in this file
     n = 0
     do f=1,size(self%fields)
       if (self%fields(f)%metadata%io_file == domains(d)) n = n +1
     end do
     if (n == 0) cycle
+
+    domain_filename = soca_genfilename(f_conf,max_string_length,vdate,date_cols,domains(d))
     allocate(vars(n))
 
     ! copy atlas fields into per-PE compute-domain temporaries and enqueue with the writer
@@ -1041,7 +1041,14 @@ subroutine soca_fields_write_cice_rst(self, f_conf, vdate, date_cols, &
   type(atlas_field) :: afield
   real(kind=kind_real), pointer :: adata(:,:)
 
-  domain_filename = soca_genfilename(f_conf, max_string_length, vdate, date_cols, "ice")
+  ! Output path: honour `output filename` if set (PostProcessIce's writeRestart
+  ! sets this so the user picks the exact on-disk output path). Otherwise fall
+  ! back to soca_genfilename's datadir/exp/type/date construction.
+  if (f_conf%has("output filename")) then
+    call f_conf%get_or_die("output filename", domain_filename)
+  else
+    domain_filename = soca_genfilename(f_conf, max_string_length, vdate, date_cols, "ice")
+  end if
 
   ! 1. collect the unique CICE variable names (io sup name) across all
   !    per-category ice fields.

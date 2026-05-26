@@ -20,6 +20,7 @@
 #include "eckit/config/Configuration.h"
 #include "oops/base/ParameterTraitsVariables.h"
 #include "oops/base/Variables.h"
+#include "oops/util/DateTime.h"
 #include "oops/util/Printable.h"
 #include "oops/util/parameters/NumericConstraints.h"
 #include "oops/util/parameters/Parameter.h"
@@ -144,6 +145,21 @@ class PostProcessIce: public util::Printable {
   };
 
   // ---------------------------------------------------------------------------
+  /// @brief Input/output paths for the CICE restart this PostProcessIce
+  /// reads and writes. `input` is also used as the update-mode template:
+  /// the writer byte-copies it to `output` and then overwrites only the
+  /// variables soca models. (~40 unmodelled CICE variables pass through.)
+  class CiceRestartParameters : public oops::Parameters {
+    OOPS_CONCRETE_PARAMETERS(CiceRestartParameters, oops::Parameters)
+   public:
+    oops::RequiredParameter<std::string> input{"input",
+      "Path to the CICE background restart. Also serves as the update-mode "
+      "template -- unmodelled CICE variables are copied through.", this};
+    oops::RequiredParameter<std::string> output{"output",
+      "Path to the postprocessed CICE restart to write.", this};
+  };
+
+  // ---------------------------------------------------------------------------
   /// @brief Parameters for adding soca increment to CICE restart files
   class Parameters : public oops::Parameters {
     OOPS_CONCRETE_PARAMETERS(Parameters, oops::Parameters)
@@ -152,6 +168,10 @@ class PostProcessIce: public util::Printable {
     oops::RequiredParameter<int> ncat{"ncat", this, {oops::minConstraint(1)}};
     oops::RequiredParameter<int> ice_lev{"ice_lev", this, {oops::minConstraint(1)}};
     oops::RequiredParameter<int> sno_lev{"sno_lev", this, {oops::minConstraint(1)}};
+    oops::RequiredParameter<CiceRestartParameters> ciceRestart{"cice restart",
+      "CICE restart input/output paths. PostProcessIce reads `input`, writes "
+      "the postprocessed restart to `output`, and uses `input` as the "
+      "update-mode template.", this};
     oops::Parameter<SstUpdateParameters> sstUpdate{"sst update",
       "SST adjustment on ice2noice transitions.", {}, this};
     oops::Parameter<ITDParameters> itd{"itd", "ITD re-bin options", {}, this};
@@ -195,6 +215,27 @@ class PostProcessIce: public util::Printable {
   void postProcess(State & pproc, const State & restart,
                    const State & analysis) const;
 
+  /// @brief Names of the CICE-restart fields PostProcessIce needs on the
+  /// input State. Fully determined by `ncat / iceLev / snoLev`; auto-injected
+  /// by `readRestart` so the caller does not have to enumerate them in yaml.
+  static oops::Variables ciceRestartVariables(int ncat, int iceLev, int snoLev);
+
+  /// @brief Read the per-category CICE background restart into a fresh
+  /// soca::State, auto-injecting the variable list. The State carries only
+  /// ice fields; postProcess will copy ocean T/S off the `analysis` argument
+  /// onto `pproc` internally for the SST-on-ice2noice adjustment.
+  ///
+  /// `validTime` is the analysis valid time (typically `analysis.validTime()`).
+  State readRestart(const Geometry & geom,
+                    const util::DateTime & validTime) const;
+
+  /// @brief Write the postprocessed CICE restart at the path configured under
+  /// `cice restart: output:`. The configured `cice restart: input:` is used
+  /// as the update-mode template -- it is byte-copied to the output and only
+  /// modelled vars are overwritten in place.
+  void writeRestart(const State & pproc,
+                    const util::DateTime & validTime) const;
+
   /// Stage C thermo / pond pass. Mutates the CICE thermo/pond fields of `fset`
   /// in place, using the per-cat aicen / vsnon fields from the same `fset`.
   /// No-op when neither `update snow thermo` nor `reset ponds` is enabled.
@@ -222,9 +263,20 @@ class PostProcessIce: public util::Printable {
   };
 
  private:
+  /// @brief Copy `sea_water_potential_temperature` and `sea_water_salinity`
+  /// from `src` into `dst`. If the field is missing from `dst`'s atlas
+  /// FieldSet (it will be when `dst` came from `readRestart`, which only
+  /// loads ice variables), a clone of the `src` field is added. Used at the
+  /// top of `postProcess` to seed `pproc`'s ocean T/S from the analysis so
+  /// the SST-on-ice2noice branch has a writable target.
+  /// Fields missing from `src` are silently skipped.
+  static void copyOceanFields(const State & src, State & dst);
+
   const Geometry & geom_;
   Parameters params_;
   size_t ncat_;
+  size_t iceLev_;
+  size_t snoLev_;
   // Global lat/lon KDTree. Payload is the 1-based atlas global_index (gidx).
   // Built at construction by all-gathering owned-cell (lon, lat, gidx) triples
   // across all ranks and building one tree on each rank.
