@@ -31,8 +31,17 @@ class ObsLocRossby: public ufo::ObsHorLocGC99<GeometryIterator> {
  public:
   ObsLocRossby(const eckit::Configuration &, ioda::ObsSpace &);
 
+  /// Compute the Rossby-radius based localization length scale (the gaussian
+  /// length scale, before the gaussian -> Gaspari-Cohn width conversion) at a
+  /// single grid point. \p rossbyRadius and \p area are the values of the
+  /// "rossby_radius" and "area" geometry fields at that point.
+  /// This is the single source of truth for the length-scale formula, shared
+  /// with the soca_saveobslocscales.x application.
+  static double lengthScale(const ObsLocRossbyParameters &,
+                            double rossbyRadius, double area);
+
   /// Compute Rossby radius based localization and update localization values
-  /// in \p locvector. Missing values indicate that observation is outside of
+  /// in \p locfactor. Missing values indicate that observation is outside of
   /// localization.
   void computeLocalization(
     const GeometryIterator &,

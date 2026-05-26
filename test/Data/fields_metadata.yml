@@ -206,6 +206,8 @@
 - name: distance_from_coast
   masked: false
 
+- name: localization_lengthscale
+
 - name: mesoscale_representation_error
 
 - name: ocean_mixed_layer_thickness

@@ -1,0 +1,27 @@
+# Save the Rossby-radius based observation localization length scales
+# at every grid point to a file.
+
+geometry:
+  geom_grid_file: data_generated/gridgen/soca_gridspec.72x35x25.nc
+  mom6_input_nml: data_static/72x35x25/input.nml
+  fields metadata: data_static/fields_metadata.yml
+
+# Rossby localization specification. These are the same options accepted by
+# the "Rossby" obs localization method (soca::ObsLocRossby).
+rossby localization:
+  localization method: Rossby
+  base value: 100.0e3
+  rossby mult: 1.0
+  min grid mult: 2.0
+  min value: 200.0e3
+  max value: 900.0e3
+
+# If true (default), save the Gaspari-Cohn width actually passed to GC99
+# (i.e. the gaussian scale multiplied by 2/sqrt(0.3)).
+# If false, save the raw gaussian length scale.
+gaspari-cohn width: true
+
+output:
+  datadir: data_output/
+  exp: obsloc_scales
+  type: incr

@@ -109,6 +109,11 @@ ecbuild_add_executable( TARGET  soca_tlm_toolbox.x
                         LIBS    soca
                       )
 
+ecbuild_add_executable( TARGET  soca_saveobslocscales.x
+                        SOURCES SaveObsLocScales.cc
+                        LIBS    soca
+                      )
+
 if(Torch_FOUND)
   ecbuild_add_executable( TARGET  soca_ice_emulator.x
                         SOURCES IceEmul.cc

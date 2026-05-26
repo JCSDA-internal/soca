@@ -34,6 +34,20 @@ ObsLocRossby::ObsLocRossby(const eckit::Configuration & config,
 
 // -----------------------------------------------------------------------------
 
+double ObsLocRossby::lengthScale(const ObsLocRossbyParameters & options,
+                                 double rossbyRadius, double area) {
+  double lengthscale = options.base;
+  lengthscale += options.mult * rossbyRadius;
+  lengthscale = std::max(lengthscale, options.min_grid * sqrt(area));
+  const boost::optional<double> & minval = options.min;
+  const boost::optional<double> & maxval = options.max;
+  if (minval != boost::none) lengthscale = std::max(lengthscale, *minval);
+  if (maxval != boost::none) lengthscale = std::min(lengthscale, *maxval);
+  return lengthscale;
+}
+
+// -----------------------------------------------------------------------------
+
 void ObsLocRossby::computeLocalization(
     const GeometryIterator & i,
     ioda::ObsVector & locvector) const {
@@ -45,13 +59,8 @@ void ObsLocRossby::computeLocalization(
   }
 
   // calculate the length scale at this location
-  double lengthscale = options_.base;
-  lengthscale += options_.mult * i.getFieldValue("rossby_radius");
-  lengthscale = std::max(lengthscale, options_.min_grid * sqrt(i.getFieldValue("area")));
-  const boost::optional<double> & minval = options_.min;
-  const boost::optional<double> & maxval = options_.max;
-  if (minval != boost::none) lengthscale = std::max(lengthscale, *minval);
-  if (maxval != boost::none) lengthscale = std::min(lengthscale, *maxval);
+  double lengthscale = lengthScale(options_, i.getFieldValue("rossby_radius"),
+                                   i.getFieldValue("area"));
 
   // convert from gaussian to gaspari-cohn width
   lengthscale *= 2.0/sqrt(0.3);
