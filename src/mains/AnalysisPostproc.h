@@ -286,9 +286,11 @@ class AnalysisPostproc : public oops::Application {
         }
         oops::Log::info() << "updated ice state " << ensMember << ":" << ens[iens] << std::endl;
 
-        // Per-member %mem% substitution in the postprocess-ice and CICE-bg
-        // (ocean) configs. The output filename now lives inside ppIceConfig
-        // under `cice restart: output:`.
+        // Per-member substitution of `pattern` (e.g. "%mem%") in the
+        // `postprocess ice` block. In practice the substitution only fires
+        // inside `cice restart: input:` and `cice restart: output:`, which
+        // are the only paths that vary per member; the rest of the block
+        // is shared.
         eckit::LocalConfiguration ppIceConfig(ppIceTemplate);
         util::seekAndReplace(ppIceConfig, pattern, ensMember+1, 0);
 

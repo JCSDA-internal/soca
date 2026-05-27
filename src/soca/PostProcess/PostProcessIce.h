@@ -21,7 +21,6 @@
 #include "oops/base/ParameterTraitsVariables.h"
 #include "oops/base/Variables.h"
 #include "oops/util/DateTime.h"
-#include "oops/util/Printable.h"
 #include "oops/util/parameters/NumericConstraints.h"
 #include "oops/util/parameters/Parameter.h"
 #include "oops/util/parameters/Parameters.h"
@@ -32,7 +31,7 @@ namespace soca {
 class Geometry;
 class State;
 
-class PostProcessIce: public util::Printable {
+class PostProcessIce {
  public:
   // ---------------------------------------------------------------------------
   /// @brief Parameters for re-binning the ice thickness distribution after
@@ -240,9 +239,17 @@ class PostProcessIce: public util::Printable {
   /// @brief Per-cell pass (case dispatch + ITD rebin + snow distribution
   /// + freeboard + min-vice cleanup), followed by the thermo / pond pass
   /// and (optional) new-ice seeding. Mutates `pproc` in place from
-  /// `restart` toward `analysis`.
-  void runPostprocess(State & pproc, const State & restart,
-                      const State & analysis) const;
+  /// `restart` toward `analysis`; that mutated `pproc` is what gets
+  /// written to the CICE restart.
+  ///
+  /// @returns an aggregate-ice State on `analysis`'s geometry carrying
+  /// `sea_ice_area_fraction`, `sea_ice_thickness`, and
+  /// `sea_ice_snow_thickness` matching what was actually written to
+  /// `pproc` (after all per-cat adjustments). Built without adding extra
+  /// fields to `pproc.fieldSet()` so `pproc` keeps the per-cat schema
+  /// the CICE-restart writer expects.
+  State runPostprocess(State & pproc, const State & restart,
+                       const State & analysis) const;
 
 
   /// Thermo / pond pass. Mutates the CICE thermo/pond fields of `fset` in
@@ -354,7 +361,6 @@ class PostProcessIce: public util::Printable {
                   double aice, size_t jnode) const;
   double meanHsno(const std::vector<atlas::array::ArrayView<double, 2>> & vsnoCat,
                   double aice, size_t jnode) const;
-  void print(std::ostream &) const override;
 };
 
 }  // namespace soca

@@ -84,6 +84,14 @@ PostProcessIce::PostProcessIce(const Geometry & geom,
   iceLev_ = params_.ice_lev.value();
   snoLev_ = params_.sno_lev.value();
 
+  // Validate `category bounds` length against ncat regardless of whether the
+  // rebin will run. The default is the CICE5 ncat=5 layout, so any user
+  // setting ncat != 5 without supplying bounds catches it here.
+  if (params_.itd.value().hicat.value().size() != ncat_ + 1) {
+    throw eckit::UserError(
+      "PostProcessIce: itd.category bounds must have length ncat+1", Here());
+  }
+
   // Build a global lat/lon KDTree across all ranks. Payload is the 1-based
   // atlas global_index (gidx). Pattern adapted from oops::GeometryData::setGlobalTree.
   const auto & fs   = geom_.functionSpace();
@@ -153,52 +161,44 @@ State PostProcessIce::postprocess(const State & analysis) const {
   // 1. Read the per-category CICE background restart.
   State restart = readRestart(geom_, analysis.validTime());
 
-  // 2. Apply Stage A/B/C in place on a working copy.
+  // 2. Run the per-cell pass on a working copy. The mutated `pproc` is
+  //    the per-cat CICE state we'll write back; the returned State is
+  //    the aggregate (aice, hice, hsno) on analysis's geometry.
   State pproc(geom_, restart);
-  runPostprocess(pproc, restart, analysis);
+  State result = runPostprocess(pproc, restart, analysis);
 
   // 3. Write the postprocessed CICE restart (update mode).
   writeRestart(pproc, analysis.validTime());
 
-  // 4. Return an aggregate-ice State on `analysis`'s geometry carrying the
-  //    three diagnostic fields that runPostprocess added onto pproc. We
-  //    cannot just hand `pproc` back: it carries ~115 per-cat/per-(cat,lev)
-  //    CICE fields the caller doesn't want and didn't ask for. Build a
-  //    fresh State with the canonical aggregate-ice variable list and copy
-  //    the values across via atlas views.
-  const oops::Variables aggregateVars({
-      "sea_ice_area_fraction",
-      "sea_ice_thickness",
-      "sea_ice_snow_thickness"});
-  State result(analysis.geometry(), aggregateVars, analysis.validTime());
-  for (const std::string & name : aggregateVars.variables()) {
-    const auto srcView = atlas::array::make_view<double, 2>(
-        pproc.fieldSet().field(name));
-    auto dstView = atlas::array::make_view<double, 2>(
-        result.fieldSet().field(name));
-    const auto shape = srcView.shape();
-    for (atlas::idx_t j = 0; j < shape[0]; ++j) {
-      for (atlas::idx_t l = 0; l < shape[1]; ++l) {
-        dstView(j, l) = srcView(j, l);
-      }
-    }
-  }
   return result;
 }
 
 // -----------------------------------------------------------------------------
 
-void PostProcessIce::runPostprocess(State & pproc,
-                                    const State & restart,
-                                    const State & analysis) const {
-  // Access function space and sizes
-  const auto & fs = geom_.functionSpace();
+State PostProcessIce::runPostprocess(State & pproc,
+                                     const State & restart,
+                                     const State & analysis) const {
   // Restart background fields (read-only)
   const atlas::FieldSet & bgfields = restart.fieldSet();
   // Analysis fields (read-only)
   const atlas::FieldSet & anfields = analysis.fieldSet();
-  pproc = restart;  // start from background state
+  // `pproc` is the working copy of `restart` the caller passed in.
   atlas::FieldSet & newfields = pproc.fieldSet();
+
+  // Aggregate-ice result on analysis's geometry. We fill its three fields
+  // directly via atlas views and never add the diagnostics to pproc, so
+  // pproc keeps the per-cat schema the CICE-restart writer expects.
+  const oops::Variables aggregateVars({
+      "sea_ice_area_fraction",
+      "sea_ice_thickness",
+      "sea_ice_snow_thickness"});
+  State result(analysis.geometry(), aggregateVars, analysis.validTime());
+  auto outAice = atlas::array::make_view<double, 2>(
+      result.fieldSet().field("sea_ice_area_fraction"));
+  auto outHice = atlas::array::make_view<double, 2>(
+      result.fieldSet().field("sea_ice_thickness"));
+  auto outHsno = atlas::array::make_view<double, 2>(
+      result.fieldSet().field("sea_ice_snow_thickness"));
   oops::Log::info() << "PostProcessIce: background restart: " << restart
                     << std::endl;
   oops::Log::info() << "PostProcessIce: analysis: " << analysis << std::endl;
@@ -207,35 +207,21 @@ void PostProcessIce::runPostprocess(State & pproc,
   const size_t sno_lev = params_.sno_lev.value();
   const size_t field_size = bgfields.field(0).shape(0);
 
-  // Restart background fields (read-only) and target per-cat fields on pproc.
+  // Read-only per-cat views into the background restart, and writable
+  // per-cat views into the working copy (which started as a copy of the
+  // background; we'll overwrite the modelled cats in place below).
   auto bg_aice_cat  = ppiCatViews(bgfields,  ncat_, "sea_ice_category",      "_area_fraction");
   auto bg_vice_cat  = ppiCatViews(bgfields,  ncat_, "sea_ice_category",      "_volume");
   auto bg_vsno_cat  = ppiCatViews(bgfields,  ncat_, "sea_ice_snow_category", "_volume");
   auto new_aice_cat = ppiCatViews(newfields, ncat_, "sea_ice_category",      "_area_fraction");
   auto new_vice_cat = ppiCatViews(newfields, ncat_, "sea_ice_category",      "_volume");
   auto new_vsno_cat = ppiCatViews(newfields, ncat_, "sea_ice_snow_category", "_volume");
-  // Create field and view for total ice concentration in restarts
-  atlas::Field bg_aice_field = fs.createField<double>(
-    atlas::option::name("sea_ice_area_fraction") | atlas::option::levels(1));
-  atlas::Field new_aice_field = fs.createField<double>(
-    atlas::option::name("sea_ice_area_fraction") | atlas::option::levels(1));
-  atlas::Field new_hice_field = fs.createField<double>(
-    atlas::option::name("sea_ice_thickness") | atlas::option::levels(1));
-  atlas::Field new_hsno_field = fs.createField<double>(
-    atlas::option::name("sea_ice_snow_thickness") | atlas::option::levels(1));
-  auto bg_aice = atlas::array::make_view<double, 2>(bg_aice_field);
-  auto new_aice = atlas::array::make_view<double, 2>(new_aice_field);
-  auto new_hice = atlas::array::make_view<double, 2>(new_hice_field);
-  auto new_hsno = atlas::array::make_view<double, 2>(new_hsno_field);
-  newfields.add(new_aice_field);
-  newfields.add(new_hice_field);
-  newfields.add(new_hsno_field);
-  // Compute total ice concentration in restart
+
+  // Background total area, needed in the per-cell case dispatch
+  // (noice2ice / ice2noice detection).
+  std::vector<double> bg_aice(field_size, 0.0);
   for (size_t jnode = 0; jnode < field_size; ++jnode) {
-    bg_aice(jnode, 0) = totalAice(bg_aice_cat, jnode);
-    new_aice(jnode, 0) = bg_aice(jnode, 0);
-    new_hice(jnode, 0) = meanHice(new_vice_cat, new_aice(jnode, 0), jnode);
-    new_hsno(jnode, 0) = meanHsno(new_vsno_cat, new_aice(jnode, 0), jnode);
+    bg_aice[jnode] = totalAice(bg_aice_cat, jnode);
   }
 
   // Analysis fields. The user lists which ice-related variables are actually
@@ -294,8 +280,8 @@ void PostProcessIce::runPostprocess(State & pproc,
     for (size_t jn = 0; jn < field_size; ++jn) {
       double v = 0.0;
       for (size_t k = 0; k < ncat_; ++k) v += bg_vice_cat[k](jn, 0);
-      a_hice_vec[jn] = (bg_aice(jn, 0) > icephysics::Constants::puny)
-                       ? v / bg_aice(jn, 0) : 0.0;
+      a_hice_vec[jn] = (bg_aice[jn] > icephysics::Constants::puny)
+                       ? v / bg_aice[jn] : 0.0;
     }
   }
   if (has_hsno_th) {
@@ -320,10 +306,7 @@ void PostProcessIce::runPostprocess(State & pproc,
   const bool do_rebin = itd.rebin.value();
   const std::vector<double> hicat = itd.hicat.value();
   const double dhi_min = itd.dhiMin.value();
-  if (do_rebin && hicat.size() != ncat_ + 1) {
-    throw eckit::UserError(
-      "PostProcessIce: itd.category bounds must have length ncat+1", Here());
-  }
+  // hicat size already validated at construction.
   // Per-cell scratch buffers for the ITD rebin.
   std::vector<double> rebin_aicen(ncat_, 0.0);
   std::vector<double> rebin_vicen(ncat_, 0.0);
@@ -389,7 +372,7 @@ void PostProcessIce::runPostprocess(State & pproc,
       a_aice(jnode, 0) = 0.0;
     }
 
-    const double ai_bg = bg_aice(jnode, 0);
+    const double ai_bg = bg_aice[jnode];
     const double ai_an = a_aice(jnode, 0);
     const bool   isLand = (mask_(jnode, 0) == 0.0);
 
@@ -404,9 +387,9 @@ void PostProcessIce::runPostprocess(State & pproc,
         new_vice_cat[icat](jnode, 0) = 0.0;
         new_vsno_cat[icat](jnode, 0) = 0.0;
       }
-      new_aice(jnode, 0) = 0.0;
-      new_hice(jnode, 0) = 0.0;
-      new_hsno(jnode, 0) = 0.0;
+      outAice(jnode, 0) = 0.0;
+      outHice(jnode, 0) = 0.0;
+      outHsno(jnode, 0) = 0.0;
       continue;
     }
 
@@ -496,8 +479,8 @@ void PostProcessIce::runPostprocess(State & pproc,
         for (size_t icat = 0; icat < ncat_; ++icat) {
           bg_vsno_sum += bg_vsno_cat[icat](jnode, 0);
         }
-        hsn_target = (bg_aice(jnode, 0) > icephysics::Constants::puny)
-                         ? bg_vsno_sum / bg_aice(jnode, 0)
+        hsn_target = (bg_aice[jnode] > icephysics::Constants::puny)
+                         ? bg_vsno_sum / bg_aice[jnode]
                          : 0.0;
       }
       // Clamp cell-mean to [hsnow_min, hsnow_max]. The min is treated as a
@@ -575,9 +558,9 @@ void PostProcessIce::runPostprocess(State & pproc,
       // the floor anyway. Acceptable.
     }
     // -------------------- Aggregate diagnostics ---------------------------
-    new_aice(jnode, 0) = totalAice(new_aice_cat, jnode);
-    new_hice(jnode, 0) = meanHice(new_vice_cat, new_aice(jnode, 0), jnode);
-    new_hsno(jnode, 0) = meanHsno(new_vsno_cat, new_aice(jnode, 0), jnode);
+    outAice(jnode, 0) = totalAice(new_aice_cat, jnode);
+    outHice(jnode, 0) = meanHice(new_vice_cat, outAice(jnode, 0), jnode);
+    outHsno(jnode, 0) = meanHsno(new_vsno_cat, outAice(jnode, 0), jnode);
   }
   if (do_rebin) {
     oops::Log::info() << "PostProcessIce: ITD rebin visited "
@@ -648,6 +631,7 @@ void PostProcessIce::runPostprocess(State & pproc,
                            << "with ice within seedSearchK)." << std::endl;
     }
   }
+  return result;
 }
 
 // -----------------------------------------------------------------------------
@@ -726,11 +710,6 @@ void PostProcessIce::writeRestart(const State & pproc,
   cfg.set("cice template",   params_.ciceRestart.value().input.value());
   cfg.set("date",            validTime.toString());
   pproc.writeCice(cfg);
-}
-
-// -----------------------------------------------------------------------------
-
-void PostProcessIce::print(std::ostream &) const {
 }
 
 // -----------------------------------------------------------------------------
