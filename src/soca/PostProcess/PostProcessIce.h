@@ -186,10 +186,14 @@ class PostProcessIce: public util::Printable {
       "Freeboard enforcement options.", {}, this};
     oops::Parameter<ThermoParameters> thermo{"thermo",
       "Stage C thermo / pond options.", {}, this};
-    oops::Parameter<double> minAice{"min aice",
-            "minimum allowable ice concentration", 0.0, this, {oops::minConstraint(0.0)}};
-    oops::Parameter<double> minVice{"min vice",
-            "minimum allowable ice volume", 0.00001, this, {oops::minConstraint(0.0)}};
+    oops::Parameter<double> minCatIceVolume{"min cat ice volume",
+            "Per-cat ice volume floor (m^3/m^2-cell). After Stage A/B, cats "
+            "with vicen below this are swept and their mass redistributed to "
+            "surviving cats proportionally to aicen, preserving the cell-mean "
+            "totals. Prevents the rebin's marginal solutions from leaving "
+            "thick-ice-on-edge artifacts at small aice. Distinct from "
+            "`min new ice thickness`, which seeds new-ice cell-mean thickness.",
+            1.0e-5, this, {oops::minConstraint(0.0)}};
     oops::Parameter<double> minAiceOutput{"min aice output",
             "Cells where the analysis aice is below this threshold are treated "
             "as no-ice in the output (all per-cat fields zeroed). Stops "

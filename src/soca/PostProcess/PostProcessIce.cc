@@ -297,8 +297,7 @@ void PostProcessIce::postProcess(State & pproc,
   const auto & sstUpdateParams = params_.sstUpdate.value();
   const bool   adjust_sst = sstUpdateParams.adjustSST.value();
   const double max_dsst   = sstUpdateParams.sstDiffMax.value();
-  const double min_aice   = params_.minAice.value();
-  const double min_vice = params_.minVice.value();
+  const double min_vice = params_.minCatIceVolume.value();
   const auto & itd = params_.itd.value();
   const bool do_rebin = itd.rebin.value();
   const std::vector<double> hicat = itd.hicat.value();
@@ -364,7 +363,7 @@ void PostProcessIce::postProcess(State & pproc,
   //   7. min-vice cleanup; recompute aggregates.
   for (size_t jnode = 0; jnode < field_size; ++jnode) {
     // Clamp bounds on analysis first.
-    if (a_aice(jnode, 0) < min_aice) a_aice(jnode, 0) = 0.0;
+    if (a_aice(jnode, 0) < 0.0)      a_aice(jnode, 0) = 0.0;
     if (a_aice(jnode, 0) > 1.0)      a_aice(jnode, 0) = 1.0;
     if (a_hice_vec[jnode] < 0.0)     a_hice_vec[jnode] = 0.0;
     if (a_hsno_vec[jnode] < 0.0)     a_hsno_vec[jnode] = 0.0;
