@@ -40,26 +40,30 @@ class Postproc : public oops::Application {
     const soca::Geometry geom(fullConfig.getSubConfiguration("geometry"),
                               this->getComm());
 
-    // Background -- aggregate ice + ocean (history-style ice file).
-    const soca::State bg(geom, fullConfig.getSubConfiguration("background"));
+    std::unique_ptr<soca::State> analysis;
+    if (fullConfig.has("analysis")) {
+      analysis = std::make_unique<soca::State>(geom, fullConfig.getSubConfiguration("analysis"));
+    } else {
+      // Background -- aggregate ice + ocean (history-style ice file).
+      const soca::State bg(geom, fullConfig.getSubConfiguration("background"));
 
-    // 3DVar increment, read on the bg's variables and time.
-    soca::Increment incr(geom, bg.variables(), bg.validTime());
-    incr.read(fullConfig.getSubConfiguration("increment"));
+      // 3DVar increment, read on the bg's variables and time.
+      soca::Increment incr(geom, bg.variables(), bg.validTime());
+      incr.read(fullConfig.getSubConfiguration("increment"));
 
-    // analysis = bg + incr
-    soca::State analysis(bg);
-    analysis += incr;
-
+      // analysis = bg + incr
+      analysis = std::make_unique<soca::State>(bg);
+      *analysis += incr;
+    }
     // Per-category CICE restart, read by PostProcessIce itself. postProcess
     // internally copies ocean T/S off `analysis` onto pproc, so no caller-
     // side ocean merge is needed -- the SST-on-ice2noice adjustment writes
     // to pproc.T which starts at analysis.T.
     PostProcessIce ppIce(geom, fullConfig.getSubConfiguration("postprocess ice"));
-    soca::State restart = ppIce.readRestart(geom, analysis.validTime());
+    soca::State restart = ppIce.readRestart(geom, analysis->validTime());
     soca::State pproc(geom, restart);
-    ppIce.postProcess(pproc, restart, analysis);
-    ppIce.writeRestart(pproc, analysis.validTime());
+    ppIce.postProcess(pproc, restart, *analysis);
+    ppIce.writeRestart(pproc, analysis->validTime());
     return 0;
   }
 

@@ -88,9 +88,6 @@ def main():
     }
     new_subs = {
         "BKG_CICE_RESTART": bkg_cice_lnk,
-        "BKG_CICE_RESTART_BASENAME": bkg_cice_lnk,
-        "BKG_MOM_RESTART_BASENAME": bkg_mom_lnk,
-        "BKG_DATE": bkg_dt,
         "OCN_ANALYSIS": ocn_an_lnk,
         "ICE_ANALYSIS": ice_an_lnk,
         "ANALYSIS_DATE": an_dt,
