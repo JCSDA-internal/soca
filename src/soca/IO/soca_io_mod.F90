@@ -79,9 +79,10 @@ end type axis_entry
 type :: soca_io_writer
   character(len=:), allocatable :: filename
   ! Update mode: when `template` is set, commit copies `template`->`filename`
-  ! and overwrites only the enqueued vars in place, leaving every other
-  ! variable, dim and global attribute of the template untouched. Used for
-  ! CICE restarts, where SOCA models only a subset of the ~50 variables.
+  ! (skipped when the two paths are identical) and overwrites only the
+  ! enqueued vars in place, leaving every other variable, dim and global
+  ! attribute of the template untouched. Used for CICE restarts, where SOCA
+  ! models only a subset of the ~50 variables.
   character(len=:), allocatable :: template
   type(domain2D), pointer :: domain => null()
   integer :: isc, iec, jsc, jec        ! local compute domain (1-based as mpp returns)
@@ -443,10 +444,11 @@ end subroutine writer_commit
 
 !==============================================================================
 ! writer_commit_update: update-existing mode. Root byte-copies the template to
-! the output path once, then each enqueued var is mpp_gather'd to root and
-! written in place over the existing variable. Every other variable, dimension
-! and global attribute of the template is preserved untouched. No dims/coords
-! are defined -- the file structure is the template's.
+! the output path once (skipped when the two paths are identical -- the file
+! already is its own template), then each enqueued var is mpp_gather'd to
+! root and written in place over the existing variable. Every other variable,
+! dimension and global attribute of the template is preserved untouched.
+! No dims/coords are defined -- the file structure is the template's.
 !
 ! Used for CICE restarts, where SOCA models only ~10 of the ~50 variables and
 ! the rest (iceumask, istep1, stresses, global attrs) must pass through.
@@ -467,9 +469,14 @@ subroutine writer_commit_update(self)
   call mpi_pelist(pelist)
 
   ! Root copies the template to the output path, then reopens NF90_WRITE.
+  ! When template and output paths are identical, skip the copy and open
+  ! the file directly for in-place update -- the on-disk bytes already
+  ! match the template by definition.
   ! All PEs must reach the gather calls, but only root touches the file.
   if (is_root) then
-    call soca_io_copy_file(self%template, self%filename)
+    if (trim(self%template) /= trim(self%filename)) then
+      call soca_io_copy_file(self%template, self%filename)
+    end if
     call ncc(nf90_open(self%filename, NF90_WRITE, ncid), &
         'nf90_open (update) '//trim(self%filename))
   end if
