@@ -95,7 +95,7 @@ class PostProcessIce: public util::Printable {
   };
 
   // ---------------------------------------------------------------------------
-  /// @brief Parameters for the Stage C thermo / pond pass. Operates on the CICE
+  /// @brief Parameters for the thermo / pond pass. Operates on the CICE
   /// restart's per-layer enthalpy, surface temperature, and melt-pond fields,
   /// which are carried as atlas Fields of the State (listed in the State's
   /// `state variables` and declared in fields_metadata.yml).
@@ -104,15 +104,16 @@ class PostProcessIce: public util::Printable {
 
    public:
     oops::Parameter<bool> updateSnowThermo{"update snow thermo",
-      "Clip snow enthalpy into [snowEnthalpy(min Tsfc), snowEnthalpy(max Tsfc)] "
-      "and back-derive Tsfcn from qsno on cats with snow. Also caps the surface "
-      "ice layer enthalpy by iceEnthalpyBL99(Tsfcn, sice). On by default to "
-      "match the Python reference scripts.",
+      "Rebuild per-layer snow enthalpy (qsno) from Tsfcn on cats with snow "
+      "(qsno = snowEnthalpy(Tsfcn), clipped into a physical range), and cap "
+      "the surface ice layer enthalpy by iceEnthalpyBL99(Tsfcn, sice). On "
+      "by default; turning it off leaves the background qsno/qice unchanged.",
       true, this};
     oops::Parameter<bool> resetPonds{"reset ponds",
       "Zero apnd and hpnd on per-cat slots where the snow distribution "
-      "modified vsnon. Mirrors the Python reference, which only zeros ponds "
-      "on snow-inserted cats. Never touches ipnd. On by default.",
+      "modified vsnon (the new snow load is inconsistent with the bg ponds). "
+      "Never touches ipnd (refrozen-lid thickness, preserved from bg). On "
+      "by default.",
       true, this};
     oops::Parameter<double> maxTsfc{"max Tsfc",
       "Upper bound on Tsfcn (deg C). Snow enthalpy is clipped accordingly.",
@@ -122,11 +123,12 @@ class PostProcessIce: public util::Printable {
       -100.0, this};
     oops::Parameter<bool> seedNewIce{"seed new ice",
       "Seed Tsfcn (and qsno = snowEnthalpy(Tseed)) on cats that went from "
-      "aicen=0 in background to aicen>0 after Stage A/B; sub-surface qice/sice "
-      "are synthesized at the ocean freezing point via BL99/BZ99 (matches "
-      "dd's tice_max = Tfrz - 0.01). Donor Tsfc from a global lat/lon "
-      "nearest neighbor with any ice within `seed search neighbors`; falls "
-      "back to Tfrz when no donor is found. On by default.",
+      "aicen=0 in background to aicen>0 after the per-cell pass. Sub-surface "
+      "qice/sice are synthesized at the ocean freezing point via BL99/BZ99 "
+      "(any surface-temperature-based qice seed produces values several "
+      "MJ/m^3 too warm). Donor Tsfc from a global lat/lon nearest neighbor "
+      "with any ice within `seed search neighbors`; falls back to Tfrz "
+      "when no donor is found. On by default.",
       true, this};
     oops::Parameter<int> seedSearchK{"seed search neighbors",
       "Number of nearest KDTree neighbors to scan for a donor with any ice "
@@ -150,7 +152,7 @@ class PostProcessIce: public util::Printable {
   };
 
   // ---------------------------------------------------------------------------
-  /// @brief Parameters for adding soca increment to CICE restart files
+  /// @brief Top-level parameters for PostProcessIce.
   class Parameters : public oops::Parameters {
     OOPS_CONCRETE_PARAMETERS(Parameters, oops::Parameters)
 
@@ -168,7 +170,7 @@ class PostProcessIce: public util::Printable {
     oops::Parameter<FreeboardParameters> freeboard{"freeboard",
       "Freeboard enforcement options.", {}, this};
     oops::Parameter<ThermoParameters> thermo{"thermo",
-      "Stage C thermo / pond options.", {}, this};
+      "Per-layer thermo / pond reset options.", {}, this};
     oops::Parameter<double> minCatIceVolume{"min cat ice volume",
             "Per-cat ice volume floor (m^3/m^2-cell). After Stage A/B, cats "
             "with vicen below this are swept and their mass redistributed to "
@@ -207,8 +209,9 @@ class PostProcessIce: public util::Printable {
   /// @brief End-to-end CICE-restart postprocess:
   ///   1. read the per-category CICE background restart at
   ///      `cice restart: input:`;
-  ///   2. apply Stage A/B/C (case dispatch, ITD rebin, snow distribution,
-  ///      freeboard, thermo + new-ice seed) using `analysis` as the target;
+  ///   2. apply the per-cell pass (case dispatch, ITD rebin, snow
+  ///      distribution, freeboard, thermo + new-ice seed) using `analysis`
+  ///      as the target;
   ///   3. write the postprocessed restart at `cice restart: output:` in
   ///      update mode (the input is the template; ~40 unmodelled CICE
   ///      variables pass through).
@@ -216,7 +219,7 @@ class PostProcessIce: public util::Printable {
   /// @returns an aggregate-ice State on `analysis`'s geometry carrying
   /// `sea_ice_area_fraction`, `sea_ice_thickness`, and
   /// `sea_ice_snow_thickness` matching what was actually written to the
-  /// restart (post min-vice cleanup, post freeboard, etc.).
+  /// restart (after all per-cat adjustments).
   State postprocess(const State & analysis) const;
 
  private:
@@ -234,14 +237,16 @@ class PostProcessIce: public util::Printable {
   void writeRestart(const State & pproc,
                     const util::DateTime & validTime) const;
 
-  /// @brief The per-cell case dispatch + Stage A/B/C; mutates `pproc` in
-  /// place from `restart` toward `analysis`.
+  /// @brief Per-cell pass (case dispatch + ITD rebin + snow distribution
+  /// + freeboard + min-vice cleanup), followed by the thermo / pond pass
+  /// and (optional) new-ice seeding. Mutates `pproc` in place from
+  /// `restart` toward `analysis`.
   void runPostprocess(State & pproc, const State & restart,
                       const State & analysis) const;
 
 
-  /// Stage C thermo / pond pass. Mutates the CICE thermo/pond fields of `fset`
-  /// in place, using the per-cat aicen / vsnon fields from the same `fset`.
+  /// Thermo / pond pass. Mutates the CICE thermo/pond fields of `fset` in
+  /// place, using the per-cat aicen / vsnon fields from the same `fset`.
   /// No-op when neither `update snow thermo` nor `reset ponds` is enabled.
   ///
   /// `snowTouched` is sized `field_size * ncat`, indexed `[jnode * ncat + k]`,
@@ -288,8 +293,8 @@ class PostProcessIce: public util::Printable {
   atlas::array::ArrayView<double, 2> mask_;
 
   /// @brief Mask of (jnode, k) cells that transitioned from
-  /// `bg_aicen[k] == 0` to `new_aicen[k] > 0` after Stages A/B. Indexed
-  /// `jnode * ncat + k`.
+  /// `bg_aicen[k] == 0` to `new_aicen[k] > 0` after the per-cell pass.
+  /// Indexed `jnode * ncat + k`.
   struct NewIceMask {
     std::size_t ncat = 0;
     std::size_t nNodes = 0;
@@ -299,14 +304,15 @@ class PostProcessIce: public util::Printable {
     }
   };
 
-  /// Phase A+B+C of the sparse halo exchange. For every owned cell, run
-  /// `kdTree_.closestPoints(target, K)` to identify the global gidx of K
-  /// nearest neighbors; deduplicate into a per-rank "wanted" set; sparse
-  /// allToAllv to request donor data; pack reply records from local FieldSet
-  /// views; sparse allToAllv to receive replies.
-  /// Returns a map keyed by gidx with the donor's CatRecord.
+  /// Sparse halo exchange of donor cell data. For every owned cell, run
+  /// `kdTree_.closestPoints(target, K)` to identify the global gidx of the
+  /// K nearest neighbors; deduplicate into a per-rank "wanted" set; sparse
+  /// allToAllv to request donor data; pack reply records from local
+  /// FieldSet views; sparse allToAllv to receive replies. Returns a map
+  /// keyed by gidx with the donor's CatRecord.
   ///
-  /// The per-cat view vectors are all of the *background* restart, indexed `[k]`.
+  /// The per-cat view vectors are all of the *background* restart,
+  /// indexed `[k]`.
   std::unordered_map<std::int64_t, CatRecord> gatherDonorHalo(
       std::size_t K,
       const std::vector<atlas::array::ArrayView<double, 2>> & bg_aice_cat,
@@ -315,9 +321,9 @@ class PostProcessIce: public util::Printable {
       const;
 
   /// Area-weighted mean Tsfc and mean ice thickness across the K nearest
-  /// KDTree neighbors that carry any ice. Used by the Stage A case-dispatch
-  /// for noice→ice cells to set the rebin's volume target before the per-
-  /// category thermo seeding runs in Stage C.
+  /// KDTree neighbors that carry any ice. Used by the per-cell pass on
+  /// noice->ice cells to set the rebin's volume target before the
+  /// per-category thermo seeding runs (in seedNewIce).
   ///
   /// Returns true if at least one donor with ice was found. Outputs are valid
   /// only when the return is true; otherwise both are left untouched.
@@ -328,8 +334,8 @@ class PostProcessIce: public util::Printable {
                     double & Tsfc_mean,
                     double & hice_mean) const;
 
-  /// Stage C noice→ice seeding. For each (jnode, k) flagged in `mask`,
-  /// pick the global lat/lon nearest cell with any ice from `donorCache` and
+  /// New-ice thermo seeding. For each (jnode, k) flagged in `mask`, pick
+  /// the global lat/lon nearest cell with any ice from `donorCache` and
   /// seed Tsfcn from its area-weighted mean Tsfc; synthesize qsno/qice/sice
   /// from CICE physics (snowEnthalpy, iceEnthalpyBL99, siceLayerCice4).
   /// Falls back to Tfrz physics seed when no donor is found within K.

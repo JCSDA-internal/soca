@@ -9,8 +9,6 @@
 
 #include <algorithm>
 #include <cstdint>
-#include <limits>
-#include <numeric>
 #include <unordered_set>
 #include <utility>
 #include <vector>
@@ -19,9 +17,6 @@
 #include "atlas/field.h"
 #include "atlas/functionspace.h"
 #include "atlas/functionspace/NodeColumns.h"
-#include "atlas/mesh/Mesh.h"
-#include "atlas/mesh/Connectivity.h"
-#include "atlas/mesh/actions/BuildCellCentres.h"
 #include "atlas/util/Point.h"
 
 #include "eckit/config/LocalConfiguration.h"
@@ -204,9 +199,9 @@ void PostProcessIce::runPostprocess(State & pproc,
   const atlas::FieldSet & anfields = analysis.fieldSet();
   pproc = restart;  // start from background state
   atlas::FieldSet & newfields = pproc.fieldSet();
-  oops::Log::info() << " background restart: " << restart << std::endl;
-  oops::Log::info() << " analysis: " << analysis << std::endl;
-  oops::Log::info() << " pproc before " << pproc << std::endl;
+  oops::Log::info() << "PostProcessIce: background restart: " << restart
+                    << std::endl;
+  oops::Log::info() << "PostProcessIce: analysis: " << analysis << std::endl;
 
   const size_t ice_lev = params_.ice_lev.value();
   const size_t sno_lev = params_.sno_lev.value();
@@ -349,23 +344,21 @@ void PostProcessIce::runPostprocess(State & pproc,
   std::vector<double> fb_vsnon(ncat_, 0.0);
   size_t freeboard_failures = 0;
 
-  // ---------------------------------------------------------------------------
-  // Sparse halo exchange for donor data (Phases A+B+C). K is the seed-new-ice
-  // search radius; both donorMeanIce (in the NOICE2ICE branch) and seedNewIce
-  // (Stage C) read from the same donorCache. The donor record only carries
-  // per-cat aicen/vicen/Tsfcn — seedNewIce synthesizes the per-layer thermo
-  // from the donor mean Tsfc, so the per-layer fields are not gathered.
-  const auto bg_tsfc_cat = ppiCatViews(restart.fieldSet(), ncat_,
-                                       "sea_ice_category", "_surface_temperature");
-  const std::size_t seedK = static_cast<std::size_t>(
-      params_.thermo.value().seedSearchK.value());
-  auto donorCache = gatherDonorHalo(seedK, bg_aice_cat, bg_vice_cat, bg_tsfc_cat);
-
-  // Additional knobs picked up from the top-level parameters. seedK was
-  // already computed above for the donor halo gather; reuse it here.
   const double hsnow_max        = snowParams.hsnowMax.value();
   const double hitot_min        = params_.hitotMin.value();
   const double min_aice_output  = params_.minAiceOutput.value();
+  const std::size_t seedK = static_cast<std::size_t>(
+      params_.thermo.value().seedSearchK.value());
+
+  // Sparse halo exchange: for each owned cell, gather donor (aicen, vicen,
+  // Tsfcn) records from up to K KDTree neighbors. Both the noice->ice
+  // volume seed (donorMeanIce, in the per-cell loop) and the thermo-seed
+  // pass (seedNewIce) read from this single cache. Per-layer thermo is
+  // synthesized from the donor's mean Tsfc, so only per-cat fields are
+  // gathered.
+  const auto bg_tsfc_cat = ppiCatViews(restart.fieldSet(), ncat_,
+                                       "sea_ice_category", "_surface_temperature");
+  auto donorCache = gatherDonorHalo(seedK, bg_aice_cat, bg_vice_cat, bg_tsfc_cat);
 
   // Per-cell scratch for the rebin call.
   int      rebin_aicen_mutated   = 0;
@@ -375,10 +368,9 @@ void PostProcessIce::runPostprocess(State & pproc,
   size_t rebin_visited = 0;
 
   // ----------------------------------------------------------------------
-  // Stage A: per-cell case dispatch (port of the Python reference scripts).
-  // For each owned cell:
+  // Per-cell pass. For each owned cell:
   //   1. clamp analysis bounds;
-  //   2. classify (LAND/ICE2NOICE/NOICE2ICE/ICE2ICE);
+  //   2. classify (LAND / ICE2NOICE / NOICE2ICE / ICE2ICE);
   //   3. set seed aicen/vicen and vtot_target accordingly;
   //   4. ITD rebin (when enabled) drives aicen/vicen to (a_aice, vtot_target);
   //   5. distribute snow by aicen-weight from clamped cell-mean hsno;
@@ -424,14 +416,13 @@ void PostProcessIce::runPostprocess(State & pproc,
     bool   noice2ice   = (ai_bg <= icephysics::Constants::puny);
 
     if (noice2ice) {
-      // Placeholder all-in-cat-0; the rebin will spread it. Vtot_target source
-      // order:
-      //   1. analysis a_hice (most informative — use it whenever positive);
-      //   2. KDTree donor mean hice;
-      //   3. hitot_min · ai_an fallback.
-      // The donor-mean Tsfc is still useful for the Stage C thermo seed (it
-      // sets initial Tsfcn/qsno/qice/sice physics consistently), so the
-      // donorMeanIce call stays in the seedNewIce pass.
+      // Seed by putting all ice in cat 0; the ITD rebin will spread it.
+      // Pick vtot_target in this order:
+      //   1. analysis a_hice when positive (most informative);
+      //   2. KDTree donor mean hice when available;
+      //   3. hitot_min * ai_an as a floor.
+      // The donor-mean Tsfc is also needed for the thermo seed pass;
+      // that's computed there, not here.
       double hice_seed = a_hice_vec[jnode];
       if (hice_seed <= 0.0) {
         double Tsfc_donor, hice_donor;
@@ -447,9 +438,10 @@ void PostProcessIce::runPostprocess(State & pproc,
         new_vsno_cat[k](jnode, 0) = 0.0;
       }
     } else {
-      // ICE2ICE: alpha-rescale per-cat from background. The rebin (if
-      // enabled) then corrects toward analysis hice·a_aice. Trust the
-      // analysis hice unconditionally (user decision 2026-05-11).
+      // ICE2ICE: alpha-rescale per-cat from background to hit a_aice. The
+      // rebin (if enabled) then corrects ice volume toward analysis
+      // hice * a_aice; trust the analysis hice unconditionally rather than
+      // blending with the rescaled background volume.
       const double alpha = ai_an / ai_bg;
       for (std::size_t k = 0; k < ncat_; ++k) {
         new_aice_cat[k](jnode, 0) = alpha * bg_aice_cat[k](jnode, 0);
@@ -461,7 +453,7 @@ void PostProcessIce::runPostprocess(State & pproc,
       vtot_target = a_hice_vec[jnode] * ai_an;
     }
 
-    // -------------------- Stage B: ITD rebin ------------------------------
+    // -------------------- ITD rebin ---------------------------------------
     if (do_rebin) {
       for (size_t icat = 0; icat < ncat_; ++icat) {
         rebin_aicen[icat] = new_aice_cat[icat](jnode, 0);
@@ -487,7 +479,7 @@ void PostProcessIce::runPostprocess(State & pproc,
       }
     }
 
-    // -------------------- Stage C: snow distribution ----------------------
+    // -------------------- Snow distribution -------------------------------
     // Recompute ai_now (may differ slightly from a_aice after rebin).
     double ai_now = 0.0;
     for (size_t icat = 0; icat < ncat_; ++icat) {
@@ -521,7 +513,7 @@ void PostProcessIce::runPostprocess(State & pproc,
       }
     }
 
-    // -------------------- Stage C+: freeboard -----------------------------
+    // -------------------- Freeboard enforcement ---------------------------
     if (do_freeboard) {
       bool anyIce = false;
       for (size_t icat = 0; icat < ncat_; ++icat) {
@@ -603,14 +595,15 @@ void PostProcessIce::runPostprocess(State & pproc,
                          << freeboard_failures << " cells; left untouched."
                          << std::endl;
   }
-  oops::Log::info() << " after pp restart: " << restart << std::endl;
+  oops::Log::info() << "PostProcessIce: postprocessed restart: " << pproc
+                    << std::endl;
 
   // ---------------------------------------------------------------------------
-  // Stage C: build NewIceMask, run applyThermoStage, optional seedNewIce.
-  // With the shuffle path removed, every (jnode, k) cell that transitioned
-  // bg_aicen==0 -> new_aicen>0 needs thermo seeding from a KDTree donor.
-  // The masks are sized field_size*ncat and indexed by jnode (ghost cells
-  // are simply left zero).
+  // Thermo / pond pass and (optional) new-ice seeding. Every (jnode, k) slot
+  // that transitioned bg_aicen==0 -> new_aicen>0 above gets its per-layer
+  // qice / sice / qsno (and Tsfcn) synthesized from CICE physics using a
+  // donor Tsfc from the global KDTree. The masks are sized field_size*ncat
+  // and indexed by jnode (ghost cells are left zero).
   NewIceMask newIce;
   newIce.ncat = ncat_;
   newIce.nNodes = field_size;
@@ -655,8 +648,6 @@ void PostProcessIce::runPostprocess(State & pproc,
                            << "with ice within seedSearchK)." << std::endl;
     }
   }
-  // `pproc` (now carrying the mutated ice + thermo/pond fields) is written by
-  // the caller via PostProcessIce::writeRestart.
 }
 
 // -----------------------------------------------------------------------------
@@ -790,10 +781,9 @@ void PostProcessIce::applyThermoStage(
 
   const double maxTsfc = thermoParams.maxTsfc.value();
   const double minTsfc = thermoParams.minTsfc.value();
-  // The qsno enthalpy clip bound is a physical constraint (snow enthalpy at
-  // ~0 C), NOT the Tsfcn clamp. maxTsfc (= -1 C by default) is a deliberately
-  // tight production-grid fix for Tsfcn only; coupling the qsno clip to it
-  // would over-clip snow enthalpy. dd clips at snowEnth(-0.01 C).
+  // The qsno enthalpy clip bound is the physical "warmest snow" enthalpy
+  // (snowEnthalpy at ~ 0 C), NOT the Tsfcn clamp. Coupling the qsno clip to
+  // maxTsfc (default -1 C, a Tsfcn-only bound) would over-clip snow enthalpy.
   const double qsnoMax = icephysics::snowEnthalpy(icephysics::Constants::Tsno_clip_max);
   const double qsnoMin = icephysics::snowEnthalpy(minTsfc);
   const double qsnoLo  = std::min(qsnoMin, qsnoMax);
@@ -829,9 +819,10 @@ void PostProcessIce::applyThermoStage(
     for (std::size_t k = 0; k < ncat_; ++k) {
       const double aice = aiceCat[k](jnode, 0);
       if (aice <= 0.0) {
-        // Cat lost its ice (ice2noice cell, rebin shuffle, or min-vice cleanup).
-        // Clear stale thermo so cats without ice carry zeros rather than the
-        // bg values they inherited from `pproc = restart`.
+        // Cat lost its ice (ice2noice cell, ITD rebin emptied it, or
+        // min-vice cleanup swept it). Clear stale thermo so empty cats
+        // carry zeros rather than the bg values inherited from
+        // `pproc = restart`.
         tsfcCat[k](jnode, 0) = 0.0;
         for (std::size_t l = 0; l < snoLev; ++l) {
           qsnoCatLev[k][l](jnode, 0) = 0.0;
@@ -848,14 +839,11 @@ void PostProcessIce::applyThermoStage(
 
       if (updateSnowThermo) {
         const double vsno = vsnoCat[k](jnode, 0);
-        // Tsfcn from prior stages (preserved from background for ICE2ICE, or
-        // donor-seeded by seedNewIce for NOICE2ICE) is the physically
-        // meaningful quantity here. Rebuild qsno from Tsfcn rather than the
-        // reverse, mirroring the Python reference (qsn_tsfc =
-        // snowEnthalpy(tsf_new) in insert_iconc_ithkn_cice6_restart.py).
-        // The opposite direction (back-deriving Tsfcn from a stale bg qsno
-        // on cats that gained snow via redistribution) produced a +2.6 K
-        // warm bias on the production grid.
+        // Tsfcn from prior steps (preserved from background for ICE2ICE,
+        // or donor-seeded by seedNewIce for NOICE2ICE) is the physically
+        // meaningful quantity. Rebuild qsno from Tsfcn, not the other way
+        // round -- back-deriving Tsfcn from a stale bg qsno on cats that
+        // gained snow via redistribution introduces a measurable warm bias.
         double & T = tsfcCat[k](jnode, 0);
         T = std::min(maxTsfc, std::max(minTsfc, T));
         if (vsno > 0.0) {
@@ -865,7 +853,7 @@ void PostProcessIce::applyThermoStage(
             qsnoCatLev[k][l](jnode, 0) = qClipped;
           }
         } else {
-          // No snow: zero qsno (matches Python; avoids stale-bg leakage).
+          // No snow: zero qsno to avoid stale-bg leakage.
           for (std::size_t l = 0; l < snoLev; ++l) {
             qsnoCatLev[k][l](jnode, 0) = 0.0;
           }
@@ -881,8 +869,8 @@ void PostProcessIce::applyThermoStage(
       }
 
       if (resetPonds && snowTouched[jnode * ncat_ + k]) {
-        // Match dd: only zero apnd/hpnd where snow was inserted. Never
-        // touch ipnd (the refrozen-lid thickness is preserved from bg).
+        // Only zero apnd/hpnd where snow was inserted; ipnd (refrozen-lid
+        // thickness) is always preserved from background.
         apndCat[k](jnode, 0) = 0.0;
         hpndCat[k](jnode, 0) = 0.0;
       }
@@ -1087,11 +1075,10 @@ std::size_t PostProcessIce::seedNewIce(
     if (!foundDonor) ++fallbackCount;
 
     const double Tseed = std::min(maxTsfc, std::max(minTsfc, donorTsfc));
-    // qice on the brand-new ice slots is seeded at the ocean freezing point
-    // (Tfrz - small offset), not the donor Tsfc. dd does the same
-    // (insert_iconc_ithkn_cice6_restart.py: tice_max = Tfrz - 0.01): a
-    // surface-temperature-based seed would give qice several MJ/m^3 warmer
-    // than physics warrants and spike near-surface melt energy on summer ice.
+    // qice on brand-new ice slots is seeded at the ocean freezing point
+    // (Tfrz - small offset), not the donor Tsfc. Surface-temperature-based
+    // seeding would give qice several MJ/m^3 warmer than physics warrants
+    // and spike near-surface melt energy on summer ice.
     const double Tice_seed = icephysics::Constants::Tfrz
                              - icephysics::Constants::Tice_seed_offset;
 

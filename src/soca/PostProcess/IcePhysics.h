@@ -27,14 +27,12 @@ struct Constants {
   static constexpr double msal       = 0.573;      // BZ99 profile shape
   static constexpr double Tmin       = -100.0;     // floor on internal T (C)
   static constexpr double Tfrz       = -1.86243522;  // sea-water freezing pt (C)
-  // New-ice qice seed temperature offset below Tfrz. Matches dd's
-  // insert_iconc_ithkn_cice6_restart.py (tice_max = Tfrz - 0.01): newly-iced
-  // category slots get the coldest reasonable enthalpy so CICE does not melt
-  // them on the first timestep.
+  // New-ice qice seed temperature offset below Tfrz. Newly-iced category
+  // slots get the coldest reasonable enthalpy so CICE does not melt them
+  // on the first timestep.
   static constexpr double Tice_seed_offset = 0.01;   // K below Tfrz
-  // Upper Tsfc-equivalent for the qsno enthalpy clip. A physical bound
+  // Upper Tsfc-equivalent for the qsno enthalpy clip: a physical bound
   // (snow enthalpy at ~0 C), independent of the Tsfcn production clamp.
-  // Matches dd's qsn_max ~ snowEnth(-0.01 C).
   static constexpr double Tsno_clip_max    = -0.01;  // C
 };
 
@@ -45,7 +43,7 @@ struct Constants {
 // category k either aicen[k] == 0 or hicat[k] <= vicen[k]/aicen[k] <= hicat[k+1],
 // while hitting both Sum(aicen) = aiceTarget and Sum(vicen) = viceTarget.
 //
-// Algorithm (port of mc6util.adjust_thkncats_aice without scipy):
+// Algorithm:
 //   0. If aiceTarget <= puny: zero everything, return true.
 //   1. Early-out if every bin already satisfies the bounds and the totals
 //      already match the targets within (aTol, vTol).
