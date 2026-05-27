@@ -43,6 +43,7 @@ set( soca_test_input
   testinput/dirac_soca_cor_nicas_scales.yml
   testinput/dirac_soca_cov.yml
   testinput/dirac_socahyb_cov.yml
+  testinput/eakf.yml
   testinput/ensanpproc.yml
   testinput/ensanpproc_ensda.yml
   testinput/ensmeanandvariance.yml
@@ -122,6 +123,7 @@ set( soca_test_ref
   testref/dirac_soca_cor_nicas_scales.test
   testref/dirac_soca_cov.test
   testref/dirac_socahyb_cov.test
+  testref/eakf.test
   testref/ensanpproc.test
   testref/ensanpproc_ensda.test
   testref/ensmeanandvariance.test
@@ -694,13 +696,13 @@ soca_add_test( NAME 3dvarfgat_pseudo
                EXE  soca_var.x
                TEST_DEPENDS test_soca_gridgen
                             test_soca_forecast_mom6
-                            test_socs_parameters_diffusion )
+                            test_soca_parameters_diffusion )
 
 soca_add_test( NAME 3dhyb
                EXE  soca_var.x
                TEST_DEPENDS test_soca_gridgen
                             test_soca_parameters_bump_loc
-                            test_socs_parameters_diffusion )
+                            test_soca_parameters_diffusion )
 
 soca_add_test( NAME 3dhyb_diffusion
                EXE  soca_var.x
@@ -712,7 +714,7 @@ soca_add_test( NAME 3dhybfgat_pseudo
                NOTRAPFPE
                TEST_DEPENDS test_soca_gridgen
                             test_soca_parameters_bump_loc
-                            test_socs_parameters_diffusion )
+                            test_soca_parameters_diffusion )
 
 soca_add_test( NAME 4denvar
                EXE soca_var.x
@@ -724,7 +726,7 @@ soca_add_test( NAME 4denvar
 soca_add_test( NAME 4dhybenvar
                EXE soca_var.x
                TEST_DEPENDS test_soca_gridgen
-                            test_socs_parameters_diffusion
+                            test_soca_parameters_diffusion
                             test_soca_forecast_mom6
                             test_soca_forecast_mom6_ens1
                             test_soca_forecast_mom6_ens2
@@ -734,13 +736,13 @@ soca_add_test( NAME 4dvar_identity
                EXE soca_var.x
                TEST_DEPENDS test_soca_gridgen
                             test_soca_parameters_bump_loc
-                            test_socs_parameters_diffusion
+                            test_soca_parameters_diffusion
                             test_soca_forecast_mom6 )
 
 soca_add_test( NAME 4dvar_htlm
                EXE soca_var.x
                TEST_DEPENDS test_soca_gridgen
-                            test_socs_parameters_diffusion
+                            test_soca_parameters_diffusion
                             test_soca_forecast_mom6
                             test_soca_forecast_mom6_ens1
                             test_soca_forecast_mom6_ens2
@@ -777,6 +779,10 @@ soca_add_test( NAME letkf_split_solver
 soca_add_test( NAME getkf
                EXE  soca_letkf.x
               #  NOTRAPFPE
+               TEST_DEPENDS test_soca_gridgen )
+
+soca_add_test( NAME eakf
+               EXE  soca_letkf.x
                TEST_DEPENDS test_soca_gridgen )
 
 # other executables that depends on increments from 3dvar_diffusion run

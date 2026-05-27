@@ -21,3 +21,12 @@ To generate doxygen documentation for the Fortran parts of the code, use the `-D
 in the `soca/docs/html` path of the build directory.
 
 See the [JEDI Documentation](https://jointcenterforsatellitedataassimilation-jedi-docs.readthedocs-hosted.com/en/latest/) for additional details on how to setup, build, and test JEDI projects.
+
+## Documentation
+
+- [docs/postproc_application.md](docs/postproc_application.md): YAML setup for `soca_anpproc.x`
+	ensemble post-processing workflow.
+- [src/soca/VariableChange/Soca2Cice/README.md](src/soca/VariableChange/Soca2Cice/README.md):
+	sea-ice analysis post-processing details for CICE.
+- [src/soca/Utils/incrqc/README.md](src/soca/Utils/incrqc/README.md): increment quality-control
+	algorithm and configuration details.
