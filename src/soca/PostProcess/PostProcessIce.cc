@@ -154,9 +154,48 @@ PostProcessIce::PostProcessIce(const Geometry & geom,
 
 // -----------------------------------------------------------------------------
 
-void PostProcessIce::postProcess(State & pproc,
-                                 const State & restart,
-                                 const State & analysis) const {
+State PostProcessIce::postprocess(const State & analysis) const {
+  // 1. Read the per-category CICE background restart.
+  State restart = readRestart(geom_, analysis.validTime());
+
+  // 2. Apply Stage A/B/C in place on a working copy.
+  State pproc(geom_, restart);
+  runPostprocess(pproc, restart, analysis);
+
+  // 3. Write the postprocessed CICE restart (update mode).
+  writeRestart(pproc, analysis.validTime());
+
+  // 4. Return an aggregate-ice State on `analysis`'s geometry carrying the
+  //    three diagnostic fields that runPostprocess added onto pproc. We
+  //    cannot just hand `pproc` back: it carries ~115 per-cat/per-(cat,lev)
+  //    CICE fields the caller doesn't want and didn't ask for. Build a
+  //    fresh State with the canonical aggregate-ice variable list and copy
+  //    the values across via atlas views.
+  const oops::Variables aggregateVars({
+      "sea_ice_area_fraction",
+      "sea_ice_thickness",
+      "sea_ice_snow_thickness"});
+  State result(analysis.geometry(), aggregateVars, analysis.validTime());
+  for (const std::string & name : aggregateVars.variables()) {
+    const auto srcView = atlas::array::make_view<double, 2>(
+        pproc.fieldSet().field(name));
+    auto dstView = atlas::array::make_view<double, 2>(
+        result.fieldSet().field(name));
+    const auto shape = srcView.shape();
+    for (atlas::idx_t j = 0; j < shape[0]; ++j) {
+      for (atlas::idx_t l = 0; l < shape[1]; ++l) {
+        dstView(j, l) = srcView(j, l);
+      }
+    }
+  }
+  return result;
+}
+
+// -----------------------------------------------------------------------------
+
+void PostProcessIce::runPostprocess(State & pproc,
+                                    const State & restart,
+                                    const State & analysis) const {
   // Access function space and sizes
   const auto & fs = geom_.functionSpace();
   // Restart background fields (read-only)

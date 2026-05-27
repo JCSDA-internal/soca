@@ -204,31 +204,42 @@ class PostProcessIce: public util::Printable {
 
   PostProcessIce(const Geometry &, const eckit::Configuration &);
 
-  void postProcess(State & pproc, const State & restart,
-                   const State & analysis) const;
+  /// @brief End-to-end CICE-restart postprocess:
+  ///   1. read the per-category CICE background restart at
+  ///      `cice restart: input:`;
+  ///   2. apply Stage A/B/C (case dispatch, ITD rebin, snow distribution,
+  ///      freeboard, thermo + new-ice seed) using `analysis` as the target;
+  ///   3. write the postprocessed restart at `cice restart: output:` in
+  ///      update mode (the input is the template; ~40 unmodelled CICE
+  ///      variables pass through).
+  ///
+  /// @returns an aggregate-ice State on `analysis`'s geometry carrying
+  /// `sea_ice_area_fraction`, `sea_ice_thickness`, and
+  /// `sea_ice_snow_thickness` matching what was actually written to the
+  /// restart (post min-vice cleanup, post freeboard, etc.).
+  State postprocess(const State & analysis) const;
 
+ private:
   /// @brief Names of the CICE-restart fields PostProcessIce needs on the
-  /// input State. Fully determined by `ncat / iceLev / snoLev`; auto-injected
-  /// by `readRestart` so the caller does not have to enumerate them in yaml.
+  /// input State. Fully determined by `ncat / iceLev / snoLev`.
   static oops::Variables ciceRestartVariables(int ncat, int iceLev, int snoLev);
 
   /// @brief Read the per-category CICE background restart into a fresh
   /// soca::State, auto-injecting the variable list. The returned State
-  /// carries only sea-ice fields; PostProcessIce neither reads nor writes
-  /// ocean variables (ocean T/S on the analysis is unused).
-  ///
-  /// `validTime` is the analysis valid time (typically `analysis.validTime()`).
+  /// carries only sea-ice fields.
   State readRestart(const Geometry & geom,
                     const util::DateTime & validTime) const;
 
-  /// @brief Write the postprocessed CICE restart at the path configured under
-  /// `cice restart: output:`. The configured `cice restart: input:` is used
-  /// as the update-mode template -- it is byte-copied to the output and only
-  /// modelled vars are overwritten in place.
+  /// @brief Write the postprocessed CICE restart in update mode.
   void writeRestart(const State & pproc,
                     const util::DateTime & validTime) const;
 
- private:
+  /// @brief The per-cell case dispatch + Stage A/B/C; mutates `pproc` in
+  /// place from `restart` toward `analysis`.
+  void runPostprocess(State & pproc, const State & restart,
+                      const State & analysis) const;
+
+
   /// Stage C thermo / pond pass. Mutates the CICE thermo/pond fields of `fset`
   /// in place, using the per-cat aicen / vsnon fields from the same `fset`.
   /// No-op when neither `update snow thermo` nor `reset ponds` is enabled.

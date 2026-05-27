@@ -33,9 +33,11 @@ class Postproc : public oops::Application {
   /// @brief Standalone CICE-restart postprocessing driver.
   ///
   /// Reads the background and the analysis increment, forms the analysis as
-  /// `bg + incr`, then runs PostProcessIce on the per-category CICE restart.
-  /// PostProcessIce owns the CICE restart read/write (paths from the
-  /// `postprocess ice: cice restart:` block).
+  /// `bg + incr`, then hands it to PostProcessIce::postprocess. The
+  /// PostProcessIce call owns the CICE restart read/write (paths from the
+  /// `postprocess ice: cice restart:` block) and returns an aggregate-ice
+  /// State that this driver discards (the standalone binary only cares about
+  /// the on-disk restart).
   int execute(const eckit::Configuration & fullConfig) const {
     const soca::Geometry geom(fullConfig.getSubConfiguration("geometry"),
                               this->getComm());
@@ -55,15 +57,8 @@ class Postproc : public oops::Application {
       analysis = std::make_unique<soca::State>(bg);
       *analysis += incr;
     }
-    // Per-category CICE restart, read by PostProcessIce itself. postProcess
-    // internally copies ocean T/S off `analysis` onto pproc, so no caller-
-    // side ocean merge is needed -- the SST-on-ice2noice adjustment writes
-    // to pproc.T which starts at analysis.T.
     PostProcessIce ppIce(geom, fullConfig.getSubConfiguration("postprocess ice"));
-    soca::State restart = ppIce.readRestart(geom, analysis->validTime());
-    soca::State pproc(geom, restart);
-    ppIce.postProcess(pproc, restart, *analysis);
-    ppIce.writeRestart(pproc, analysis->validTime());
+    (void)ppIce.postprocess(*analysis);
     return 0;
   }
 

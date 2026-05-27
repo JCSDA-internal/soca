@@ -294,14 +294,11 @@ class AnalysisPostproc : public oops::Application {
 
         PostProcessIce ppIce(geometry.geometry(), ppIceConfig);
         for (size_t itime = 0; itime < ens.local_time_size(); ++itime) {
-          const util::DateTime validTime = ens(itime, iens).state().validTime();
-          // Per-category CICE restart read by PostProcessIce itself.
-          // postProcess copies ocean T/S off the ensemble state (the
-          // analysis arg) onto pproc internally.
-          soca::State restart = ppIce.readRestart(geometry.geometry(), validTime);
-          soca::State pproc(geometry.geometry(), restart);
-          ppIce.postProcess(pproc, restart, ens(itime, iens).state());
-          ppIce.writeRestart(pproc, validTime);
+          // PostProcessIce::postprocess opens, processes, and writes the
+          // per-member CICE restart. We discard the returned aggregate-ice
+          // State here -- the ensemble pipeline only cares about the
+          // on-disk per-member restart.
+          (void)ppIce.postprocess(ens(itime, iens).state());
         }
       }
     }
