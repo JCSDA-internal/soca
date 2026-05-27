@@ -57,7 +57,9 @@ class PostProcessIce: public util::Printable {
    public:
     oops::Parameter<bool> rebin{"rebin",
       "If true, re-bin ice thickness categories so that hin = vicen/aicen "
-      "is inside [hicat[k], hicat[k+1]] for every category.", false, this};
+      "is inside [hicat[k], hicat[k+1]] for every category. On by default; "
+      "the no-rebin path leaves per-cat thicknesses outside their bins and "
+      "is only useful as a legacy/diagnostic comparison.", true, this};
     oops::Parameter<std::vector<double>> hicat{"category bounds",
       "Lower edges of CICE thickness categories plus the upper edge of the "
       "thickest category. Length must equal ncat+1.",
