@@ -688,12 +688,14 @@ void PostProcessIce::writeRestart(const State & pproc,
                                   const util::DateTime & validTime) const {
   // Update-mode write: byte-copy the input restart (the template) to the
   // output path, reopen for write, overwrite only the variables soca models.
-  // The ~40 unmodelled CICE variables pass through.
+  // The ~40 unmodelled CICE variables pass through. Dedicated entry on
+  // soca::State so the generic write_rst path doesn't have to know about
+  // CICE update mode.
   eckit::LocalConfiguration cfg;
   cfg.set("output filename", params_.ciceRestart.value().output.value());
   cfg.set("cice template",   params_.ciceRestart.value().input.value());
   cfg.set("date",            validTime.toString());
-  pproc.write(cfg);
+  pproc.writeCice(cfg);
 }
 
 // -----------------------------------------------------------------------------

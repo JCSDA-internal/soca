@@ -140,6 +140,9 @@ contains
   !> \copybrief soca_fields_write_rst \see soca_fields_write_rst
   procedure :: write_rst => soca_fields_write_rst
 
+  !> \copybrief soca_fields_write_cice \see soca_fields_write_cice
+  procedure :: write_cice => soca_fields_write_cice
+
   !> \}
 
   !> \name misc
@@ -925,7 +928,6 @@ subroutine soca_fields_write_rst(self, f_conf, vdate)
 
   character(len=3), allocatable :: domains(:)
   character(len=:), allocatable :: domain_filename
-  character(len=:), allocatable :: cice_template
 
   type(varwrapper), allocatable, target :: vars(:)  ! target so vars(n)%data sections are valid pointer targets for soca_io enqueue
 
@@ -935,26 +937,11 @@ subroutine soca_fields_write_rst(self, f_conf, vdate)
     call f_conf%get_or_die("date colons", date_cols)
   end if
 
-  ! Optional CICE restart template. When set, the "ice" domain is written in
-  ! update mode: a copy of the template is overwritten in place, preserving the
-  ! ~40 CICE variables soca does not model. Per-category fields are grouped by
-  ! their CICE variable (io sup name) into one (ni,nj,ncat) write per variable.
-  if (f_conf%has("cice template")) then
-    call f_conf%get_or_die("cice template", cice_template)
-  end if
-
   ! Set up domain info
   domains = [character(len=3) :: "ocn", "sfc", "ice", "wav", "bio"]
 
   ! for each domain, get the fields to be written out and write them
   do d=1,size(domains)
-
-    ! "ice" domain in CICE-template update mode: grouped per-category write.
-    if (domains(d) == "ice" .and. allocated(cice_template)) then
-      call soca_fields_write_cice_rst(self, f_conf, vdate, date_cols, &
-                                      max_string_length, cice_template)
-      cycle
-    end if
 
     ! count the number of vars that we will write in this file
     n = 0
@@ -1010,6 +997,37 @@ subroutine soca_fields_write_rst(self, f_conf, vdate)
     deallocate(vars)
   end do
 end subroutine soca_fields_write_rst
+
+
+! ------------------------------------------------------------------------------
+!> Write the "ice" domain as a CICE restart in update mode (entry point).
+!!
+!! Public entry into the per-category CICE restart writer. The config block
+!! must carry both `cice template` (path to the input restart used as the
+!! update-mode template) and `output filename` (path to the output restart).
+!! Used by PostProcessIce::writeRestart; not called by the generic write_rst
+!! path, which knows nothing about CICE update mode.
+!!
+!! \relates soca_fields_mod::soca_fields
+subroutine soca_fields_write_cice(self, f_conf, vdate)
+  class(soca_fields), target, intent(inout) :: self      !< Fields
+  type(fckit_configuration),  intent(in)    :: f_conf    !< Configuration
+  type(datetime),             intent(inout) :: vdate     !< DateTime
+
+  integer, parameter :: max_string_length = 800
+  logical :: date_cols
+  character(len=:), allocatable :: cice_template
+
+  call f_conf%get_or_die("cice template", cice_template)
+
+  date_cols = .true.
+  if (f_conf%has("date colons")) then
+    call f_conf%get_or_die("date colons", date_cols)
+  end if
+
+  call soca_fields_write_cice_rst(self, f_conf, vdate, date_cols, &
+                                  max_string_length, cice_template)
+end subroutine soca_fields_write_cice
 
 
 ! ------------------------------------------------------------------------------
