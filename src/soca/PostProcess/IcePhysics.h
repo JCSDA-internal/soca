@@ -78,14 +78,6 @@ bool adjustThicknessCategories(std::vector<double> & aicen,
                                int * aicenMutated   = nullptr,
                                double * maxDeltaAicen = nullptr);
 
-// Back-compat overload: preserves Sum(aicen) of the input (aiceTarget set to
-// the current sum) and runs the legacy vicen-only path. Calls the full form.
-bool adjustThicknessCategories(std::vector<double> & aicen,
-                               std::vector<double> & vicen,
-                               double viceTarget,
-                               const std::vector<double> & hicat,
-                               double dhiMin = 0.01);
-
 // ---------------------------------------------------------------------------
 // enforceFreeboard
 //
@@ -137,13 +129,6 @@ double siceLayerCice4(int k, int nlyr);
 //   qsn = -rho_snow * (Lfresh - cp_ice * min(0, Tsfc))
 // ---------------------------------------------------------------------------
 double snowEnthalpy(double Tsfc, double rhoSnow = Constants::rho_snow);
-
-// ---------------------------------------------------------------------------
-// Inverse: snow surface temperature (deg C) implied by snow enthalpy qsn:
-//   Tsfc = (qsn + rho_snow * Lfresh) / (cp_ice * rho_snow)
-// Result is clamped to <= 0.
-// ---------------------------------------------------------------------------
-double snowEnthalpyToTsfc(double qsn, double rhoSnow = Constants::rho_snow);
 
 }  // namespace icephysics
 }  // namespace soca

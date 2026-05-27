@@ -63,7 +63,10 @@ class PostProcessIce: public util::Printable {
       "thickest category. Length must equal ncat+1.",
       {0.0, 0.6445072, 1.391433, 2.470179, 4.567288, 9.333887}, this};
     oops::Parameter<double> dhiMin{"min thickness gap",
-      "Minimum gap from category bounds enforced during re-binning (m).",
+      "Numerical robustness knob. The rebin solver enforces "
+      "hicat[k] + dhiMin <= h[k] <= hicat[k+1] - dhiMin instead of the raw "
+      "category edges, so per-cat thicknesses sit inside the bin interior "
+      "and the next pass cannot reclassify them by an epsilon. Units: m.",
       0.01, this, {oops::minConstraint(0.0)}};
   };
 
@@ -80,9 +83,10 @@ class PostProcessIce: public util::Printable {
       "below this are zeroed after rescale. Set to 0 to disable.",
       0.0, this, {oops::minConstraint(0.0)}};
     oops::Parameter<double> hsnowMax{"max snow thickness",
-      "Cap on the cell-mean snow thickness (m). The analysis hsno is clamped "
-      "to [min snow thickness / aice, this] before being distributed per cat. "
-      "Matches the Python reference scripts. Set very large to disable.",
+      "Cap on the cell-mean (per-ice-area) snow thickness (m). The analysis "
+      "hsno is clamped to [min snow thickness, this] before being "
+      "distributed per cat by aicen-weight. Matches the Python reference "
+      "scripts. Set very large to disable.",
       5.0, this, {oops::minConstraint(0.0)}};
   };
 
@@ -91,19 +95,16 @@ class PostProcessIce: public util::Printable {
   /// snow has been redistributed, each category should satisfy the hydrostatic
   /// balance rho_ice*hi + rho_snow*hs <= rho_ocean*(hi+hs). Snow is first
   /// redistributed across categories; if any cat is still flooded, ice volume
-  /// is grown to lift the snow-ice interface back to sea level.
+  /// is grown to lift the snow-ice interface back to sea level. Densities are
+  /// fixed at the CICE5/CICE6 defaults (icephysics::Constants::{rho_ice,
+  /// rho_snow, rho_ocean}); making them configurable would let users write a
+  /// restart inconsistent with CICE's own physics.
   class FreeboardParameters : public oops::Parameters {
     OOPS_CONCRETE_PARAMETERS(FreeboardParameters, oops::Parameters)
    public:
     oops::Parameter<bool> enforce{"enforce",
       "If true, run the freeboard enforcement pass after the ITD rebin.",
       false, this};
-    oops::Parameter<double> rhoIce{"rho ice",
-      "Sea ice density (kg/m^3)", 917.0, this, {oops::minConstraint(0.0)}};
-    oops::Parameter<double> rhoSnow{"rho snow",
-      "Snow density (kg/m^3)",   330.0, this, {oops::minConstraint(0.0)}};
-    oops::Parameter<double> rhoOcean{"rho ocean",
-      "Ocean density (kg/m^3)", 1025.0, this, {oops::minConstraint(0.0)}};
   };
 
   // ---------------------------------------------------------------------------
@@ -133,10 +134,12 @@ class PostProcessIce: public util::Printable {
       "Lower bound on Tsfcn (deg C). Snow enthalpy is clipped accordingly.",
       -100.0, this};
     oops::Parameter<bool> seedNewIce{"seed new ice",
-      "Seed Tsfcn/qsno/sice/qice for cats that went from aicen=0 in background "
-      "to aicen>0 after Stage A/B. Donor Tsfc from a global lat/lon nearest "
-      "neighbor with any ice; sub-surface profile from CICE physics "
-      "(BL99/BZ99). On by default to match the Python reference scripts.",
+      "Seed Tsfcn (and qsno = snowEnthalpy(Tseed)) on cats that went from "
+      "aicen=0 in background to aicen>0 after Stage A/B; sub-surface qice/sice "
+      "are synthesized at the ocean freezing point via BL99/BZ99 (matches "
+      "dd's tice_max = Tfrz - 0.01). Donor Tsfc from a global lat/lon "
+      "nearest neighbor with any ice within `seed search neighbors`; falls "
+      "back to Tfrz when no donor is found. On by default.",
       true, this};
     oops::Parameter<int> seedSearchK{"seed search neighbors",
       "Number of nearest KDTree neighbors to scan for a donor with any ice "
@@ -236,6 +239,7 @@ class PostProcessIce: public util::Printable {
   void writeRestart(const State & pproc,
                     const util::DateTime & validTime) const;
 
+ private:
   /// Stage C thermo / pond pass. Mutates the CICE thermo/pond fields of `fset`
   /// in place, using the per-cat aicen / vsnon fields from the same `fset`.
   /// No-op when neither `update snow thermo` nor `reset ponds` is enabled.
@@ -262,7 +266,7 @@ class PostProcessIce: public util::Printable {
     double mask;
   };
 
- private:
+
   /// @brief Copy `sea_water_potential_temperature` and `sea_water_salinity`
   /// from `src` into `dst`. If the field is missing from `dst`'s atlas
   /// FieldSet (it will be when `dst` came from `readRestart`, which only

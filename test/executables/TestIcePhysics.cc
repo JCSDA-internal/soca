@@ -45,7 +45,7 @@ void testAdjustThkncats_Identity() {
   const double aTotal  = sumv(aicen);
 
   const bool ok = soca::icephysics::adjustThicknessCategories(
-      aicen, vicen, vTarget, hicat, 0.01);
+      aicen, vicen, aTotal, vTarget, hicat);
   EXPECT(ok);
   EXPECT(nearEq(sumv(vicen), vTarget, 1.0e-12));
   EXPECT(nearEq(sumv(aicen), aTotal,  1.0e-12));
@@ -69,7 +69,7 @@ void testAdjustThkncats_OutOfBoundClamps() {
   const double vTarget = 0.60;
 
   const bool ok = soca::icephysics::adjustThicknessCategories(
-      aicen, vicen, vTarget, hicat, 0.01);
+      aicen, vicen, aTotal, vTarget, hicat);
   EXPECT(ok);
   EXPECT(nearEq(sumv(vicen), vTarget, 1.0e-9));
   EXPECT(nearEq(sumv(aicen), aTotal,  1.0e-12));
@@ -87,26 +87,29 @@ void testAdjustThkncats_HitTarget() {
   std::vector<double> hicat{0.0, 0.64, 1.39, 2.47, 4.57, 50.0};
   std::vector<double> aicen{0.10, 0.10, 0.10, 0.10, 0.10};
   std::vector<double> vicen{0.05, 0.10, 0.20, 0.30, 0.50};  // sum 1.15
+  const double aTotal  = sumv(aicen);
   // Per-cat envelope sums to vLo ~ 0.911, vHi ~ 5.901. Pick inside.
   const double vTarget = 1.30;
 
   const bool ok = soca::icephysics::adjustThicknessCategories(
-      aicen, vicen, vTarget, hicat, 0.01);
+      aicen, vicen, aTotal, vTarget, hicat);
   EXPECT(ok);
   EXPECT(nearEq(sumv(vicen), vTarget, 1.0e-9));
 }
 
 void testAdjustThkncats_InfeasibleTarget() {
-  // Demand a viceTarget below the lower envelope -> should report failure.
+  // Demand a viceTarget far below the feasibility envelope -> should fail
+  // even after Phase 2 (cannot reshuffle aicen to thin enough).
   std::vector<double> hicat{0.0, 0.64, 1.39, 2.47, 4.57, 50.0};
   std::vector<double> aicen{0.0, 0.0, 0.0, 0.20, 0.0};   // only cat 3 has area
   std::vector<double> vicen{0.0, 0.0, 0.0, 0.50, 0.0};
-  // Legacy form holds aicen fixed; only cat 3 envelope is [0.496, 0.912].
-  // Target = 0.10 is below -> legacy overload must fail.
-  const double vTarget = 0.10;
+  const double aTarget = sumv(aicen);
+  // After reshuffling aicen to the thinnest cat, the lower envelope is still
+  // ~ aTarget * hLo[0] = 0.20 * 0.01 = 0.002. Target = 0.001 is below that.
+  const double vTarget = 1.0e-3;
 
   const bool ok = soca::icephysics::adjustThicknessCategories(
-      aicen, vicen, vTarget, hicat, 0.01);
+      aicen, vicen, aTarget, vTarget, hicat);
   EXPECT(!ok);
 }
 
@@ -353,19 +356,21 @@ void testSiceLayerCice4_BoundsAndShape() {
   EXPECT(soca::icephysics::siceLayerCice4(1, 0) == 0.0);
 }
 
-void testSnowEnthalpy_RoundTrip() {
-  // Tsfc -> qsn -> Tsfc must round-trip for Tsfc < 0.
-  for (double Tin = -30.0; Tin < -0.1; Tin += 1.0) {
-    const double q = soca::icephysics::snowEnthalpy(Tin);
-    const double Tback = soca::icephysics::snowEnthalpyToTsfc(q);
-    EXPECT(nearEq(Tback, Tin, 1.0e-9));
-  }
-  // Tsfc = 0 must give qsn = -rho_snow*Lfresh exactly.
+void testSnowEnthalpy_KnownValue() {
+  // Tsfc = 0 gives qsn = -rho_snow * Lfresh exactly.
   const double q0 = soca::icephysics::snowEnthalpy(0.0);
   EXPECT(nearEq(q0,
                 -soca::icephysics::Constants::rho_snow
                 * soca::icephysics::Constants::Lfresh,
                 1.0e-6));
+  // Tsfc = -10 C gives qsn = -rho_snow*(Lfresh - cp_ice*(-10)) =
+  //                     -rho_snow*Lfresh - rho_snow*cp_ice*10
+  // (sign: colder snow has more-negative enthalpy).
+  const double T = -10.0;
+  const double qExpected = -soca::icephysics::Constants::rho_snow
+      * (soca::icephysics::Constants::Lfresh
+         - soca::icephysics::Constants::cp_ice * T);
+  EXPECT(nearEq(soca::icephysics::snowEnthalpy(T), qExpected, 1.0e-6));
 }
 
 void testFreeboard_GrowIce() {
@@ -402,7 +407,7 @@ int main() {
   testIceEnthalpyBL99_RoundTripSign();
   testIceEnthalpyBL99_KnownValue();
   testSiceLayerCice4_BoundsAndShape();
-  testSnowEnthalpy_RoundTrip();
+  testSnowEnthalpy_KnownValue();
 
   if (gFailures == 0) {
     std::printf("TestIcePhysics: all checks passed\n");

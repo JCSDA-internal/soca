@@ -35,9 +35,6 @@ postprocess ice:
     min thickness gap: 0.01
   freeboard:
     enforce: true
-    rho ice:   917.0
-    rho snow:  330.0
-    rho ocean: 1025.0
 
 test:
   reference filename: testref/soca2cice_new_freeboard.test

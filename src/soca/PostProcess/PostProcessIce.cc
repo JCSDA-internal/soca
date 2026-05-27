@@ -182,27 +182,13 @@ void PostProcessIce::postProcess(State & pproc,
   const size_t sno_lev = params_.sno_lev.value();
   const size_t field_size = bgfields.field(0).shape(0);
 
-  // Restart background fields
-  std::vector<atlas::array::ArrayView<double, 2>> bg_aice_cat, bg_vice_cat, bg_vsno_cat;
-  std::vector<atlas::array::ArrayView<double, 2>> new_aice_cat, new_vice_cat, new_vsno_cat;
-  bg_aice_cat.reserve(ncat_);
-  bg_vice_cat.reserve(ncat_);
-  bg_vsno_cat.reserve(ncat_);
-  new_aice_cat.reserve(ncat_);
-  new_vice_cat.reserve(ncat_);
-  new_vsno_cat.reserve(ncat_);
-  std::string varname;
-  for (size_t icat = 0; icat < ncat_; ++icat) {
-    varname = "sea_ice_category" + std::to_string(icat+1) + "_area_fraction";
-    bg_aice_cat.push_back(atlas::array::make_view<double, 2>(bgfields.field(varname)));
-    new_aice_cat.push_back(atlas::array::make_view<double, 2>(newfields.field(varname)));
-    varname = "sea_ice_category" + std::to_string(icat+1) + "_volume";
-    bg_vice_cat.push_back(atlas::array::make_view<double, 2>(bgfields.field(varname)));
-    new_vice_cat.push_back(atlas::array::make_view<double, 2>(newfields.field(varname)));
-    varname = "sea_ice_snow_category" + std::to_string(icat+1) + "_volume";
-    bg_vsno_cat.push_back(atlas::array::make_view<double, 2>(bgfields.field(varname)));
-    new_vsno_cat.push_back(atlas::array::make_view<double, 2>(newfields.field(varname)));
-  }
+  // Restart background fields (read-only) and target per-cat fields on pproc.
+  auto bg_aice_cat  = ppiCatViews(bgfields,  ncat_, "sea_ice_category",      "_area_fraction");
+  auto bg_vice_cat  = ppiCatViews(bgfields,  ncat_, "sea_ice_category",      "_volume");
+  auto bg_vsno_cat  = ppiCatViews(bgfields,  ncat_, "sea_ice_snow_category", "_volume");
+  auto new_aice_cat = ppiCatViews(newfields, ncat_, "sea_ice_category",      "_area_fraction");
+  auto new_vice_cat = ppiCatViews(newfields, ncat_, "sea_ice_category",      "_volume");
+  auto new_vsno_cat = ppiCatViews(newfields, ncat_, "sea_ice_snow_category", "_volume");
   // Writable view onto pproc's ocean temperature so the SST-adjust step on
   // ice2noice cells can update it (Fortran soca2cice behavior).
   auto new_tocn = atlas::array::make_view<double, 2>(
@@ -331,9 +317,10 @@ void PostProcessIce::postProcess(State & pproc,
 
   const auto & fbParams = params_.freeboard.value();
   const bool do_freeboard = fbParams.enforce.value();
-  const double rho_ice   = fbParams.rhoIce.value();
-  const double rho_snow  = fbParams.rhoSnow.value();
-  const double rho_ocean = fbParams.rhoOcean.value();
+  // Freeboard densities are fixed at CICE's own defaults (see Constants).
+  const double rho_ice   = icephysics::Constants::rho_ice;
+  const double rho_snow  = icephysics::Constants::rho_snow;
+  const double rho_ocean = icephysics::Constants::rho_ocean;
   // Per-cell scratch buffers for freeboard.
   std::vector<double> fb_aicen(ncat_, 0.0);
   std::vector<double> fb_vicen(ncat_, 0.0);

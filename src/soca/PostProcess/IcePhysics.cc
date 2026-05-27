@@ -9,18 +9,9 @@
 
 #include <algorithm>
 #include <cmath>
-#include <numeric>
 
 namespace soca {
 namespace icephysics {
-
-namespace {
-
-double sum(const std::vector<double> & v) {
-  return std::accumulate(v.begin(), v.end(), 0.0);
-}
-
-}  // namespace
 
 // ---------------------------------------------------------------------------
 // adjustThicknessCategories (helpers)
@@ -308,36 +299,6 @@ bool adjustThicknessCategories(std::vector<double> & aicen,
   return true;
 }
 
-// Back-compat overload: legacy callers preserve per-cat aicen (no Phase 2).
-// Equivalent to the old algorithm: only vicen is redistributed.
-bool adjustThicknessCategories(std::vector<double> & aicen,
-                               std::vector<double> & vicen,
-                               double viceTarget,
-                               const std::vector<double> & hicat,
-                               double dhiMin) {
-  const size_t ncat = aicen.size();
-  if (ncat == 0 || vicen.size() != ncat || hicat.size() != ncat + 1) {
-    return false;
-  }
-  std::vector<double> hLo(ncat), hHi(ncat);
-  buildBounds(hicat, dhiMin, hLo, hHi);
-
-  // Initial per-cat thickness, clamped to bounds.
-  std::vector<double> h(ncat, 0.0);
-  for (size_t k = 0; k < ncat; ++k) {
-    if (aicen[k] > Constants::puny) {
-      const double hCur = vicen[k] / aicen[k];
-      h[k] = std::min(std::max(hCur, hLo[k]), hHi[k]);
-    }
-  }
-  // Phase 1 only — aicen is preserved.
-  if (!runVicenPhase(aicen, hLo, hHi, viceTarget, 1.0e-9, h)) return false;
-  for (size_t k = 0; k < ncat; ++k) {
-    vicen[k] = (aicen[k] > Constants::puny) ? aicen[k] * h[k] : 0.0;
-  }
-  return true;
-}
-
 // ---------------------------------------------------------------------------
 // snowIceFreeboard
 // ---------------------------------------------------------------------------
@@ -445,9 +406,6 @@ bool enforceFreeboard(std::vector<double> & aicen,
   for (size_t k = 0; k < ncat; ++k) {
     if (aicen[k] > Constants::puny && fb[k] < -1.0e-9) return false;
   }
-
-  // Suppress "unused" warning if compiled without the helper.
-  (void)sum;
   return true;
 }
 
@@ -485,17 +443,11 @@ double siceLayerCice4(int k, int nlyr) {
 }
 
 // ---------------------------------------------------------------------------
-// snowEnthalpy / snowEnthalpyToTsfc
+// snowEnthalpy
 // ---------------------------------------------------------------------------
 double snowEnthalpy(double Tsfc, double rhoSnow) {
   const double Ti = std::min(0.0, Tsfc);
   return -rhoSnow * (Constants::Lfresh - Constants::cp_ice * Ti);
-}
-
-double snowEnthalpyToTsfc(double qsn, double rhoSnow) {
-  const double T = (qsn + rhoSnow * Constants::Lfresh)
-                 / (Constants::cp_ice * rhoSnow);
-  return std::min(T, 0.0);
 }
 
 }  // namespace icephysics
