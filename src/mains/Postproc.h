@@ -49,6 +49,7 @@ class Postproc : public oops::Application {
     } else {
       // Background -- aggregate ice + ocean (history-style ice file).
       const soca::State bg(geom, fullConfig.getSubConfiguration("background"));
+      oops::Log::test() << " Background: " << bg << std::endl;
 
       // 3DVar increment, read on the bg's variables and time.
       soca::Increment incr(geom, bg.variables(), bg.validTime());
@@ -58,8 +59,10 @@ class Postproc : public oops::Application {
       analysis = std::make_unique<soca::State>(bg);
       *analysis += incr;
     }
+    oops::Log::test() << " Analysis: " << *analysis << std::endl;
     PostProcessIce ppIce(geom, fullConfig.getSubConfiguration("postprocess ice"));
-    (void)ppIce.postprocess(*analysis);
+    const soca::State result = ppIce.postprocess(*analysis);
+    oops::Log::test() << " Postprocessed state: " << result << std::endl;
     return 0;
   }
 

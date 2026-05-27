@@ -199,9 +199,9 @@ State PostProcessIce::runPostprocess(State & pproc,
       result.fieldSet().field("sea_ice_thickness"));
   auto outHsno = atlas::array::make_view<double, 2>(
       result.fieldSet().field("sea_ice_snow_thickness"));
-  oops::Log::info() << "PostProcessIce: background restart: " << restart
+  oops::Log::debug() << "PostProcessIce: background restart: " << restart
                     << std::endl;
-  oops::Log::info() << "PostProcessIce: analysis: " << analysis << std::endl;
+  oops::Log::debug() << "PostProcessIce: analysis: " << analysis << std::endl;
 
   const size_t ice_lev = params_.ice_lev.value();
   const size_t sno_lev = params_.sno_lev.value();
@@ -578,7 +578,7 @@ State PostProcessIce::runPostprocess(State & pproc,
                          << freeboard_failures << " cells; left untouched."
                          << std::endl;
   }
-  oops::Log::info() << "PostProcessIce: postprocessed restart: " << pproc
+  oops::Log::debug() << "PostProcessIce: postprocessed restart: " << pproc
                     << std::endl;
 
   // ---------------------------------------------------------------------------
