@@ -35,21 +35,6 @@ class State;
 class PostProcessIce: public util::Printable {
  public:
   // ---------------------------------------------------------------------------
-  /// @brief Parameters for the SST update on ice2noice transitions. When ice
-  /// is removed by the analysis, optionally warm the surface ocean toward the
-  /// freezing temperature so the post-DA SST is consistent with no ice.
-  class SstUpdateParameters : public oops::Parameters {
-    OOPS_CONCRETE_PARAMETERS(SstUpdateParameters, oops::Parameters)
-   public:
-    oops::Parameter<bool> adjustSST{"update SST",
-      "Warm the surface ocean toward Tfrz on ice2noice transitions.",
-      true, this};
-    oops::Parameter<double> sstDiffMax{"max positive SST update",
-      "Maximum update to sea surface temperature (K).", 1.0, this,
-      {oops::minConstraint(0.0)}};
-  };
-
-  // ---------------------------------------------------------------------------
   /// @brief Parameters for re-binning the ice thickness distribution after
   /// rescale, so that each category's mean thickness is inside its bin.
   class ITDParameters : public oops::Parameters {
@@ -177,8 +162,6 @@ class PostProcessIce: public util::Printable {
       "CICE restart input/output paths. PostProcessIce reads `input`, writes "
       "the postprocessed restart to `output`, and uses `input` as the "
       "update-mode template.", this};
-    oops::Parameter<SstUpdateParameters> sstUpdate{"sst update",
-      "SST adjustment on ice2noice transitions.", {}, this};
     oops::Parameter<ITDParameters> itd{"itd", "ITD re-bin options", {}, this};
     oops::Parameter<SnowParameters> snow{"snow",
       "Snow-volume distribution options.", {}, this};
@@ -230,9 +213,9 @@ class PostProcessIce: public util::Printable {
   static oops::Variables ciceRestartVariables(int ncat, int iceLev, int snoLev);
 
   /// @brief Read the per-category CICE background restart into a fresh
-  /// soca::State, auto-injecting the variable list. The State carries only
-  /// ice fields; postProcess will copy ocean T/S off the `analysis` argument
-  /// onto `pproc` internally for the SST-on-ice2noice adjustment.
+  /// soca::State, auto-injecting the variable list. The returned State
+  /// carries only sea-ice fields; PostProcessIce neither reads nor writes
+  /// ocean variables (ocean T/S on the analysis is unused).
   ///
   /// `validTime` is the analysis valid time (typically `analysis.validTime()`).
   State readRestart(const Geometry & geom,
@@ -272,15 +255,6 @@ class PostProcessIce: public util::Printable {
     double mask;
   };
 
-
-  /// @brief Copy `sea_water_potential_temperature` and `sea_water_salinity`
-  /// from `src` into `dst`. If the field is missing from `dst`'s atlas
-  /// FieldSet (it will be when `dst` came from `readRestart`, which only
-  /// loads ice variables), a clone of the `src` field is added. Used at the
-  /// top of `postProcess` to seed `pproc`'s ocean T/S from the analysis so
-  /// the SST-on-ice2noice branch has a writable target.
-  /// Fields missing from `src` are silently skipped.
-  static void copyOceanFields(const State & src, State & dst);
 
   const Geometry & geom_;
   Parameters params_;
