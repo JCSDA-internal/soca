@@ -17,21 +17,21 @@ background:
   - sea_water_potential_temperature
   - sea_water_salinity
 
-# 3DVar increment.  Read using bg's variables / time inside Postproc.h.
 increment:
   date: *bkg_date
   basename: data_generated/3dvar/
   ocn_filename: ocn.3dvar.iter1.incr.2018-04-15T00:00:00Z.nc
   ice_filename: ice.3dvar.iter1.incr.2018-04-15T00:00:00Z.nc
 
+# Baseline new-path test: all defaults (rebin on, thermo on, freeboard off,
+# seed new ice on). Variants below add freeboard / drop the analysis hice
+# and hsno (_bgfallback) / add the full Stage C donor-halo seed (_seed).
 postprocess ice:
   ncat: 5
   ice_lev: 7
   sno_lev: 1
   cice restart:
     input:  data_static/72x35x25/restarts/iced.2018-04-15-00000.nc
-    # Output filename matches the previous test layout so the
-    # postprocice_vs_soca2cice regression nccmp picks it up unchanged.
     output: data_output/ice.cice_restart_postproc.an.2018-04-15T00:00:00Z.nc
 
 test:
