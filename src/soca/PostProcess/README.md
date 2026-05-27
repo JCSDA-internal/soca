@@ -42,9 +42,11 @@ does three things:
 The returned `aggregateOut` State carries the `sea_ice_area_fraction`,
 `sea_ice_thickness`, and `sea_ice_snow_thickness` fields *actually written* to
 the restart (post min-vice cleanup, post freeboard, etc.). It is on
-`analysis`'s geometry. Standalone callers normally discard it; the
-`gdasapp` increment handler can use it to recover the effective ice
-analysis if needed.
+`analysis`'s geometry and is built directly inside the per-cell pass; no
+diagnostics are attached to the working per-cat State, so the writer sees
+exactly the per-cat schema it expects. Standalone callers normally discard
+the aggregate; the `gdasapp` increment handler can use it to recover the
+effective ice analysis if needed.
 
 PostProcessIce does **not** read or write ocean variables: ocean T/S on the
 analysis is unused. Any surface-ocean adjustment on ice removal (e.g.
