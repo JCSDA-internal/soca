@@ -348,6 +348,9 @@ State PostProcessIce::runPostprocess(State & pproc,
   std::size_t rebin_aicen_mutations  = 0;
   double   rebin_max_delta_aicen_all = 0.0;
   size_t rebin_visited = 0;
+  // Counter + diagnostic for the final per-cat bin-clip (defence in depth).
+  std::size_t bin_clip_slots = 0;
+  double      bin_clip_max_abs_dh = 0.0;
 
   // ----------------------------------------------------------------------
   // Per-cell pass. For each owned cell:
@@ -542,6 +545,8 @@ State PostProcessIce::runPostprocess(State & pproc,
       const double hClipped = std::min(std::max(h, hLo), hHi);
       if (hClipped != h) {
         new_vice_cat[icat](jnode, 0) = a * hClipped;
+        ++bin_clip_slots;
+        bin_clip_max_abs_dh = std::max(bin_clip_max_abs_dh, std::fabs(h - hClipped));
       }
     }
     // -------------------- Aggregate diagnostics ---------------------------
@@ -549,6 +554,19 @@ State PostProcessIce::runPostprocess(State & pproc,
     outHice(jnode, 0) = meanHice(new_vice_cat, outAice(jnode, 0), jnode);
     outHsno(jnode, 0) = meanHsno(new_vsno_cat, outAice(jnode, 0), jnode);
   }
+  // Reduce per-rank counters to global totals so the Log::info / Log::warning
+  // lines below report the whole run, not just rank 0's piece. Counts sum,
+  // magnitudes max. Uses geom_.getComm() (the same comm used for the
+  // KDTree / halo gather).
+  const auto & diagComm = geom_.getComm();
+  diagComm.allReduceInPlace(rebin_visited,             eckit::mpi::sum());
+  diagComm.allReduceInPlace(rebin_aicen_mutations,     eckit::mpi::sum());
+  diagComm.allReduceInPlace(rebin_max_delta_aicen_all, eckit::mpi::max());
+  diagComm.allReduceInPlace(rebin_failures,            eckit::mpi::sum());
+  diagComm.allReduceInPlace(freeboard_failures,        eckit::mpi::sum());
+  diagComm.allReduceInPlace(bin_clip_slots,            eckit::mpi::sum());
+  diagComm.allReduceInPlace(bin_clip_max_abs_dh,       eckit::mpi::max());
+
   if (do_rebin) {
     oops::Log::info() << "PostProcessIce: ITD rebin visited "
                       << rebin_visited << " cells; aicen-mutated "
@@ -564,6 +582,11 @@ State PostProcessIce::runPostprocess(State & pproc,
     oops::Log::warning() << "PostProcessIce: freeboard enforcement failed at "
                          << freeboard_failures << " cells; left untouched."
                          << std::endl;
+  }
+  if (bin_clip_slots > 0) {
+    oops::Log::info() << "PostProcessIce: per-cat bin clip fired on "
+                      << bin_clip_slots << " (jnode, cat) slots; max |dh| = "
+                      << bin_clip_max_abs_dh << " m." << std::endl;
   }
   oops::Log::debug() << "PostProcessIce: postprocessed restart: " << pproc
                     << std::endl;
@@ -610,8 +633,9 @@ State PostProcessIce::runPostprocess(State & pproc,
   applyThermoStage(pproc.fieldSet(), snowTouched);
 
   if (thermoParams.seedNewIce.value()) {
-    const std::size_t fallbacks = seedNewIce(pproc.fieldSet(), newIce,
-                                             donorCache, ice_lev, sno_lev);
+    std::size_t fallbacks = seedNewIce(pproc.fieldSet(), newIce,
+                                       donorCache, ice_lev, sno_lev);
+    diagComm.allReduceInPlace(fallbacks, eckit::mpi::sum());
     if (fallbacks > 0) {
       oops::Log::warning() << "PostProcessIce: noice->ice seed fell back to "
                            << "Tfrz at " << fallbacks << " cells (no donor "
