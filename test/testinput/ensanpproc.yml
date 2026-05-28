@@ -105,6 +105,8 @@ analysis postprocessing:
       input:  data_static/72x35x25/restarts/iced.2018-04-15-00000.nc
       # per-member dirs are pre-created by the test harness (data_generated/ensanpproc/mem.N)
       output: data_generated/ensanpproc/mem.%mem%/ice.ensanpproc.an.2018-04-15T00:00:00Z.nc
+    itd:
+      category bounds: [0.0, 0.6445072, 1.391433, 2.470179, 4.567288, 9.333887]
 
 test:
   reference filename: testref/ensanpproc.test

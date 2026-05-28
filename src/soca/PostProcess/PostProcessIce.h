@@ -44,10 +44,13 @@ class PostProcessIce {
       "is inside [hicat[k], hicat[k+1]] for every category. On by default; "
       "the no-rebin path leaves per-cat thicknesses outside their bins and "
       "is only useful as a legacy/diagnostic comparison.", true, this};
-    oops::Parameter<std::vector<double>> hicat{"category bounds",
+    oops::RequiredParameter<std::vector<double>> hicat{"category bounds",
       "Lower edges of CICE thickness categories plus the upper edge of the "
-      "thickest category. Length must equal ncat+1.",
-      {0.0, 0.6445072, 1.391433, 2.470179, 4.567288, 9.333887}, this};
+      "thickest category (must be model-specific; e.g. CICE6 GFSv17 with "
+      "ncat=5 uses [0, 0.64, 1.39, 2.47, 4.57, 1000]). Length must equal "
+      "ncat+1. Required so users don't accidentally inherit a default that "
+      "mismatches their CICE version -- a mismatch silently produces a "
+      "restart CICE will refuse to read in linear_itd.", this};
     oops::Parameter<double> dhiMin{"min thickness gap",
       "Numerical robustness knob. The rebin solver enforces "
       "hicat[k] + dhiMin <= h[k] <= hicat[k+1] - dhiMin instead of the raw "
@@ -170,14 +173,6 @@ class PostProcessIce {
       "Freeboard enforcement options.", {}, this};
     oops::Parameter<ThermoParameters> thermo{"thermo",
       "Per-layer thermo / pond reset options.", {}, this};
-    oops::Parameter<double> minCatIceVolume{"min cat ice volume",
-            "Per-cat ice volume floor (m^3/m^2-cell). After Stage A/B, cats "
-            "with vicen below this are swept and their mass redistributed to "
-            "surviving cats proportionally to aicen, preserving the cell-mean "
-            "totals. Prevents the rebin's marginal solutions from leaving "
-            "thick-ice-on-edge artifacts at small aice. Distinct from "
-            "`min new ice thickness`, which seeds new-ice cell-mean thickness.",
-            1.0e-5, this, {oops::minConstraint(0.0)}};
     oops::Parameter<double> minAiceOutput{"min aice output",
             "Cells where the analysis aice is below this threshold are treated "
             "as no-ice in the output (all per-cat fields zeroed). Stops "

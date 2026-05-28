@@ -301,7 +301,6 @@ State PostProcessIce::runPostprocess(State & pproc,
   // hsn_target from the bg snow cell-mean. So nothing to do here.
 
   // parameters
-  const double min_vice = params_.minCatIceVolume.value();
   const auto & itd = params_.itd.value();
   const bool do_rebin = itd.rebin.value();
   const std::vector<double> hicat = itd.hicat.value();
@@ -367,7 +366,7 @@ State PostProcessIce::runPostprocess(State & pproc,
     if (a_hsno_vec[jnode] < 0.0)     a_hsno_vec[jnode] = 0.0;
     // Drop output ice on cells where analysis aice is below the noise floor.
     // The rebin can otherwise produce micro-vicen layouts that show up as
-    // thick-ice-on-edge artifacts after the min_vice cleanup.
+    // thick-ice-on-edge artifacts.
     if (a_aice(jnode, 0) > 0.0 && a_aice(jnode, 0) < min_aice_output) {
       a_aice(jnode, 0) = 0.0;
     }
@@ -520,42 +519,30 @@ State PostProcessIce::runPostprocess(State & pproc,
       }
     }
 
-    // -------------------- min-vice cleanup (mass-conserving) --------------
-    // Identify cats with vicen < min_vice. Sum their (aicen, vicen, vsnon)
-    // and redistribute that mass into surviving cats proportionally to the
-    // survivors' aicen, preserving Σaicen/Σvicen/Σvsnon. Without this, the
-    // rebin's marginal-aice solutions (e.g. tiny mass in cat 0 + bulk in a
-    // thicker cat) get clipped to one cat at its upper bin edge, producing
-    // thick-ice-on-edge artifacts.
-    {
-      double dropA = 0.0, dropV = 0.0, dropS = 0.0;
-      double survA = 0.0;
-      for (size_t icat = 0; icat < ncat_; ++icat) {
-        if (new_aice_cat[icat](jnode, 0) > 0.0
-            && new_vice_cat[icat](jnode, 0) < min_vice) {
-          dropA += new_aice_cat[icat](jnode, 0);
-          dropV += new_vice_cat[icat](jnode, 0);
-          dropS += new_vsno_cat[icat](jnode, 0);
-          new_aice_cat[icat](jnode, 0) = 0.0;
-          new_vice_cat[icat](jnode, 0) = 0.0;
-          new_vsno_cat[icat](jnode, 0) = 0.0;
-        } else {
-          survA += new_aice_cat[icat](jnode, 0);
-        }
+    // -------------------- Final per-cat bin clip --------------------------
+    // Defence in depth: even though the ITD rebin's Step 6 should already
+    // leave every populated cat with hi inside its bin, edge effects in the
+    // earlier passes (rebin failure fallback, freeboard ice growth, etc.)
+    // can leave hi slightly out of bin. Clip each populated cat's hi into
+    // [hicat[k] + dhi_min, hicat[k+1] - dhi_min] so the restart is
+    // guaranteed CICE-readable. Loses a small amount of mass per cell to
+    // the clip; acceptable because the alternative is a restart CICE will
+    // refuse to read (linear_itd abort).
+    for (size_t icat = 0; icat < ncat_; ++icat) {
+      const double a = new_aice_cat[icat](jnode, 0);
+      if (a <= icephysics::Constants::puny) {
+        new_aice_cat[icat](jnode, 0) = 0.0;
+        new_vice_cat[icat](jnode, 0) = 0.0;
+        new_vsno_cat[icat](jnode, 0) = 0.0;
+        continue;
       }
-      if (dropA > 0.0 && survA > 0.0) {
-        for (size_t icat = 0; icat < ncat_; ++icat) {
-          if (new_aice_cat[icat](jnode, 0) > 0.0) {
-            const double w = new_aice_cat[icat](jnode, 0) / survA;
-            new_aice_cat[icat](jnode, 0) += dropA * w;
-            new_vice_cat[icat](jnode, 0) += dropV * w;
-            new_vsno_cat[icat](jnode, 0) += dropS * w;
-          }
-        }
+      const double hLo = hicat[icat]     + dhi_min;
+      const double hHi = hicat[icat + 1] - dhi_min;
+      const double h   = new_vice_cat[icat](jnode, 0) / a;
+      const double hClipped = std::min(std::max(h, hLo), hHi);
+      if (hClipped != h) {
+        new_vice_cat[icat](jnode, 0) = a * hClipped;
       }
-      // If no survivors, the dropped mass is gone — this happens only when
-      // every cat had vicen < min_vice, i.e. the cell-mean vicen was below
-      // the floor anyway. Acceptable.
     }
     // -------------------- Aggregate diagnostics ---------------------------
     outAice(jnode, 0) = totalAice(new_aice_cat, jnode);
