@@ -41,7 +41,7 @@ does three things:
 
 The returned `aggregateOut` State carries the `sea_ice_area_fraction`,
 `sea_ice_thickness`, and `sea_ice_snow_thickness` fields *actually written* to
-the restart (post min-vice cleanup, post freeboard, etc.). It is on
+the restart (post ITD rebin, post freeboard, post bin clip). It is on
 `analysis`'s geometry and is built directly inside the per-cell pass; no
 diagnostics are attached to the working per-cat State, so the writer sees
 exactly the per-cat schema it expects. Standalone callers normally discard
@@ -88,11 +88,18 @@ For each owned cell:
    cat remains negative-freeboard, grow its ice volume to lift the snow-ice
    interface back to sea level.
 
-6. **Min-vice cleanup**: sweep cats with `vicen < min cat ice volume` and
-   redistribute their `(aicen, vicen, vsnon)` mass into surviving cats
-   proportionally to `aicen`. Without this the rebin's marginal-aice
-   solutions get clipped at one cat's upper bin edge, producing
-   thick-ice-on-edge artifacts.
+6. **Per-cat bin clip**: defence in depth. Even though the ITD rebin
+   should leave every populated cat with `hi = vicen/aicen` inside
+   `[hicat[k] + dhi_min, hicat[k+1] - dhi_min]`, edge effects (rebin
+   failure on an infeasible target, freeboard ice growth pushing a
+   cat above its bin) can leave `hi` slightly out of bin. The final
+   clip clamps each populated cat's `hi` back into its bin by
+   adjusting `vicen[k] = aicen[k] * h_clipped`; `aicen[k]` is left
+   alone so `Σaicen` is preserved. Loses a small amount of mass per
+   clipped cat; in exchange the restart is guaranteed CICE-readable
+   (CICE's `linear_itd` aborts on any out-of-bin per-cat thickness).
+   The log line `per-cat bin clip fired on X slots; max |dh| = Y m`
+   reports how often this fires.
 
 7. **Aggregate diagnostics**: compute the cell totals
    `sea_ice_area_fraction`, `sea_ice_thickness`, `sea_ice_snow_thickness`
@@ -103,7 +110,7 @@ For each owned cell:
 After the per-cell pass, the per-layer thermo and melt-pond fields are
 updated in place:
 
-- On cats that lost ice (LAND, ICE2NOICE, rebin-emptied, min-vice cleanup):
+- On cats that lost ice (LAND, ICE2NOICE, rebin-emptied):
   zero `Tsfcn`, all `qice`, all `sice`, all `qsno`, all pond fields.
   Avoids leaving stale background values on empty slots.
 
@@ -160,10 +167,6 @@ postprocess ice:
   # the output (all per-cat fields zeroed). Set to 0 to disable.
   min aice output: 1.0e-4
 
-  # Per-cat ice volume floor (m^3/m^2-cell). Mass-conserving sweep after
-  # the rebin. Distinct from `min new ice thickness`.
-  min cat ice volume: 1.0e-5
-
   # Cell-mean new-ice thickness used for the rebin's volume target when an
   # noice->ice cell has no analysis hice and no donor with ice is found.
   min new ice thickness: 0.1
@@ -179,7 +182,12 @@ postprocess ice:
 
   itd:
     rebin: true                                # default
-    category bounds: [0.0, 0.6445072, 1.391433, 2.470179, 4.567288, 9.333887]
+    # REQUIRED: model-specific. Example for ncat=5:
+    #   CICE6 GFSv17: [0.0, 0.64, 1.39, 2.47, 4.57, 1000.0]
+    # Length must equal ncat+1. No default -- a mismatch between this and
+    # the receiving CICE binary silently produces a restart that CICE
+    # refuses to read in linear_itd.
+    category bounds: [0.0, 0.64, 1.39, 2.47, 4.57, 1000.0]
     min thickness gap: 0.01                    # numerical robustness, m
 
   snow:
@@ -198,9 +206,10 @@ postprocess ice:
     min Tsfc: -100.0
 ```
 
-`ncat`, `ice_lev`, `sno_lev`, and the `cice restart: input/output` block
-are required. Everything else has a default that matches the production
-GDAS configuration; you only need to set what differs.
+`ncat`, `ice_lev`, `sno_lev`, the `cice restart: input/output` block,
+and `itd: category bounds` are required. Everything else has a default
+that matches the production GDAS configuration; you only need to set
+what differs.
 
 The freeboard pass uses fixed densities from `icephysics::Constants`
 (`rho_ice = 917`, `rho_snow = 330`, `rho_ocean = 1025`, all in kg/m^3) -
