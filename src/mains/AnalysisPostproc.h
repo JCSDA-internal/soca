@@ -280,11 +280,12 @@ class AnalysisPostproc : public oops::Application {
       const eckit::LocalConfiguration ppIceTemplate(anPostprocConfig, "postprocess ice");
       for (size_t iens = 0; iens < incs.local_ens_size(); ++iens) {
         const size_t ensMember = incs.local_ens()[iens];
-        oops::Log::info() << "updating ice state " << ensMember << ":" << ens[iens] << std::endl;
+        oops::Log::info() << "Ensemble state " << ensMember << " :" << ens[iens] << std::endl;
         for (size_t itime = 0; itime < ens.local_time_size(); ++itime) {
           ens(itime, iens) += incs(itime, iens);
         }
-        oops::Log::info() << "updated ice state " << ensMember << ":" << ens[iens] << std::endl;
+        oops::Log::info() << "Ensemble state + increment " << ensMember << ":"
+                          << ens[iens] << std::endl;
 
         // Per-member substitution of `pattern` (e.g. "%mem%") in the
         // `postprocess ice` block. In practice the substitution only fires
@@ -300,7 +301,9 @@ class AnalysisPostproc : public oops::Application {
           // per-member CICE restart. We discard the returned aggregate-ice
           // State here -- the ensemble pipeline only cares about the
           // on-disk per-member restart.
-          (void)ppIce.postprocess(ens(itime, iens).state());
+          State result = ppIce.postprocess(ens(itime, iens).state());
+          oops::Log::info() << "Postprocessed ensemble state (ice) " << ensMember << ":"
+                            << result << std::endl;
         }
       }
     }
