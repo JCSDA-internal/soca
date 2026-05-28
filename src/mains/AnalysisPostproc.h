@@ -298,9 +298,7 @@ class AnalysisPostproc : public oops::Application {
         PostProcessIce ppIce(geometry.geometry(), ppIceConfig);
         for (size_t itime = 0; itime < ens.local_time_size(); ++itime) {
           // PostProcessIce::postprocess opens, processes, and writes the
-          // per-member CICE restart. We discard the returned aggregate-ice
-          // State here -- the ensemble pipeline only cares about the
-          // on-disk per-member restart.
+          // per-member CICE restart.
           State result = ppIce.postprocess(ens(itime, iens).state());
           oops::Log::info() << "Postprocessed ensemble state (ice) " << ensMember << ":"
                             << result << std::endl;
