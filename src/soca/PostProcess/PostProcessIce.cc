@@ -554,10 +554,9 @@ State PostProcessIce::runPostprocess(State & pproc,
     outHice(jnode, 0) = meanHice(new_vice_cat, outAice(jnode, 0), jnode);
     outHsno(jnode, 0) = meanHsno(new_vsno_cat, outAice(jnode, 0), jnode);
   }
-  // Reduce per-rank counters to global totals so the Log::info / Log::warning
-  // lines below report the whole run, not just rank 0's piece. Counts sum,
-  // magnitudes max. Uses geom_.getComm() (the same comm used for the
-  // KDTree / halo gather).
+  // Reduce per-rank counters to global totals so the diagnostic log lines
+  // below report the whole run, not just rank 0's piece. Counts sum,
+  // magnitudes max.
   const auto & diagComm = geom_.getComm();
   diagComm.allReduceInPlace(rebin_visited,             eckit::mpi::sum());
   diagComm.allReduceInPlace(rebin_aicen_mutations,     eckit::mpi::sum());
@@ -573,15 +572,17 @@ State PostProcessIce::runPostprocess(State & pproc,
                       << rebin_aicen_mutations << " (max |Δaicen|="
                       << rebin_max_delta_aicen_all << ")." << std::endl;
     if (rebin_failures > 0) {
-      oops::Log::warning() << "PostProcessIce: ITD rebin failed at "
-                           << rebin_failures << " cells (target outside the "
-                           << "feasible envelope); left untouched." << std::endl;
+      oops::Log::info() << "PostProcessIce: ITD rebin failed at "
+                        << rebin_failures << " cells (target outside the "
+                        << "feasible envelope); the per-cat bin clip "
+                        << "catches any resulting out-of-bin hi."
+                        << std::endl;
     }
   }
   if (do_freeboard && freeboard_failures > 0) {
-    oops::Log::warning() << "PostProcessIce: freeboard enforcement failed at "
-                         << freeboard_failures << " cells; left untouched."
-                         << std::endl;
+    oops::Log::info() << "PostProcessIce: freeboard enforcement failed at "
+                      << freeboard_failures << " cells; left untouched."
+                      << std::endl;
   }
   if (bin_clip_slots > 0) {
     oops::Log::info() << "PostProcessIce: per-cat bin clip fired on "
@@ -637,9 +638,9 @@ State PostProcessIce::runPostprocess(State & pproc,
                                        donorCache, ice_lev, sno_lev);
     diagComm.allReduceInPlace(fallbacks, eckit::mpi::sum());
     if (fallbacks > 0) {
-      oops::Log::warning() << "PostProcessIce: noice->ice seed fell back to "
-                           << "Tfrz at " << fallbacks << " cells (no donor "
-                           << "with ice within seedSearchK)." << std::endl;
+      oops::Log::info() << "PostProcessIce: noice->ice seed fell back to "
+                        << "Tfrz at " << fallbacks << " cells (no donor "
+                        << "with ice within seedSearchK)." << std::endl;
     }
   }
   return result;
