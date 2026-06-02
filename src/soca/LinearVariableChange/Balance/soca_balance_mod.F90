@@ -6,7 +6,6 @@
 module soca_balance_mod
 
 use fckit_configuration_module, only: fckit_configuration
-use fms_mod, only: read_data
 use kinds, only: kind_real
 use atlas_module, only: atlas_field
 
@@ -14,6 +13,7 @@ use atlas_module, only: atlas_field
 use soca_fields_mod, only: soca_field
 use soca_geom_mod, only: soca_geom
 use soca_increment_mod, only: soca_increment
+use soca_io_mod, only: soca_io_reader
 use soca_ksshts_mod, only: soca_ksshts, soca_steric_jacobian
 use soca_kst_mod, only: soca_kst, soca_soft_jacobian
 use soca_state_mod, only: soca_state
@@ -99,7 +99,8 @@ subroutine soca_balance_setup(self, f_conf, traj, geom)
 
   ! declarations related to the sea-ice Jacobian
   character(len=:), allocatable :: kct_name
-  real(kind=kind_real), allocatable :: kct(:,:) !> dc/dT
+  real(kind=kind_real), allocatable, target :: kct(:,:) !> dc/dT (target for soca_io_reader pointer association)
+  type(soca_io_reader) :: dcdt_reader
 
   self%geom => geom
 
@@ -201,7 +202,9 @@ subroutine soca_balance_setup(self, f_conf, traj, geom)
     if ( f_conf%has("dcdt") ) then
       call f_conf%get_or_die("dcdt.filename", filename)
       call f_conf%get_or_die("dcdt.name", kct_name)
-      call read_data(filename, kct_name, kct, domain=geom%Domain%mpp_domain)
+      call dcdt_reader%init(geom%Domain%mpp_domain, filename)
+      call dcdt_reader%enqueue(kct_name, kct)
+      call dcdt_reader%commit()
     end if
     allocate(self%kct(isc:iec,jsc:jec))
     self%kct = 0.0_kind_real

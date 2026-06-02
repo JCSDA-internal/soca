@@ -54,6 +54,7 @@ observations:
       where:
       - variable: {name: GeoVaLs/sea_area_fraction}
         minvalue: 0.5
+      apply at iterations: 0,1
 
   - obs space:
       name: ADT
@@ -78,6 +79,7 @@ observations:
       where:
       - variable: {name: GeoVaLs/sea_area_fraction}
         minvalue: 0.5
+      apply at iterations: 0,1
 
 driver:
   do posterior observer: true
