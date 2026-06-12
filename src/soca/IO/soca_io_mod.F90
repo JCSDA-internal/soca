@@ -27,7 +27,7 @@ use netcdf
 use mpi
 use kinds, only: kind_real
 use mpp_mod, only: mpp_gather, mpp_scatter, mpp_broadcast, mpp_pe, mpp_root_pe, mpp_npes, &
-                   mpp_get_current_pelist, mpp_sync, mpp_error, FATAL
+                   mpp_get_current_pelist, mpp_error, FATAL
 use mpp_domains_mod, only: domain2D, &
                            mpp_get_compute_domain, mpp_get_global_domain, &
                            mpp_get_data_domain
@@ -41,9 +41,6 @@ public :: soca_io_reader
 public :: soca_io_file_exists, soca_io_var_exists
 public :: soca_io_config_from_yaml
 public :: soca_io_ensemble_write_parallel
-public :: soca_io_ensemble_read_scatter
-public :: soca_io_single_state_read_scatter
-public :: soca_io_async_mpi
 public :: soca_io_ensemble_root_pe
 public :: soca_io_writers_commit_ensemble
 public :: soca_io_readers_commit_ensemble
@@ -561,7 +558,7 @@ end subroutine writer_stage_close
 !==============================================================================
 ! Bulk-write orchestrator: take an array of pre-configured writers (each one
 ! init'd against the same domain with its own filename and rotated root_pe)
-! and run all four stages across the whole set with mpp_sync between phases.
+! and run all four stages across the whole set.
 !
 ! Phase ordering:
 !   1. define-all  (each writer's root_pe creates its file; concurrent, no MPI)
@@ -571,8 +568,9 @@ end subroutine writer_stage_close
 !   3. write-all   (each writer's root_pe nf90_put_var's its data; concurrent)
 !   4. close-all   (concurrent nf90_close)
 !
-! mpp_sync between phases so the wall-time profile lines up across ranks (the
-! reported t_* on rank 0 then equals the max-across-ranks phase wall time).
+! No inter-phase barriers are needed: the gather phase is self-synchronizing
+! (collective + MPI_Waitall), and define/write/close are independent per
+! writer root_pe, so each rank runs them at its own pace.
 !
 ! Memory: each writer's root_pe holds one member's worth of every var's
 ! gbuf_2d/gbuf_3d between phases 2 and 3 -- peak ~global state size per writer.
@@ -581,30 +579,26 @@ subroutine soca_io_writers_commit_ensemble(writers)
   type(soca_io_writer), intent(inout) :: writers(:)
 
   integer :: m
-  integer(kind=8) :: c0, c1, rate
-  real(kind=kind_real) :: t_define, t_gather, t_write, t_close
 
   if (size(writers) == 0) return
-  do m = 1, size(writers)
-    if (writers(m)%root_pe < 0) writers(m)%root_pe = mpp_root_pe()
+
+  ! All writers in a batch must share one FMS domain: the async gather
+  ! allgathers writers(1)'s compute-domain bounds once and reuses them to unpack
+  ! every member's tiles. A mismatched domain would silently corrupt the field.
+  do m = 2, size(writers)
+    if (.not. associated(writers(m)%domain, writers(1)%domain)) &
+        call mpp_error(FATAL, &
+            'soca_io_writers_commit_ensemble: all writers in a batch must share one domain')
   end do
 
-  call system_clock(count_rate=rate)
-  call mpp_sync()
-
   ! Phase 1: file create + dim/var defs. Concurrent across root_pes; no MPI.
-  call system_clock(c0)
   do m = 1, size(writers)
     call writer_stage_define(writers(m))
   end do
-  call mpp_sync()
-  call system_clock(c1)
-  t_define = real(c1 - c0, kind=kind_real) / real(rate, kind=kind_real)
 
   ! Phase 2: gather. Sync path issues per-writer per-var mpp_gather (each is a
   ! world-comm collective, so they serialize across writers). Async path
   ! batches every (writer, var) MPI_Igatherv into one wave + MPI_Waitall.
-  call system_clock(c0)
   if (async_mpi_enabled_) then
     call writer_stage_gather_all_async(writers)
   else
@@ -612,34 +606,16 @@ subroutine soca_io_writers_commit_ensemble(writers)
       call writer_stage_gather(writers(m))
     end do
   end if
-  call mpp_sync()
-  call system_clock(c1)
-  t_gather = real(c1 - c0, kind=kind_real) / real(rate, kind=kind_real)
 
   ! Phase 3: each root_pe writes its writer's data. No MPI -> concurrent disk.
-  call system_clock(c0)
   do m = 1, size(writers)
     call writer_stage_write(writers(m))
   end do
-  call mpp_sync()
-  call system_clock(c1)
-  t_write = real(c1 - c0, kind=kind_real) / real(rate, kind=kind_real)
 
   ! Phase 4: each root_pe closes its file. No MPI -> concurrent.
-  call system_clock(c0)
   do m = 1, size(writers)
     call writer_stage_close(writers(m))
   end do
-  call mpp_sync()
-  call system_clock(c1)
-  t_close = real(c1 - c0, kind=kind_real) / real(rate, kind=kind_real)
-
-  if (mpp_pe() == mpp_root_pe()) then
-    write(*, '(A,I0,4(A,F0.4))') &
-        'OOPS_PERF soca_io writer_ensemble nm=', size(writers), &
-        ' define=', t_define, ' gather=', t_gather, &
-        ' write=',  t_write,  ' close=',  t_close
-  end if
 end subroutine soca_io_writers_commit_ensemble
 
 
@@ -663,10 +639,14 @@ subroutine writer_stage_gather_all_async(writers)
   integer :: nz_v, full_count, isg, jsg, nx_g, ny_g
   integer :: i, j, k, ig, jg, kk, mp_comm
   integer, allocatable :: all_isc(:), all_iec(:), all_jsc(:), all_jec(:)
-  integer, allocatable :: tile_counts2d(:), pelist(:)
+  integer, allocatable :: tile_counts2d(:)
   integer, allocatable :: reqs(:)
   integer, allocatable :: req_writer(:), req_var(:)
-  integer, allocatable :: rc(:), disp(:)
+  ! Per-request count/displacement arrays. MPI_Igatherv is nonblocking, so the
+  ! count/displ arguments must stay valid (unmutated) until MPI_Waitall. Each
+  ! request has its own column rc(:,rq)/disp(:,rq) -- a single shared rc(:)
+  ! recomputed each loop iteration would be aliased across in-flight gathers.
+  integer, allocatable :: rc(:,:), disp(:,:)
   type :: gather_buf_t
     real(kind=kind_real), allocatable :: buf(:)
   end type
@@ -674,7 +654,7 @@ subroutine writer_stage_gather_all_async(writers)
   logical :: is_root_for_this
 
   if (size(writers) == 0) return
-  call mpi_pelist_and_comm(pelist, mp_comm)
+  call current_mpi_comm(mp_comm)
   nprocs = mpp_npes()
 
   ! All writers in the ensemble share the same FMS domain (the geometry's),
@@ -723,7 +703,7 @@ subroutine writer_stage_gather_all_async(writers)
   allocate(reqs(max_reqs))
   allocate(req_writer(max_reqs), req_var(max_reqs))
   allocate(sends(max_reqs), recvs(max_reqs))
-  allocate(rc(nprocs), disp(nprocs))
+  allocate(rc(nprocs, max_reqs), disp(nprocs, max_reqs))
   rq_count = 0
 
   ! Phase A/B: pack send + post Igatherv per (writer, var).
@@ -742,11 +722,11 @@ subroutine writer_stage_gather_all_async(writers)
       end if
 
       do r = 1, nprocs
-        rc(r) = tile_counts2d(r) * nz_v
+        rc(r, rq_count) = tile_counts2d(r) * nz_v
       end do
-      disp(1) = 0
+      disp(1, rq_count) = 0
       do r = 2, nprocs
-        disp(r) = disp(r-1) + rc(r-1)
+        disp(r, rq_count) = disp(r-1, rq_count) + rc(r-1, rq_count)
       end do
 
       allocate(sends(rq_count)%buf(my_count2d * nz_v))
@@ -776,13 +756,18 @@ subroutine writer_stage_gather_all_async(writers)
       if (is_root_for_this) then
         full_count = 0
         do r = 1, nprocs
-          full_count = full_count + rc(r)
+          full_count = full_count + rc(r, rq_count)
         end do
         allocate(recvs(rq_count)%buf(full_count))
+      else
+        ! Non-root recvbuf is not significant to MPI_Igatherv, but the actual
+        ! argument must still be an allocated array (1-elem dummy mirrors the
+        ! reader scatter path's sendbuf handling).
+        allocate(recvs(rq_count)%buf(1))
       end if
 
       call MPI_Igatherv(sends(rq_count)%buf, my_count2d * nz_v, MPI_DOUBLE_PRECISION, &
-          recvs(rq_count)%buf, rc, disp, MPI_DOUBLE_PRECISION, &
+          recvs(rq_count)%buf, rc(:, rq_count), disp(:, rq_count), MPI_DOUBLE_PRECISION, &
           writers(m)%root_pe, mp_comm, reqs(rq_count), ierr)
     end do
   end do
@@ -834,7 +819,6 @@ subroutine writer_stage_gather_all_async(writers)
 
 9999 continue
   deallocate(all_isc, all_iec, all_jsc, all_jec, tile_counts2d)
-  if (allocated(pelist)) deallocate(pelist)
 end subroutine writer_stage_gather_all_async
 
 
@@ -1121,13 +1105,13 @@ subroutine reader_stage_distribute(self)
   integer :: my_isc, my_iec, my_jsc, my_jec, my_count2d
   integer :: nx_c, ny_c, i_off, j_off, mp_comm
   integer, allocatable :: all_isc(:), all_iec(:), all_jsc(:), all_jec(:)
-  integer, allocatable :: tile_counts2d(:), rc(:), disp(:), pelist(:)
+  integer, allocatable :: tile_counts2d(:), rc(:), disp(:)
   real(kind=kind_real), allocatable :: sendbuf(:), recvbuf(:)
   logical :: is_root
 
   is_root = (mpp_pe() == self%reader_pe)
   nprocs  = mpp_npes()
-  call mpi_pelist_and_comm(pelist, mp_comm)
+  call current_mpi_comm(mp_comm)
 
   call mpp_get_compute_domain(self%domain, my_isc, my_iec, my_jsc, my_jec)
   allocate(all_isc(nprocs), all_iec(nprocs), all_jsc(nprocs), all_jec(nprocs))
@@ -1235,7 +1219,6 @@ subroutine reader_stage_distribute(self)
   end do
 
   deallocate(all_isc, all_iec, all_jsc, all_jec, tile_counts2d, rc, disp)
-  if (allocated(pelist)) deallocate(pelist)
 end subroutine reader_stage_distribute
 
 
@@ -1273,51 +1256,38 @@ subroutine soca_io_readers_commit_ensemble(readers)
   type(soca_io_reader), intent(inout) :: readers(:)
 
   integer :: m
-  integer(kind=8) :: c0, c1, rate
-  real(kind=kind_real) :: t_read, t_distrib
 
   if (size(readers) == 0) return
-  do m = 1, size(readers)
-    if (readers(m)%reader_pe < 0) readers(m)%reader_pe = mpp_root_pe()
-  end do
 
-  call system_clock(count_rate=rate)
-  call mpp_sync()
+  ! All readers in a batch must share one FMS domain (see the writer
+  ! orchestrator note): the async scatter allgathers readers(1)'s
+  ! compute-domain bounds once and reuses them for every member.
+  do m = 2, size(readers)
+    if (.not. associated(readers(m)%domain, readers(1)%domain)) &
+        call mpp_error(FATAL, &
+            'soca_io_readers_commit_ensemble: all readers in a batch must share one domain')
+  end do
 
   if (.not. ensemble_read_scatter_) then
     ! Strided ensemble path: loop members, run the existing per-PE strided
     ! reader for each. Members are sequenced; within each member every PE
     ! reads its own tile.
-    call system_clock(c0)
     do m = 1, size(readers)
       call commit_reader_strided(readers(m))
       if (allocated(readers(m)%vars)) deallocate(readers(m)%vars)
       readers(m)%nvars = 0
     end do
-    call mpp_sync()
-    call system_clock(c1)
-    t_read = real(c1 - c0, kind=kind_real) / real(rate, kind=kind_real)
-    if (mpp_pe() == mpp_root_pe()) then
-      write(*, '(A,I0,A,F0.4)') &
-          'OOPS_PERF soca_io reader_ensemble (strided) nm=', size(readers), &
-          ' read+distribute=', t_read
-    end if
     return
   end if
 
   ! Scatter ensemble path.
   ! Phase 1: each reader_pe reads its file. No MPI -> reads concurrent.
-  call system_clock(c0)
   do m = 1, size(readers)
     call reader_stage_read(readers(m))
   end do
-  call mpp_sync()
-  call system_clock(c1)
-  t_read = real(c1 - c0, kind=kind_real) / real(rate, kind=kind_real)
 
   ! Phase 2: scatter. Sync per-reader serializes; async batches all
   ! (reader, var) Iscatterv/Ibcast + Waitall.
-  call system_clock(c0)
   if (async_mpi_enabled_) then
     call reader_stage_distribute_all_async(readers)
   else
@@ -1325,20 +1295,11 @@ subroutine soca_io_readers_commit_ensemble(readers)
       call reader_stage_distribute(readers(m))
     end do
   end if
-  call mpp_sync()
-  call system_clock(c1)
-  t_distrib = real(c1 - c0, kind=kind_real) / real(rate, kind=kind_real)
 
   ! Phase 3: free staged buffers + drop working set.
   do m = 1, size(readers)
     call reader_stage_close(readers(m))
   end do
-
-  if (mpp_pe() == mpp_root_pe()) then
-    write(*, '(A,I0,2(A,F0.4))') &
-        'OOPS_PERF soca_io reader_ensemble (scatter) nm=', size(readers), &
-        ' read=', t_read, ' distribute=', t_distrib
-  end if
 end subroutine soca_io_readers_commit_ensemble
 
 
@@ -1357,7 +1318,10 @@ subroutine reader_stage_distribute_all_async(readers)
   integer :: my_isc, my_iec, my_jsc, my_jec, my_count2d, mp_comm
   integer :: n3, n4, i, j, k, k4, nx_c, ny_c, i_off, j_off
   integer, allocatable :: all_isc(:), all_iec(:), all_jsc(:), all_jec(:)
-  integer, allocatable :: tile_counts2d(:), rc(:), disp(:), pelist(:)
+  integer, allocatable :: tile_counts2d(:)
+  ! Per-request count/displacement columns: MPI_Iscatterv is nonblocking, so
+  ! these must stay valid until MPI_Waitall (one column per in-flight request).
+  integer, allocatable :: rc(:,:), disp(:,:)
   integer :: rq_count, max_reqs, ux
   integer, allocatable :: reqs(:), req_reader(:), req_var(:)
   type :: scatter_buf_t
@@ -1367,7 +1331,7 @@ subroutine reader_stage_distribute_all_async(readers)
   logical :: is_root_for_this
 
   if (size(readers) == 0) return
-  call mpi_pelist_and_comm(pelist, mp_comm)
+  call current_mpi_comm(mp_comm)
   nprocs = mpp_npes()
 
   call mpp_get_compute_domain(readers(1)%domain, my_isc, my_iec, my_jsc, my_jec)
@@ -1392,7 +1356,7 @@ subroutine reader_stage_distribute_all_async(readers)
 
   allocate(reqs(max_reqs), req_reader(max_reqs), req_var(max_reqs))
   allocate(sends(max_reqs), recvs(max_reqs))
-  allocate(rc(nprocs), disp(nprocs))
+  allocate(rc(nprocs, max_reqs), disp(nprocs, max_reqs))
   rq_count = 0
 
   ! Phase A: pack send buffers + post Iscatterv / Ibcast.
@@ -1419,17 +1383,17 @@ subroutine reader_stage_distribute_all_async(readers)
       end if
 
       do r = 1, nprocs
-        rc(r) = tile_counts2d(r) * n3 * n4
+        rc(r, rq_count) = tile_counts2d(r) * n3 * n4
       end do
-      disp(1) = 0
+      disp(1, rq_count) = 0
       do r = 2, nprocs
-        disp(r) = disp(r-1) + rc(r-1)
+        disp(r, rq_count) = disp(r-1, rq_count) + rc(r-1, rq_count)
       end do
 
       if (is_root_for_this) then
         full_count = 0
         do r = 1, nprocs
-          full_count = full_count + rc(r)
+          full_count = full_count + rc(r, rq_count)
         end do
         allocate(sends(rq_count)%buf(full_count))
         idx = 0
@@ -1460,7 +1424,7 @@ subroutine reader_stage_distribute_all_async(readers)
       end if
 
       allocate(recvs(rq_count)%buf(my_count2d * n3 * n4))
-      call MPI_Iscatterv(sends(rq_count)%buf, rc, disp, MPI_DOUBLE_PRECISION, &
+      call MPI_Iscatterv(sends(rq_count)%buf, rc(:, rq_count), disp(:, rq_count), MPI_DOUBLE_PRECISION, &
           recvs(rq_count)%buf, my_count2d * n3 * n4, MPI_DOUBLE_PRECISION, &
           readers(m)%reader_pe, mp_comm, reqs(rq_count), ierr)
     end do
@@ -1516,7 +1480,6 @@ subroutine reader_stage_distribute_all_async(readers)
 
 9999 continue
   deallocate(all_isc, all_iec, all_jsc, all_jec, tile_counts2d)
-  if (allocated(pelist)) deallocate(pelist)
 end subroutine reader_stage_distribute_all_async
 
 
@@ -1755,13 +1718,16 @@ end subroutine mpi_pelist
 ! MPI_COMM_WORLD here would deadlock in the LETKF "nens per MPI task" split
 ! where each task has its own size-1 mpp world.
 !==============================================================================
-subroutine mpi_pelist_and_comm(pelist, mp_comm)
-  integer, allocatable, intent(out) :: pelist(:)
-  integer,              intent(out) :: mp_comm
+subroutine current_mpi_comm(mp_comm)
+  integer, intent(out) :: mp_comm
+  integer, allocatable :: pelist(:)
   character(len=128) :: name
+  ! mpp_get_current_pelist requires a pelist out-arg sized mpp_npes(); the async
+  ! I/O callers only need the communicator handle, so it stays local here.
   allocate(pelist(mpp_npes()))
   call mpp_get_current_pelist(pelist, name, mp_comm)
-end subroutine mpi_pelist_and_comm
+  deallocate(pelist)
+end subroutine current_mpi_comm
 
 
 !==============================================================================
@@ -1844,25 +1810,14 @@ end subroutine soca_io_config_from_yaml
 
 
 !==============================================================================
-! Public getters for the module-level dispatch knobs. Consumed by the writer /
-! reader orchestrators (next commits) and by fields_mod when it picks between
-! single-shot and ensemble paths.
+! Public getter for the ensemble-write dispatch knob. Consumed by fields_mod
+! when it picks between the single-shot and parallel ensemble write paths.
+! (ensemble_read_scatter_ / single_state_read_scatter_ / async_mpi_enabled_ are
+! read directly within this module, so they need no public getters.)
 !==============================================================================
 logical function soca_io_ensemble_write_parallel()
   soca_io_ensemble_write_parallel = ensemble_write_parallel_
 end function soca_io_ensemble_write_parallel
-
-logical function soca_io_ensemble_read_scatter()
-  soca_io_ensemble_read_scatter = ensemble_read_scatter_
-end function soca_io_ensemble_read_scatter
-
-logical function soca_io_single_state_read_scatter()
-  soca_io_single_state_read_scatter = single_state_read_scatter_
-end function soca_io_single_state_read_scatter
-
-logical function soca_io_async_mpi()
-  soca_io_async_mpi = async_mpi_enabled_
-end function soca_io_async_mpi
 
 
 !==============================================================================

@@ -91,10 +91,10 @@ namespace soca {
       static void writeEnsemble(const std::vector<const State*> &,
                                 const std::vector<eckit::LocalConfiguration> &);
 
-      /// Bulk read across ensemble members. The implementation currently loops
-      /// per member; each member's read honors the geometry.io.'single state
-      /// read' YAML toggle (strided vs scatter). Parallel-across-members
-      /// reads using soca_io_readers_commit_ensemble are a follow-up.
+      /// Bulk read across ensemble members via soca_io_readers_commit_ensemble.
+      /// Members are read in parallel (rotated reader PEs), honoring the
+      /// geometry.io.'ensemble read' (scatter vs strided) and 'async mpi'
+      /// toggles. See soca_io_readers_commit_ensemble for the staging.
       static void readEnsemble(const std::vector<State*> &,
                                const std::vector<eckit::LocalConfiguration> &);
 
