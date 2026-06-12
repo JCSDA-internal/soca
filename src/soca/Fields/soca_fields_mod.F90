@@ -1047,9 +1047,76 @@ end subroutine soca_fields_read_seaice
 
 
 ! ------------------------------------------------------------------------------
+!> Build one per-domain writer for `fld`: enqueue every field whose io_file
+!! matches `dom`, copying each atlas field's compute-domain slice into a fresh
+!! varwrapper buffer (masked cells set to the field's fillvalue). `vars` carries
+!! the buffers and has the TARGET attribute because the writer holds pointers
+!! into them; the caller must keep `vars` alive (and unmutated) until the
+!! writer is committed. Leaves `vars` unallocated and `writer` untouched when no
+!! field maps to `dom`. Shared by soca_fields_write_rst (single state) and
+!! soca_fields_write_ensemble (bulk), so the atlas->compute-domain copy and the
+!! enqueue logic live in exactly one place.
+!! \relates soca_fields_mod::soca_fields
+subroutine soca_fields_enqueue_domain(fld, dom, filename, writer, vars, root_pe)
+  class(soca_fields),            intent(inout) :: fld
+  character(len=*),              intent(in)    :: dom
+  character(len=*),              intent(in)    :: filename
+  type(soca_io_writer),          intent(inout) :: writer
+  type(varwrapper), allocatable, target, intent(out) :: vars(:)
+  integer, optional,             intent(in)    :: root_pe
+
+  integer :: i, j, f, n, idx
+
+  ! How many fields land in this domain's file?
+  n = 0
+  do f = 1, size(fld%fields)
+    if (fld%fields(f)%metadata%io_file == dom) n = n + 1
+  end do
+  if (n == 0) return
+
+  if (present(root_pe)) then
+    call writer%init(fld%geom%Domain%mpp_domain, filename, root_pe=root_pe)
+  else
+    call writer%init(fld%geom%Domain%mpp_domain, filename)
+  end if
+
+  allocate(vars(n))
+  n = 0
+  do f = 1, size(fld%fields)
+    if (fld%fields(f)%metadata%io_file /= dom) cycle
+    n = n + 1
+
+    ! copy atlas field into a per-PE compute-domain temporary
+    vars(n)%afield = fld%aFieldset%field(fld%fields(f)%name)
+    call vars(n)%afield%data(vars(n)%adata)
+    allocate(vars(n)%data(fld%geom%isd:fld%geom%ied, &
+                          fld%geom%jsd:fld%geom%jed, vars(n)%afield%shape(1)))
+
+    ! copy, setting masked values to fillvalue
+    if (associated(fld%fields(f)%mask)) vars(n)%data = fld%fields(f)%metadata%fillvalue
+    do j = fld%geom%jsc, fld%geom%jec
+      do i = fld%geom%isc, fld%geom%iec
+        idx = fld%geom%atlas_ij2idx(i, j)
+        if (associated(fld%fields(f)%mask)) then
+          if (fld%fields(f)%mask(i, j) == 0) cycle
+        end if
+        vars(n)%data(i, j, :) = vars(n)%adata(:, idx)
+      end do
+    end do
+
+    ! enqueue with the writer
+    if (vars(n)%afield%shape(1) == 1) then
+      call writer%enqueue(fld%fields(f)%metadata%io_name, vars(n)%data(:,:,1))
+    else
+      call writer%enqueue(fld%fields(f)%metadata%io_name, vars(n)%data(:,:,:))
+    end if
+  end do
+end subroutine soca_fields_enqueue_domain
+
+
+! ------------------------------------------------------------------------------
 !> Save soca fields in a restart format
 !!
-!! TODO this can be generalized even more
 !! \relates soca_fields_mod::soca_fields
 subroutine soca_fields_write_rst(self, f_conf, vdate)
   class(soca_fields), target, intent(inout) :: self      !< Fields
@@ -1058,14 +1125,14 @@ subroutine soca_fields_write_rst(self, f_conf, vdate)
 
   integer, parameter :: max_string_length=800
   type(soca_io_writer) :: writer
-  integer :: i, j, k, idx, d, f, n
-  type(soca_field), pointer :: field
+  integer :: d, n
   logical :: date_cols
 
   character(len=3), allocatable :: domains(:)
   character(len=:), allocatable :: domain_filename
 
-  type(varwrapper), allocatable, target :: vars(:)  ! target so vars(n)%data sections are valid pointer targets for soca_io enqueue
+  ! target so vars(n)%data sections are valid pointer targets for soca_io enqueue
+  type(varwrapper), allocatable, target :: vars(:)
 
   ! Get date IO format (colons or not?)
   date_cols = .true.
@@ -1080,46 +1147,8 @@ subroutine soca_fields_write_rst(self, f_conf, vdate)
   do d=1,size(domains)
     domain_filename = soca_genfilename(f_conf,max_string_length,vdate,date_cols,domains(d))
 
-    ! count the number of vars that we will write in this file
-    n = 0
-    do f=1,size(self%fields)
-      if (self%fields(f)%metadata%io_file == domains(d)) n = n +1
-    end do
-    if (n == 0) cycle
-    allocate(vars(n))
-
-    ! copy atlas fields into per-PE compute-domain temporaries and enqueue with the writer
-    call writer%init(self%geom%Domain%mpp_domain, domain_filename)
-    n=0
-    do f=1,size(self%fields)
-      if (self%fields(f)%metadata%io_file /= domains(d)) cycle
-      n = n + 1
-
-      ! create memory
-      vars(n)%afield = self%aFieldset%field(self%fields(f)%name)
-      call vars(n)%afield%data(vars(n)%adata)
-      allocate(vars(n)%data(self%geom%isd:self%geom%ied, &
-                            self%geom%jsd:self%geom%jed, vars(n)%afield%shape(1)))
-
-      ! copy, setting masked values to fillvalue
-      if (associated(self%fields(f)%mask)) vars(n)%data = self%fields(f)%metadata%fillvalue
-      do j=self%geom%jsc, self%geom%jec
-        do i=self%geom%isc, self%geom%iec
-          idx = self%geom%atlas_ij2idx(i,j)
-          if (associated(self%fields(f)%mask)) then
-            if (self%fields(f)%mask(i,j) == 0) cycle
-          end if
-          vars(n)%data(i,j,:) = vars(n)%adata(:, idx)
-        end do
-      end do
-
-      ! enqueue with the writer
-      if (vars(n)%afield%shape(1) == 1) then
-        call writer%enqueue(self%fields(f)%metadata%io_name, vars(n)%data(:,:,1))
-      else
-        call writer%enqueue(self%fields(f)%metadata%io_name, vars(n)%data(:,:,:))
-      end if
-    end do
+    call soca_fields_enqueue_domain(self, domains(d), domain_filename, writer, vars)
+    if (.not. allocated(vars)) cycle  ! no fields in this domain
 
     ! write the file
     call writer%commit()
@@ -1140,10 +1169,10 @@ end subroutine soca_fields_write_rst
 !! world communicator. Falls back to sequential per-member commit when
 !! geometry.io.'ensemble write' is 'sequential'.
 !!
-!! Behavior per-member is identical to soca_fields_write_rst: same domain set,
-!! same per-domain filename via soca_genfilename, same mask/fillvalue handling,
-!! same byte-level netCDF output. Only the dispatch (rotated root + ensemble
-!! orchestrator) changes.
+!! Behavior per-member is identical to soca_fields_write_rst: both build each
+!! per-domain writer via soca_fields_enqueue_domain (same domain set, filename,
+!! mask/fillvalue handling and byte-level netCDF output). Only the dispatch
+!! (rotated root + ensemble orchestrator) changes.
 !!
 !! \param fields_ptrs polymorphic pointers to soca_state or soca_increment
 !! \param f_confs    per-member configurations (must align 1:1 with fields_ptrs)
@@ -1155,7 +1184,7 @@ subroutine soca_fields_write_ensemble(fields_ptrs, c_confs, vdates)
   type(datetime),             intent(inout) :: vdates(:)
 
   integer, parameter :: max_string_length = 800
-  integer :: nmembers, m, d, f, i, j, n, idx, wi, nwriters, root_pe
+  integer :: nmembers, m, d, f, n, wi, nwriters, root_pe
   character(len=3), allocatable :: domains(:)
   character(len=:), allocatable :: domain_filename
   logical :: date_cols
@@ -1205,6 +1234,8 @@ subroutine soca_fields_write_ensemble(fields_ptrs, c_confs, vdates)
     root_pe = soca_io_ensemble_root_pe(m, nmembers)
 
     do d = 1, size(domains)
+      ! count vars for this (member, domain); must stay in lockstep with the
+      ! pass-1 nwriters count so wi indexes the preallocated writers array.
       n = 0
       do f = 1, size(fld%fields)
         if (fld%fields(f)%metadata%io_file == domains(d)) n = n + 1
@@ -1213,37 +1244,8 @@ subroutine soca_fields_write_ensemble(fields_ptrs, c_confs, vdates)
 
       wi = wi + 1
       domain_filename = soca_genfilename(f_conf, max_string_length, vdates(m), date_cols, domains(d))
-      call writers(wi)%init(fld%geom%Domain%mpp_domain, domain_filename, root_pe=root_pe)
-
-      allocate(vars_arr(wi)%vars(n))
-      n = 0
-      do f = 1, size(fld%fields)
-        if (fld%fields(f)%metadata%io_file /= domains(d)) cycle
-        n = n + 1
-
-        vars_arr(wi)%vars(n)%afield = fld%aFieldset%field(fld%fields(f)%name)
-        call vars_arr(wi)%vars(n)%afield%data(vars_arr(wi)%vars(n)%adata)
-        allocate(vars_arr(wi)%vars(n)%data(fld%geom%isd:fld%geom%ied, &
-                                            fld%geom%jsd:fld%geom%jed, &
-                                            vars_arr(wi)%vars(n)%afield%shape(1)))
-
-        if (associated(fld%fields(f)%mask)) vars_arr(wi)%vars(n)%data = fld%fields(f)%metadata%fillvalue
-        do j = fld%geom%jsc, fld%geom%jec
-          do i = fld%geom%isc, fld%geom%iec
-            idx = fld%geom%atlas_ij2idx(i, j)
-            if (associated(fld%fields(f)%mask)) then
-              if (fld%fields(f)%mask(i, j) == 0) cycle
-            end if
-            vars_arr(wi)%vars(n)%data(i, j, :) = vars_arr(wi)%vars(n)%adata(:, idx)
-          end do
-        end do
-
-        if (vars_arr(wi)%vars(n)%afield%shape(1) == 1) then
-          call writers(wi)%enqueue(fld%fields(f)%metadata%io_name, vars_arr(wi)%vars(n)%data(:,:,1))
-        else
-          call writers(wi)%enqueue(fld%fields(f)%metadata%io_name, vars_arr(wi)%vars(n)%data(:,:,:))
-        end if
-      end do
+      call soca_fields_enqueue_domain(fld, domains(d), domain_filename, &
+                                      writers(wi), vars_arr(wi)%vars, root_pe=root_pe)
     end do
   end do
 

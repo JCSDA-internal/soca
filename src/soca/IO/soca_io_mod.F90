@@ -658,13 +658,9 @@ subroutine writer_stage_gather_all_async(writers)
   nprocs = mpp_npes()
 
   ! All writers in the ensemble share the same FMS domain (the geometry's),
-  ! so allgather the compute-domain bounds once and reuse for every Igatherv.
+  ! so gather the compute-domain bounds once and reuse for every Igatherv.
   call mpp_get_compute_domain(writers(1)%domain, my_isc, my_iec, my_jsc, my_jec)
-  allocate(all_isc(nprocs), all_iec(nprocs), all_jsc(nprocs), all_jec(nprocs))
-  call MPI_Allgather(my_isc, 1, MPI_INTEGER, all_isc, 1, MPI_INTEGER, mp_comm, ierr)
-  call MPI_Allgather(my_iec, 1, MPI_INTEGER, all_iec, 1, MPI_INTEGER, mp_comm, ierr)
-  call MPI_Allgather(my_jsc, 1, MPI_INTEGER, all_jsc, 1, MPI_INTEGER, mp_comm, ierr)
-  call MPI_Allgather(my_jec, 1, MPI_INTEGER, all_jec, 1, MPI_INTEGER, mp_comm, ierr)
+  call gather_compute_domains(writers(1)%domain, mp_comm, all_isc, all_iec, all_jsc, all_jec)
 
   allocate(tile_counts2d(nprocs))
   do r = 1, nprocs
@@ -1114,11 +1110,7 @@ subroutine reader_stage_distribute(self)
   call current_mpi_comm(mp_comm)
 
   call mpp_get_compute_domain(self%domain, my_isc, my_iec, my_jsc, my_jec)
-  allocate(all_isc(nprocs), all_iec(nprocs), all_jsc(nprocs), all_jec(nprocs))
-  call MPI_Allgather(my_isc, 1, MPI_INTEGER, all_isc, 1, MPI_INTEGER, mp_comm, ierr)
-  call MPI_Allgather(my_iec, 1, MPI_INTEGER, all_iec, 1, MPI_INTEGER, mp_comm, ierr)
-  call MPI_Allgather(my_jsc, 1, MPI_INTEGER, all_jsc, 1, MPI_INTEGER, mp_comm, ierr)
-  call MPI_Allgather(my_jec, 1, MPI_INTEGER, all_jec, 1, MPI_INTEGER, mp_comm, ierr)
+  call gather_compute_domains(self%domain, mp_comm, all_isc, all_iec, all_jsc, all_jec)
 
   allocate(tile_counts2d(nprocs))
   do r = 1, nprocs
@@ -1335,11 +1327,7 @@ subroutine reader_stage_distribute_all_async(readers)
   nprocs = mpp_npes()
 
   call mpp_get_compute_domain(readers(1)%domain, my_isc, my_iec, my_jsc, my_jec)
-  allocate(all_isc(nprocs), all_iec(nprocs), all_jsc(nprocs), all_jec(nprocs))
-  call MPI_Allgather(my_isc, 1, MPI_INTEGER, all_isc, 1, MPI_INTEGER, mp_comm, ierr)
-  call MPI_Allgather(my_iec, 1, MPI_INTEGER, all_iec, 1, MPI_INTEGER, mp_comm, ierr)
-  call MPI_Allgather(my_jsc, 1, MPI_INTEGER, all_jsc, 1, MPI_INTEGER, mp_comm, ierr)
-  call MPI_Allgather(my_jec, 1, MPI_INTEGER, all_jec, 1, MPI_INTEGER, mp_comm, ierr)
+  call gather_compute_domains(readers(1)%domain, mp_comm, all_isc, all_iec, all_jsc, all_jec)
 
   allocate(tile_counts2d(nprocs))
   do r = 1, nprocs
@@ -1728,6 +1716,34 @@ subroutine current_mpi_comm(mp_comm)
   call mpp_get_current_pelist(pelist, name, mp_comm)
   deallocate(pelist)
 end subroutine current_mpi_comm
+
+
+!==============================================================================
+! Allgather every PE's compute-domain bounds (isc/iec/jsc/jec) in mp_comm rank
+! order. One packed collective replaces the four separate Allgathers the bulk
+! read/write paths used to issue; results are indexed by rank, so all_isc(r) is
+! rank (r-1)'s compute-domain start -- matching the rank-ordered Igatherv /
+! Iscatterv buffer layout. The bounds are static, but the gather is cheap and
+! avoids any cross-call caching hazard with multiple geometries.
+!==============================================================================
+subroutine gather_compute_domains(domain, mp_comm, all_isc, all_iec, all_jsc, all_jec)
+  type(domain2D),       intent(in)  :: domain
+  integer,              intent(in)  :: mp_comm
+  integer, allocatable, intent(out) :: all_isc(:), all_iec(:), all_jsc(:), all_jec(:)
+  integer :: nprocs, ierr, my(4)
+  integer, allocatable :: gathered(:)
+
+  nprocs = mpp_npes()
+  call mpp_get_compute_domain(domain, my(1), my(2), my(3), my(4))
+  allocate(gathered(4 * nprocs))
+  call MPI_Allgather(my, 4, MPI_INTEGER, gathered, 4, MPI_INTEGER, mp_comm, ierr)
+  allocate(all_isc(nprocs), all_iec(nprocs), all_jsc(nprocs), all_jec(nprocs))
+  all_isc = gathered(1::4)
+  all_iec = gathered(2::4)
+  all_jsc = gathered(3::4)
+  all_jec = gathered(4::4)
+  deallocate(gathered)
+end subroutine gather_compute_domains
 
 
 !==============================================================================
