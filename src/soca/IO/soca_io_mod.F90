@@ -642,7 +642,7 @@ end subroutine soca_io_writers_commit_ensemble
 subroutine writer_stage_gather_all_async(writers)
   type(soca_io_writer), intent(inout) :: writers(:)
 
-  integer :: nprocs, ierr, r, m, v, idx, rq_count, max_reqs, req_idx
+  integer :: nprocs, ierr, r, m, v, idx, rq_count, max_reqs, req_idx, idx_done
   integer :: my_isc, my_iec, my_jsc, my_jec, my_count2d
   integer :: nz_v, full_count, isg, jsg, nx_g, ny_g
   integer :: i, j, k, ig, jg, kk, mp_comm
@@ -776,49 +776,51 @@ subroutine writer_stage_gather_all_async(writers)
     end do
   end do
 
-  ! Phase C: wait for everything.
-  call MPI_Waitall(rq_count, reqs, MPI_STATUSES_IGNORE, ierr)
-
-  ! Phase D: each root unpacks its tiles into the per-var gbuf. The pack loop
-  ! above wrote each sender's tile contiguously; Igatherv lays them back-to-
-  ! back at disp(r) in the recvbuf in rank order.
+  ! Phase C/D: complete the gathers one at a time. As each Igatherv finishes,
+  ! its send buffer is done with, and on the target root the recv buffer can be
+  ! unpacked into the per-var gbuf and freed immediately. So the transient
+  ! buffer high-water is the in-flight set, not all rq_count requests at once
+  ! (the full recv buffers are global-field sized -- holding every member's at
+  ! once doubled peak memory). All requests are still posted up front, so the
+  ! runtime overlap is unchanged. The gbufs persist to stage_write.
   do req_idx = 1, rq_count
-    m = req_writer(req_idx)
-    v = req_var(req_idx)
-    if (mpp_pe() /= writers(m)%root_pe) cycle
-    isg = writers(m)%isg
-    jsg = writers(m)%jsg
-    nx_g = writers(m)%nx_g
-    ny_g = writers(m)%ny_g
-    if (writers(m)%vars(v)%ndims == 2) then
-      idx = 0
-      do r = 1, nprocs
-        do jg = all_jsc(r), all_jec(r)
-          do ig = all_isc(r), all_iec(r)
-            idx = idx + 1
-            writers(m)%vars(v)%gbuf_2d(ig - isg + 1, jg - jsg + 1) = recvs(req_idx)%buf(idx)
-          end do
-        end do
-      end do
-    else
-      idx = 0
-      do r = 1, nprocs
-        do kk = 1, writers(m)%vars(v)%nlevels
+    call MPI_Waitany(rq_count, reqs, idx_done, MPI_STATUS_IGNORE, ierr)
+    if (idx_done == MPI_UNDEFINED) exit
+    if (allocated(sends(idx_done)%buf)) deallocate(sends(idx_done)%buf)
+    m = req_writer(idx_done)
+    v = req_var(idx_done)
+    if (mpp_pe() == writers(m)%root_pe) then
+      isg = writers(m)%isg
+      jsg = writers(m)%jsg
+      nx_g = writers(m)%nx_g
+      ny_g = writers(m)%ny_g
+      if (writers(m)%vars(v)%ndims == 2) then
+        idx = 0
+        do r = 1, nprocs
           do jg = all_jsc(r), all_jec(r)
             do ig = all_isc(r), all_iec(r)
               idx = idx + 1
-              writers(m)%vars(v)%gbuf_3d(ig - isg + 1, jg - jsg + 1, kk) = recvs(req_idx)%buf(idx)
+              writers(m)%vars(v)%gbuf_2d(ig - isg + 1, jg - jsg + 1) = recvs(idx_done)%buf(idx)
             end do
           end do
         end do
-      end do
+      else
+        idx = 0
+        do r = 1, nprocs
+          do kk = 1, writers(m)%vars(v)%nlevels
+            do jg = all_jsc(r), all_jec(r)
+              do ig = all_isc(r), all_iec(r)
+                idx = idx + 1
+                writers(m)%vars(v)%gbuf_3d(ig - isg + 1, jg - jsg + 1, kk) = recvs(idx_done)%buf(idx)
+              end do
+            end do
+          end do
+        end do
+      end if
     end if
+    if (allocated(recvs(idx_done)%buf)) deallocate(recvs(idx_done)%buf)
   end do
 
-  do i = 1, rq_count
-    if (allocated(sends(i)%buf)) deallocate(sends(i)%buf)
-    if (allocated(recvs(i)%buf)) deallocate(recvs(i)%buf)
-  end do
   deallocate(reqs, req_writer, req_var, sends, recvs, rc, disp)
 
 9999 continue
@@ -1314,7 +1316,7 @@ end subroutine soca_io_readers_commit_ensemble
 subroutine reader_stage_distribute_all_async(readers)
   type(soca_io_reader), intent(inout) :: readers(:)
 
-  integer :: nprocs, ierr, r, m, v, idx, full_count
+  integer :: nprocs, ierr, r, m, v, idx, full_count, idx_done
   integer :: my_isc, my_iec, my_jsc, my_jec, my_count2d, mp_comm
   integer :: n3, n4, i, j, k, k4, nx_c, ny_c, i_off, j_off
   integer, allocatable :: all_isc(:), all_iec(:), all_jsc(:), all_jec(:)
@@ -1426,13 +1428,20 @@ subroutine reader_stage_distribute_all_async(readers)
     end do
   end do
 
-  ! Phase B: wait.
-  call MPI_Waitall(rq_count, reqs, MPI_STATUSES_IGNORE, ierr)
-
-  ! Phase C: unpack recvbufs into caller compute slices (1D was bcast in-place).
+  ! Phase B/C: complete the scatters one at a time. As each Iscatterv (or the
+  ! 1D Ibcast) finishes, the root's send buffer is done with and is freed, and
+  ! the receiver unpacks its recv buffer into the caller compute slice and frees
+  ! it. The send buffers are global-field sized on the root (packed from gbuf),
+  ! so freeing per-completion instead of holding all of them until one Waitall
+  ! keeps the transient high-water at the in-flight set, not every member at
+  ! once. Requests are still all posted up front, so the overlap is unchanged.
   do idx = 1, rq_count
-    m = req_reader(idx)
-    v = req_var(idx)
+    call MPI_Waitany(rq_count, reqs, idx_done, MPI_STATUS_IGNORE, ierr)
+    if (idx_done == MPI_UNDEFINED) exit
+    ! 1D vars were Ibcast in-place with no send/recv buffers; the guards skip.
+    if (allocated(sends(idx_done)%buf)) deallocate(sends(idx_done)%buf)
+    m = req_reader(idx_done)
+    v = req_var(idx_done)
     if (readers(m)%vars(v)%ndims == 1) cycle
 
     if (readers(m)%vars(v)%ndims == 2) then
@@ -1456,22 +1465,19 @@ subroutine reader_stage_distribute_all_async(readers)
             ux = ux + 1
             select case (readers(m)%vars(v)%ndims)
             case (2)
-              readers(m)%vars(v)%data2d(i_off + i - 1, j_off + j - 1) = recvs(idx)%buf(ux)
+              readers(m)%vars(v)%data2d(i_off + i - 1, j_off + j - 1) = recvs(idx_done)%buf(ux)
             case (3)
-              readers(m)%vars(v)%data3d(i_off + i - 1, j_off + j - 1, k) = recvs(idx)%buf(ux)
+              readers(m)%vars(v)%data3d(i_off + i - 1, j_off + j - 1, k) = recvs(idx_done)%buf(ux)
             case (4)
-              readers(m)%vars(v)%data4d(i_off + i - 1, j_off + j - 1, k, k4) = recvs(idx)%buf(ux)
+              readers(m)%vars(v)%data4d(i_off + i - 1, j_off + j - 1, k, k4) = recvs(idx_done)%buf(ux)
             end select
           end do
         end do
       end do
     end do
+    if (allocated(recvs(idx_done)%buf)) deallocate(recvs(idx_done)%buf)
   end do
 
-  do idx = 1, size(sends)
-    if (allocated(sends(idx)%buf)) deallocate(sends(idx)%buf)
-    if (allocated(recvs(idx)%buf)) deallocate(recvs(idx)%buf)
-  end do
   deallocate(reqs, req_reader, req_var, sends, recvs, rc, disp)
 
 9999 continue
