@@ -40,7 +40,6 @@ public :: soca_io_writer
 public :: soca_io_reader
 public :: soca_io_file_exists, soca_io_var_exists
 public :: soca_io_config_from_yaml
-public :: soca_io_ensemble_write_parallel
 public :: soca_io_ensemble_batch_size
 public :: soca_io_ensemble_root_pe
 public :: soca_io_writers_commit_ensemble
@@ -52,7 +51,6 @@ integer, parameter :: MAX_NAME       = 256
 ! soca_geom_init via soca_io_config_from_yaml; persist for the run. Defaults are
 ! tuned for cluster-scale production (parallel write, scatter ensemble read,
 ! async MPI); single-state read stays strided to preserve direct-io behavior.
-logical, save :: ensemble_write_parallel_   = .true.
 logical, save :: ensemble_read_scatter_     = .true.
 logical, save :: single_state_read_scatter_ = .false.
 logical, save :: async_mpi_enabled_         = .true.
@@ -644,7 +642,7 @@ subroutine writer_stage_gather_all_async(writers)
 
   integer :: nprocs, ierr, r, m, v, idx, rq_count, max_reqs, req_idx, idx_done
   integer :: my_isc, my_iec, my_jsc, my_jec, my_count2d
-  integer :: nz_v, full_count, isg, jsg, nx_g, ny_g
+  integer :: nz_v, full_count, isg, jsg
   integer :: i, j, k, ig, jg, kk, mp_comm
   integer, allocatable :: all_isc(:), all_iec(:), all_jsc(:), all_jec(:)
   integer, allocatable :: tile_counts2d(:)
@@ -792,8 +790,6 @@ subroutine writer_stage_gather_all_async(writers)
     if (mpp_pe() == writers(m)%root_pe) then
       isg = writers(m)%isg
       jsg = writers(m)%jsg
-      nx_g = writers(m)%nx_g
-      ny_g = writers(m)%ny_g
       if (writers(m)%vars(v)%ndims == 2) then
         idx = 0
         do r = 1, nprocs
@@ -1776,10 +1772,10 @@ end subroutine ncc
 ! Resolve the module-level I/O dispatch knobs from the geometry YAML. Looked-up
 ! keys (all optional, defaults retained on miss):
 !     io:
-!       ensemble write: parallel | sequential   (default parallel)
 !       ensemble read:  scatter  | strided      (default scatter)
 !       single state read: strided | scatter    (default strided)
 !       async mpi: true | false                 (default true)
+!       ensemble batch size: N                  (default 0 = single batch)
 ! Called once from soca_geom_init with the geometry's fckit_configuration; the
 ! resolved values persist module-level for the rest of the run.
 !==============================================================================
@@ -1793,19 +1789,6 @@ subroutine soca_io_config_from_yaml(f_conf)
   if (.not. f_conf%has("io")) return
   ok = f_conf%get("io", io_conf)
   if (.not. ok) return
-
-  if (io_conf%has("ensemble write")) then
-    ok = io_conf%get("ensemble write", sval)
-    if (ok) then
-      select case (trim(sval))
-      case ("parallel");   ensemble_write_parallel_ = .true.
-      case ("sequential"); ensemble_write_parallel_ = .false.
-      case default
-        call mpp_error(FATAL, "soca_io_mod: geometry.io.'ensemble write' must be " // &
-            "'parallel' or 'sequential', got '" // trim(sval) // "'")
-      end select
-    end if
-  end if
 
   if (io_conf%has("ensemble read")) then
     ok = io_conf%get("ensemble read", sval)
@@ -1852,16 +1835,11 @@ end subroutine soca_io_config_from_yaml
 
 
 !==============================================================================
-! Public getter for the ensemble-write dispatch knob. Consumed by fields_mod
-! when it picks between the single-shot and parallel ensemble write paths.
+! Public getter for the ensemble I/O batch-size knob (0 = single batch over all
+! members). Consumed by fields_mod to wave the ensemble read/write in batches.
 ! (ensemble_read_scatter_ / single_state_read_scatter_ / async_mpi_enabled_ are
 ! read directly within this module, so they need no public getters.)
 !==============================================================================
-logical function soca_io_ensemble_write_parallel()
-  soca_io_ensemble_write_parallel = ensemble_write_parallel_
-end function soca_io_ensemble_write_parallel
-
-! Ensemble I/O batch size knob (0 = single batch over all members).
 integer function soca_io_ensemble_batch_size()
   soca_io_ensemble_batch_size = ensemble_batch_size_
 end function soca_io_ensemble_batch_size

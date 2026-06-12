@@ -34,7 +34,6 @@ use soca_io_mod, only : soca_io_reader, soca_io_writer, &
                         soca_io_writers_commit_ensemble, &
                         soca_io_readers_commit_ensemble, &
                         soca_io_ensemble_root_pe, &
-                        soca_io_ensemble_write_parallel, &
                         soca_io_ensemble_batch_size
 
 ! SOCA modules
@@ -1167,8 +1166,8 @@ end subroutine soca_fields_write_rst
 !> Bulk write multiple states/increments in one ensemble pass. Each member's
 !! per-domain files are written from a rotated writer PE (assigned by
 !! soca_io_ensemble_root_pe) so disk writes happen concurrently across the
-!! world communicator. Falls back to sequential per-member commit when
-!! geometry.io.'ensemble write' is 'sequential'.
+!! world communicator. The geometry.io.'ensemble batch size' knob bounds how
+!! many members are committed per pass (batch 1 serializes, like a serial write).
 !!
 !! Behavior per-member is identical to soca_fields_write_rst: both build each
 !! per-domain writer via soca_fields_enqueue_domain (same domain set, filename,
@@ -1265,16 +1264,10 @@ subroutine soca_fields_write_ensemble(fields_ptrs, c_confs, vdates)
       end do
     end do
 
-    ! Commit. The 'sequential' fallback is kept for A/B; it does not benefit
-    ! from rotated root_pes (each writer still gathers to its assigned PE), so
-    ! reproducibility holds.
-    if (soca_io_ensemble_write_parallel()) then
-      call soca_io_writers_commit_ensemble(writers)
-    else
-      do wi = 1, nwriters
-        call writers(wi)%commit()
-      end do
-    end if
+    ! Commit the batch through the ensemble orchestrator. Serialization for a
+    ! memory ceiling is the batch-size knob's job (batch 1 commits one member at
+    ! a time, matching a serial write); there is no separate sequential path.
+    call soca_io_writers_commit_ensemble(writers)
 
     ! Cleanup. Atlas fields use refcounted handles -> need explicit final().
     do wi = 1, nwriters
