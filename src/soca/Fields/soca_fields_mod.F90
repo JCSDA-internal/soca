@@ -34,7 +34,8 @@ use soca_io_mod, only : soca_io_reader, soca_io_writer, &
                         soca_io_writers_commit_ensemble, &
                         soca_io_readers_commit_ensemble, &
                         soca_io_ensemble_root_pe, &
-                        soca_io_ensemble_write_parallel
+                        soca_io_ensemble_write_parallel, &
+                        soca_io_ensemble_batch_size
 
 ! SOCA modules
 use soca_fields_metadata_mod, only : soca_field_metadata
@@ -1185,6 +1186,7 @@ subroutine soca_fields_write_ensemble(fields_ptrs, c_confs, vdates)
 
   integer, parameter :: max_string_length = 800
   integer :: nmembers, m, d, f, n, wi, nwriters, root_pe
+  integer :: batch_size, mb_start, mb_end, nbatch
   character(len=3), allocatable :: domains(:)
   character(len=:), allocatable :: domain_filename
   logical :: date_cols
@@ -1201,75 +1203,90 @@ subroutine soca_fields_write_ensemble(fields_ptrs, c_confs, vdates)
 
   domains = [character(len=3) :: "ocn", "sfc", "ice", "wav", "bio"]
 
-  ! Pass 1: count writers (one per (member, domain) with vars).
-  nwriters = 0
-  do m = 1, nmembers
-    fld => fields_ptrs(m)%p
-    do d = 1, size(domains)
-      n = 0
-      do f = 1, size(fld%fields)
-        if (fld%fields(f)%metadata%io_file == domains(d)) n = n + 1
+  ! Resolve the batch size: process the ensemble in waves of at most batch_size
+  ! members so peak memory is bounded by one wave's writers + scratch rather
+  ! than the whole ensemble. 0 / >= nmembers means a single batch (the default,
+  ! maximum overlap, byte-identical to the unbatched path).
+  batch_size = soca_io_ensemble_batch_size()
+  if (batch_size <= 0 .or. batch_size > nmembers) batch_size = nmembers
+
+  do mb_start = 1, nmembers, batch_size
+    mb_end = min(mb_start + batch_size - 1, nmembers)
+    nbatch = mb_end - mb_start + 1
+
+    ! Pass 1: count writers (one per (member, domain) with vars) in this batch.
+    nwriters = 0
+    do m = mb_start, mb_end
+      fld => fields_ptrs(m)%p
+      do d = 1, size(domains)
+        n = 0
+        do f = 1, size(fld%fields)
+          if (fld%fields(f)%metadata%io_file == domains(d)) n = n + 1
+        end do
+        if (n > 0) nwriters = nwriters + 1
       end do
-      if (n > 0) nwriters = nwriters + 1
     end do
-  end do
-  if (nwriters == 0) return
+    if (nwriters == 0) cycle
 
-  allocate(writers(nwriters))
-  allocate(vars_arr(nwriters))
+    allocate(writers(nwriters))
+    allocate(vars_arr(nwriters))
 
-  ! Pass 2: build writers and enqueue. Construct fckit_configuration on the fly
-  ! per member (array assignment of fckit_configuration drops the underlying
-  ! c_ptr in some compiler/version combos, so we materialize a fresh handle
-  ! each iteration -- same pattern as the single-state interface).
-  wi = 0
-  do m = 1, nmembers
-    fld => fields_ptrs(m)%p
-    f_conf = fckit_configuration(c_confs(m))
-    date_cols = .true.
-    if (f_conf%has("date colons")) then
-      call f_conf%get_or_die("date colons", date_cols)
+    ! Pass 2: build writers and enqueue. Construct fckit_configuration on the fly
+    ! per member (array assignment of fckit_configuration drops the underlying
+    ! c_ptr in some compiler/version combos, so we materialize a fresh handle
+    ! each iteration -- same pattern as the single-state interface).
+    wi = 0
+    do m = mb_start, mb_end
+      fld => fields_ptrs(m)%p
+      f_conf = fckit_configuration(c_confs(m))
+      date_cols = .true.
+      if (f_conf%has("date colons")) then
+        call f_conf%get_or_die("date colons", date_cols)
+      end if
+
+      ! Rotate the writer root PE by position WITHIN the batch so each batch
+      ! spreads its members one-per-PE across the comm (rather than by global
+      ! member index, which would pile a consecutive batch onto few PEs).
+      root_pe = soca_io_ensemble_root_pe(m - mb_start + 1, nbatch)
+
+      do d = 1, size(domains)
+        ! count vars for this (member, domain); must stay in lockstep with the
+        ! pass-1 nwriters count so wi indexes the preallocated writers array.
+        n = 0
+        do f = 1, size(fld%fields)
+          if (fld%fields(f)%metadata%io_file == domains(d)) n = n + 1
+        end do
+        if (n == 0) cycle
+
+        wi = wi + 1
+        domain_filename = soca_genfilename(f_conf, max_string_length, vdates(m), date_cols, domains(d))
+        call soca_fields_enqueue_domain(fld, domains(d), domain_filename, &
+                                        writers(wi), vars_arr(wi)%vars, root_pe=root_pe)
+      end do
+    end do
+
+    ! Commit. The 'sequential' fallback is kept for A/B; it does not benefit
+    ! from rotated root_pes (each writer still gathers to its assigned PE), so
+    ! reproducibility holds.
+    if (soca_io_ensemble_write_parallel()) then
+      call soca_io_writers_commit_ensemble(writers)
+    else
+      do wi = 1, nwriters
+        call writers(wi)%commit()
+      end do
     end if
 
-    root_pe = soca_io_ensemble_root_pe(m, nmembers)
-
-    do d = 1, size(domains)
-      ! count vars for this (member, domain); must stay in lockstep with the
-      ! pass-1 nwriters count so wi indexes the preallocated writers array.
-      n = 0
-      do f = 1, size(fld%fields)
-        if (fld%fields(f)%metadata%io_file == domains(d)) n = n + 1
-      end do
-      if (n == 0) cycle
-
-      wi = wi + 1
-      domain_filename = soca_genfilename(f_conf, max_string_length, vdates(m), date_cols, domains(d))
-      call soca_fields_enqueue_domain(fld, domains(d), domain_filename, &
-                                      writers(wi), vars_arr(wi)%vars, root_pe=root_pe)
-    end do
-  end do
-
-  ! Commit. The 'sequential' fallback is kept for A/B; it does not benefit
-  ! from rotated root_pes (each writer still gathers to its assigned PE), so
-  ! reproducibility holds.
-  if (soca_io_ensemble_write_parallel()) then
-    call soca_io_writers_commit_ensemble(writers)
-  else
+    ! Cleanup. Atlas fields use refcounted handles -> need explicit final().
     do wi = 1, nwriters
-      call writers(wi)%commit()
+      if (.not. allocated(vars_arr(wi)%vars)) cycle
+      do n = 1, size(vars_arr(wi)%vars)
+        if (allocated(vars_arr(wi)%vars(n)%data)) deallocate(vars_arr(wi)%vars(n)%data)
+        call vars_arr(wi)%vars(n)%afield%final()
+      end do
+      deallocate(vars_arr(wi)%vars)
     end do
-  end if
-
-  ! Cleanup. Atlas fields use refcounted handles -> need explicit final().
-  do wi = 1, nwriters
-    if (.not. allocated(vars_arr(wi)%vars)) cycle
-    do n = 1, size(vars_arr(wi)%vars)
-      if (allocated(vars_arr(wi)%vars(n)%data)) deallocate(vars_arr(wi)%vars(n)%data)
-      call vars_arr(wi)%vars(n)%afield%final()
-    end do
-    deallocate(vars_arr(wi)%vars)
+    deallocate(writers, vars_arr)
   end do
-  deallocate(writers, vars_arr)
 end subroutine soca_fields_write_ensemble
 
 
@@ -1291,6 +1308,7 @@ subroutine soca_fields_read_ensemble(fields_ptrs, c_confs, vdates)
   type(datetime),             intent(inout) :: vdates(:)
 
   integer :: nmembers, m, ri, nreaders_total, root_pe, k
+  integer :: batch_size, mb_start, mb_end, nbatch, j
   type(read_plan_t), allocatable, target :: plans(:)
   type(soca_io_reader), allocatable :: flat_readers(:)
   type(fckit_configuration) :: f_conf
@@ -1301,52 +1319,67 @@ subroutine soca_fields_read_ensemble(fields_ptrs, c_confs, vdates)
     call abor1_ftn("soca_fields_read_ensemble: input array size mismatch")
   end if
 
-  allocate(plans(nmembers))
+  ! Resolve the batch size: read the ensemble in waves of at most batch_size
+  ! members so the staged global fields (one per member on each reader PE) plus
+  ! per-member scratch never exceed one wave's worth. 0 / >= nmembers means a
+  ! single batch (the default, byte-identical to the unbatched read).
+  batch_size = soca_io_ensemble_batch_size()
+  if (batch_size <= 0 .or. batch_size > nmembers) batch_size = nmembers
 
-  ! Pass 1: prepare each member. Rotated reader_pe spreads the bulk reads
-  ! across PEs so they hit different files concurrently in the scatter path.
-  ! Construct fckit_configuration on the fly per member -- array-of-handles
-  ! through the c-binding has dropped the c_ptr in some compiler/version
-  ! combos; same pattern as soca_fields_write_ensemble.
-  do m = 1, nmembers
-    f_conf = fckit_configuration(c_confs(m))
-    root_pe = soca_io_ensemble_root_pe(m, nmembers)
-    call soca_fields_read_prepare(fields_ptrs(m)%p, f_conf, vdates(m), plans(m), &
-                                  reader_pe=root_pe)
-  end do
+  do mb_start = 1, nmembers, batch_size
+    mb_end = min(mb_start + batch_size - 1, nmembers)
+    nbatch = mb_end - mb_start + 1
 
-  ! Pass 2: flatten all per-domain readers into one array for the bulk commit.
-  ! Intrinsic assignment deep-copies the read_entry vars(:) but shallow-copies
-  ! their pointer components (data1d/2d/3d/4d -> plans(m)%domain_vars(...)%data
-  ! scratch buffers) and the domain pointer. The read_entry gbuf_* allocatables
-  ! are unallocated at copy time (only populated during reader_stage_read on
-  ! flat_readers), so the deep-copy doesn't duplicate any payload. The bulk
-  ! scatter delivers data straight into the buffers finalize reads from.
-  nreaders_total = 0
-  do m = 1, nmembers
-    nreaders_total = nreaders_total + size(plans(m)%readers)
-  end do
-  if (nreaders_total > 0) then
-    allocate(flat_readers(nreaders_total))
-    k = 0
-    do m = 1, nmembers
-      do ri = 1, size(plans(m)%readers)
-        k = k + 1
-        flat_readers(k) = plans(m)%readers(ri)
-      end do
+    allocate(plans(nbatch))
+
+    ! Pass 1: prepare each member in the batch. The reader_pe is rotated by
+    ! position WITHIN the batch so each batch spreads its bulk reads one-per-PE
+    ! across the comm (hitting different files concurrently in the scatter path).
+    ! Construct fckit_configuration on the fly per member -- array-of-handles
+    ! through the c-binding has dropped the c_ptr in some compiler/version
+    ! combos; same pattern as soca_fields_write_ensemble.
+    do j = 1, nbatch
+      m = mb_start + j - 1
+      f_conf = fckit_configuration(c_confs(m))
+      root_pe = soca_io_ensemble_root_pe(j, nbatch)
+      call soca_fields_read_prepare(fields_ptrs(m)%p, f_conf, vdates(m), plans(j), &
+                                    reader_pe=root_pe)
     end do
-    call soca_io_readers_commit_ensemble(flat_readers)
-    deallocate(flat_readers)
-  end if
 
-  ! Pass 3: per-member finalize -- copy scratch -> atlas, run post-processing
-  ! (CICE category deferred read, ice/snow thickness, mid-layer depth, MLD,
-  ! vertical remap), release scratch.
-  do m = 1, nmembers
-    call soca_fields_read_finalize(fields_ptrs(m)%p, plans(m))
+    ! Pass 2: flatten all per-domain readers into one array for the bulk commit.
+    ! Intrinsic assignment deep-copies the read_entry vars(:) but shallow-copies
+    ! their pointer components (data1d/2d/3d/4d -> plans(j)%domain_vars(...)%data
+    ! scratch buffers) and the domain pointer. The read_entry gbuf_* allocatables
+    ! are unallocated at copy time (only populated during reader_stage_read on
+    ! flat_readers), so the deep-copy doesn't duplicate any payload. The bulk
+    ! scatter delivers data straight into the buffers finalize reads from.
+    nreaders_total = 0
+    do j = 1, nbatch
+      nreaders_total = nreaders_total + size(plans(j)%readers)
+    end do
+    if (nreaders_total > 0) then
+      allocate(flat_readers(nreaders_total))
+      k = 0
+      do j = 1, nbatch
+        do ri = 1, size(plans(j)%readers)
+          k = k + 1
+          flat_readers(k) = plans(j)%readers(ri)
+        end do
+      end do
+      call soca_io_readers_commit_ensemble(flat_readers)
+      deallocate(flat_readers)
+    end if
+
+    ! Pass 3: per-member finalize -- copy scratch -> atlas, run post-processing
+    ! (CICE category deferred read, ice/snow thickness, mid-layer depth, MLD,
+    ! vertical remap), release scratch.
+    do j = 1, nbatch
+      m = mb_start + j - 1
+      call soca_fields_read_finalize(fields_ptrs(m)%p, plans(j))
+    end do
+
+    deallocate(plans)
   end do
-
-  deallocate(plans)
 end subroutine soca_fields_read_ensemble
 
 

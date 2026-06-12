@@ -41,6 +41,7 @@ public :: soca_io_reader
 public :: soca_io_file_exists, soca_io_var_exists
 public :: soca_io_config_from_yaml
 public :: soca_io_ensemble_write_parallel
+public :: soca_io_ensemble_batch_size
 public :: soca_io_ensemble_root_pe
 public :: soca_io_writers_commit_ensemble
 public :: soca_io_readers_commit_ensemble
@@ -55,6 +56,13 @@ logical, save :: ensemble_write_parallel_   = .true.
 logical, save :: ensemble_read_scatter_     = .true.
 logical, save :: single_state_read_scatter_ = .false.
 logical, save :: async_mpi_enabled_         = .true.
+! Ensemble I/O batch size: how many members are processed (built, committed,
+! freed) in one bulk read/write pass. 0 (the default) means a single batch over
+! all members -- maximum I/O overlap, peak memory ~ all members resident at
+! once. A positive N caps the working set to N members per pass, trading I/O
+! concurrency for a memory ceiling (set N ~ npes for one wave per PE). Consumed
+! by the soca_fields ensemble drivers.
+integer, save :: ensemble_batch_size_       = 0
 integer, parameter :: MAX_FILE_NDIMS = 8
 
 ! Reader is stateless across commits: every reader_commit nf90_opens the file,
@@ -1774,6 +1782,7 @@ subroutine soca_io_config_from_yaml(f_conf)
   type(fckit_configuration) :: io_conf
   character(len=:), allocatable :: sval
   logical :: lval, ok
+  integer :: ival
 
   if (.not. f_conf%has("io")) return
   ok = f_conf%get("io", io_conf)
@@ -1822,6 +1831,17 @@ subroutine soca_io_config_from_yaml(f_conf)
     ok = io_conf%get("async mpi", lval)
     if (ok) async_mpi_enabled_ = lval
   end if
+
+  if (io_conf%has("ensemble batch size")) then
+    ok = io_conf%get("ensemble batch size", ival)
+    if (ok) then
+      if (ival < 0) then
+        call mpp_error(FATAL, "soca_io_mod: geometry.io.'ensemble batch size' must be " // &
+            ">= 0 (0 = single batch over all members)")
+      end if
+      ensemble_batch_size_ = ival
+    end if
+  end if
 end subroutine soca_io_config_from_yaml
 
 
@@ -1834,6 +1854,11 @@ end subroutine soca_io_config_from_yaml
 logical function soca_io_ensemble_write_parallel()
   soca_io_ensemble_write_parallel = ensemble_write_parallel_
 end function soca_io_ensemble_write_parallel
+
+! Ensemble I/O batch size knob (0 = single batch over all members).
+integer function soca_io_ensemble_batch_size()
+  soca_io_ensemble_batch_size = ensemble_batch_size_
+end function soca_io_ensemble_batch_size
 
 
 !==============================================================================
