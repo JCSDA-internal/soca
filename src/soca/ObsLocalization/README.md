@@ -31,7 +31,9 @@ The computation uses local `rossby_radius` and cell `area` from geometry fields.
 
 At each model location, SOCA computes:
 
-$$L = \text{base value} + \text{rossby mult} \times \text{rossby\_radius}$$
+$$L = \text{base value} + \text{rossby mult} \times \text{rossby radius}$$
+
+where `rossby radius` is the local `rossby_radius` geometry field.
 
 Then applies the grid-size floor:
 
@@ -103,6 +105,9 @@ How this behaves:
 - Increase `rossby mult` to make localization more flow-dependent.
 - Increase `min grid mult` to avoid over-localization on small cells.
 - Use `min value`/`max value` to control extremes and improve robustness.
+
+## Solver compatibility
+Rossby localization currently works only with LETKF / GETKF. It is not yet supported with sequential EnKF solvers (e.g. EAKF), which require obs–obs localization. `rossby_radius` is only defined on the model grid, not at arbitrary obs pairs. Invoking it from a sequential solver aborts at runtime.
 
 ## Example files in SOCA tests
 
