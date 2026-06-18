@@ -319,9 +319,13 @@ class AnalysisPostproc : public oops::Application {
     if (incPostprocConfig.has("set increment variables to zero")) {
       oops::Variables socaZeroIncrVar(incPostprocConfig, "set increment variables to zero");
       if (!(socaZeroIncrVar <= incs.variables())) {
-        oops::Log::error() << "Variables to zero must be a subset of increment variables"
-                           << std::endl;
-        throw eckit::UserError("Invalid variables to zero", Here());
+        // Add variables that have to be set to zero to the increment variables,
+        // so that the increment can be updated
+        oops::Variables newvars = incs.variables();
+        newvars += socaZeroIncrVar;
+        for (size_t jj = 0; jj < incs.size(); ++jj) {
+          incs[jj].increment().updateFields(newvars);
+        }
       }
       for (size_t jj = 0; jj < incs.size(); ++jj) {
         // Note: this is soca::Increment specific method
