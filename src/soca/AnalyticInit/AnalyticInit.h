@@ -10,14 +10,12 @@
 
 #include <string>
 
-#include "oops/interface/AnalyticInitBase.h"
-
-#include "ufo/ObsTraits.h"
+#include "ufo/AnalyticInitBase.h"
 
 namespace soca {
 
   class AnalyticInit :
-    public oops::interface::AnalyticInitBase<ufo::ObsTraits> {
+    public ufo::AnalyticInitBase {
    public:
     explicit AnalyticInit(const eckit::Configuration &) {}
     void fillGeoVaLs(const ufo::SampledLocations &, ufo::GeoVaLs &) const override;

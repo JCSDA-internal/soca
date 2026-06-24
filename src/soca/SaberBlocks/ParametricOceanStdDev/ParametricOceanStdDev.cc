@@ -27,7 +27,7 @@ ParametricOceanStdDev::ParametricOceanStdDev(
     const Parameters_ & params,
     const oops::FieldSet3D & xb,
     const oops::FieldSet3D & fg)
-  : saber::SaberOuterBlockBase(params, xb.validTime()),
+  : saber::SaberOuterBlockBase(params, xb.validTime(), geom, outerVars),
     geom_(geom),
     innerVars_(outerVars)
 {

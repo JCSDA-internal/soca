@@ -30,9 +30,6 @@ observations:
   observers:
   - obs space:
       name: SeaSurfaceTemp
-      distribution:
-        name: Halo
-        halo size: 3500.0e3
       obsdataout:
         engine:
           type: H5File
@@ -48,12 +45,10 @@ observations:
     obs error:
       covariance model: diagonal
     obs localizations:
-    - localization method: Rossby
-      base value: 100.0e3
-      rossby mult: 1.0
-      min grid mult: 2.0
-      min value: 200.0e3
-      max value: 900.0e3
+    # NOTE: Rossby localization is not yet working for EAKF. You're stuck with
+    # GC99 until that is sorted out!
+    - localization method: Horizontal Gaspari-Cohn
+      lengthscale: 3000e3
     obs filters:
     - filter: Domain Check
       where:
@@ -63,9 +58,6 @@ observations:
 
   - obs space:
       name: ADT
-      distribution:
-        name: Halo
-        halo size: 3500.0e3
       obsdataout:
         engine:
           type: H5File
@@ -80,12 +72,8 @@ observations:
     obs error:
       covariance model: diagonal
     obs localizations:
-    - localization method: Rossby
-      base value: 100.0e3
-      rossby mult: 1.0
-      min grid mult: 2.0
-      min value: 200.0e3
-      max value: 900.0e3
+    - localization method: Horizontal Gaspari-Cohn
+      lengthscale: 3000e3
     obs filters:
     - filter: Domain Check
       where:
@@ -103,7 +91,7 @@ driver:
   save prior variance: true
 
 local ensemble DA:
-  solver: Deterministic LETKF
+  solver: EAKF
   inflation:
     rtps: 0.5
     rtpp: 0.6
@@ -112,40 +100,40 @@ local ensemble DA:
 output:
   datadir: data_output/
   date: *date
-  exp: letkf
+  exp: eakf
   type: ens
 
 output ensemble increments:
   datadir: data_output/
   date: *date
-  exp: letkf.inc
+  exp: eakf.inc
   type: ens
 
 output mean prior:
   datadir: data_output/
   date: *date
-  exp: letkf
+  exp: eakf
   type: fc
 
 output variance prior:
   datadir: data_output/
   date: *date
-  exp: letkf
+  exp: eakf
   type: fc
 
 output variance posterior:
   datadir: data_output/
   date: *date
-  exp: letkf
+  exp: eakf
   type: an
 
 output increment:
   datadir: data_output/
   date: *date
-  exp: letkf.inc
+  exp: eakf.inc
   type: an
 
 test:
-  reference filename: testref/letkf.test
-  test output filename: testoutput/letkf.test
+  reference filename: testref/eakf.test
+  test output filename: testoutput/eakf.test
   float relative tolerance: 1e-5
