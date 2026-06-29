@@ -39,10 +39,10 @@ class Balance: public LinearVariableChangeBase {
   ~Balance();
 
 /// Perform linear transforms
-  void multiply(const Increment &, Increment &) const;
-  void multiplyInverse(const Increment &, Increment &) const;
-  void multiplyAD(const Increment &, Increment &) const;
-  void multiplyInverseAD(const Increment &, Increment &) const;
+  void multiply(const Increment &, Increment &) const override;
+  void multiplyInverse(const Increment &, Increment &) const override;
+  void multiplyAD(const Increment &, Increment &) const override;
+  void multiplyInverseAD(const Increment &, Increment &) const override;
 
  private:
   void print(std::ostream &) const override;
