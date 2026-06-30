@@ -1,8 +1,9 @@
-! (C) Copyright 2017-2021 UCAR
+! (C) Copyright 2017-2026 UCAR
 !
 ! This software is licensed under the terms of the Apache Licence Version 2.0
 ! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
 
+!> Variable balance operators for SOCA
 module soca_balance_mod
 
 use fckit_configuration_module, only: fckit_configuration
@@ -34,7 +35,7 @@ type, public :: soca_balance
   type(soca_kst), private             :: kst                 !< T/S balance
   type(soca_ksshts), private          :: ksshts              !< SSH/T/S balance
   real(kind=kind_real), private, allocatable :: kct(:,:)     !< C/T Jacobian
-  type(soca_geom),  pointer, private       :: geom !< geometry
+  type(soca_geom),  pointer, private       :: geom                 !< Geometry
 
 contains
   !> \copybrief soca_balance_setup \see soca_balance_setup
@@ -63,6 +64,10 @@ contains
 ! ------------------------------------------------------------------------------
 
 
+!> Tanh filter function
+!! @param[in] l   Input value
+!! @param[in] l0  Transition center
+!! @return        Filtered coefficient between 0 and 1
 function soca_tanh_filt(l, l0) result (coef)
   real(kind=kind_real), intent(in) :: l
   real(kind=kind_real), intent(in) :: l0
@@ -205,8 +210,8 @@ subroutine soca_balance_setup(self, f_conf, traj, geom)
   ! optionally write out Ksshts Jacobian
   if ( f_conf%has("ksshts.jacobian_output")) then
     call f_conf%get_or_die("ksshts.jacobian_output.filename", str)
-    call write_jacobian_to_netcdf(self%ksshts%kssht, geom, str, "kssht_jacobian")
-    call write_jacobian_to_netcdf(self%ksshts%ksshs, geom, str, "ksshs_jacobian")
+    call write_jacobian_to_netcdf(self%ksshts%kssht, geom, str, "kssht_jacobian", &
+                                  jacobian2=self%ksshts%ksshs, varname2="ksshs_jacobian")
   end if
 
   ! Compute Kct
