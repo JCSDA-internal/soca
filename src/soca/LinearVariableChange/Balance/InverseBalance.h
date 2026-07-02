@@ -29,14 +29,14 @@ namespace soca {
 
 namespace soca {
 
-/// SOCA linear change of variable
-class Balance: public LinearVariableChangeBase {
+/// SOCA balance: inverse
+class InverseBalance: public LinearVariableChangeBase {
  public:
   static const std::string classname() {return "soca::Balance";}
 
-  explicit Balance(const State &, const State &,
-                   const Geometry &, const eckit::Configuration &);
-  ~Balance();
+  explicit InverseBalance(const State &, const State &,
+                          const Geometry &, const eckit::Configuration &);
+  ~InverseBalance();
 
 /// Perform linear transforms
   void multiply(const Increment &, Increment &) const override;

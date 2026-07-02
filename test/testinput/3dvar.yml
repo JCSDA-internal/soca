@@ -52,7 +52,6 @@ cost function:
     - sea_water_depth
 
   background error:
-    full inverse: true
     covariance model: SABER
     saber central block:
       saber block name: diffusion
@@ -111,6 +110,22 @@ cost function:
       linear variable changes:
 
       - linear variable change name: BalanceSOCA
+        kst:
+          dsdtmax: 0.1
+          dsdzmin: 3.0e-6
+          dtdzmin: 1.0e-6
+          nlayers: 999
+        ksshts:
+          nlayers: 10
+        dcdt:
+          filename: data_static/72x35x25/dcdt.nc
+          name: dcdt
+    inverse linear variable change:
+      input variables: *soca_an_vars
+      output variables: *soca_an_vars
+      linear variable changes:
+
+      - linear variable change name: Inverse BalanceSOCA
         kst:
           dsdtmax: 0.1
           dsdzmin: 3.0e-6
