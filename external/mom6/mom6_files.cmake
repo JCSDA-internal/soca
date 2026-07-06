@@ -126,6 +126,7 @@ list(APPEND mom6_src_files
   MOM6/src/equation_of_state/TEOS10/gsw_t_freezing_poly.f90
   MOM6/src/equation_of_state/TEOS10/gsw_t_from_ct.f90
 
+  MOM6/src/framework/MOM_ANN.F90
   MOM6/src/framework/MOM_array_transform.F90
   MOM6/src/framework/MOM_checksums.F90
   MOM6/src/framework/MOM_coms.F90
