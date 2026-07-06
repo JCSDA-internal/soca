@@ -103,6 +103,23 @@ cost function:
           filename: data_static/72x35x25/dcdt.nc
           name: dcdt
 
+    inverse linear variable change:
+      input variables: *soca_an_vars
+      output variables: *soca_an_vars
+      linear variable changes:
+
+      - linear variable change name: Inverse BalanceSOCA
+        kst:
+          dsdtmax: 0.1
+          dsdzmin: 3.0e-6
+          dtdzmin: 1.0e-6
+          nlayers: 2
+        ksshts:
+          nlayers: 2
+        dcdt:
+          filename: data_static/72x35x25/dcdt.nc
+          name: dcdt
+
   observations:
     observers:
     - obs space:

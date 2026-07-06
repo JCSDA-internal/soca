@@ -55,6 +55,7 @@ cost function:
 
   background error:
     covariance model: SABER
+    full inverse: true
     saber central block:
       saber block name: diffusion
       read:

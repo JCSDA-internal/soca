@@ -104,7 +104,6 @@ class Soca2Cice: public VariableChangeBase {
   ~Soca2Cice();
 
   void changeVar(const State &, State &) const override;
-  void changeVarInverse(const State &, State &) const override;
 
  private:
   const Geometry & geom_;

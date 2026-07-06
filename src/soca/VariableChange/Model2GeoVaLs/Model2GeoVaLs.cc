@@ -46,10 +46,4 @@ void Model2GeoVaLs::changeVar(const State & xin, State & xout) const {
 
 // -----------------------------------------------------------------------------
 
-void Model2GeoVaLs::changeVarInverse(const State &, State &) const {
-  util::abor1_cpp("Model2GeoVaLs::changeVarInverse not implemented");
-}
-
-// -----------------------------------------------------------------------------
-
 }  // namespace soca
