@@ -12,6 +12,7 @@
 #include "oops/base/GeometryData.h"
 #include "oops/generic/Diffusion.h"
 #include "oops/util/FieldSetHelpers.h"
+#include "oops/util/Logger.h"
 
 #include "soca/Utils/OceanSmoother.h"
 
