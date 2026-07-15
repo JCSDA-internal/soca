@@ -39,7 +39,8 @@ observations:
   observers:
   - obs space:
       name: SeaSurfaceTemp
-      distribution:
+      use data frame container: true
+      redistribution:
         name: Halo
         halo size: 3500.0e3
       obsdataout:
@@ -66,7 +67,8 @@ observations:
 
   - obs space:
       name: ADT
-      distribution:
+      use data frame container: true
+      redistribution:
         name: Halo
         halo size: 3500.0e3
       obsdataout:

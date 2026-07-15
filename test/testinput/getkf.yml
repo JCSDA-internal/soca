@@ -29,8 +29,9 @@ background:
 observations:
   observers:
   - obs space:
+      use data frame container: true
       name: SeaSurfaceTemp
-      distribution:
+      redistribution:
         name: Halo
         halo size: 3500.0e3
       obsdataout:
@@ -59,11 +60,11 @@ observations:
       where:
       - variable: {name: GeoVaLs/sea_area_fraction}
         minvalue: 0.5
-      apply at iterations: 0,1
 
   - obs space:
+      use data frame container: true
       name: ADT
-      distribution:
+      redistribution:
         name: Halo
         halo size: 3500.0e3
       obsdataout:
@@ -91,7 +92,6 @@ observations:
       where:
       - variable: {name: GeoVaLs/sea_area_fraction}
         minvalue: 0.5
-      apply at iterations: 0,1
 
 driver:
   do posterior observer: true
@@ -146,4 +146,4 @@ test:
   reference filename: testref/getkf.test
   test output filename: testoutput/getkf.test
   float relative tolerance: 1e-2
-  float absolute tolerance: 1.2e-2
+  float absolute tolerance: 1e-2
