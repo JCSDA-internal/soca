@@ -482,6 +482,7 @@ subroutine soca_fields_read(self, f_conf, vdate)
 
   character(len=3), dimension(5) :: domains
   type(soca_field_metadata) :: field_meta
+  real(kind=kind_real) :: h_thresh
   domains = [character(len=3) :: "ocn", "sfc", "ice", "wav", "bio"]
 
   if ( f_conf%has("read_from_file") ) call f_conf%get_or_die("read_from_file", iread)
@@ -768,6 +769,39 @@ subroutine soca_fields_read(self, f_conf, vdate)
       call end_remapping(remapCS)
       deallocate(h_common_ij, hocn_ij, varocn_ij, varocn2_ij)
     end if
+
+    ! Set non-ocean cells to fillvalue based on cell thickness threshold.
+    ! A cell is considered non-ocean if its thickness is <= h_thresh.
+    ! The cell thickness field itself is excluded from this masking.
+    h_thresh = 0.01_kind_real
+    if (f_conf%has("ocean_cell_thickness_threshold")) &
+      call f_conf%get_or_die("ocean_cell_thickness_threshold", h_thresh)
+
+    if (self%afieldset%has("sea_water_cell_thickness")) then
+      afield1 = self%afieldset%field("sea_water_cell_thickness")
+      call afield1%data(adata1)
+      do n = 1, size(self%fields)
+        ! skip the cell thickness field used for masking
+        if (self%fields(n)%name == "sea_water_cell_thickness") cycle
+        ! only apply to 3D ocean fields
+        if (self%fields(n)%nz <= 1) cycle
+        afield2 = self%afieldset%field(self%fields(n)%name)
+        call afield2%data(adata2)
+        do j = self%geom%jsc, self%geom%jec
+          do i = self%geom%isc, self%geom%iec
+            idx = self%geom%atlas_ij2idx(i,j)
+            do k = 1, self%fields(n)%nz
+              if (adata1(k, idx) <= h_thresh) then
+                adata2(k, idx) = self%fields(n)%metadata%fillvalue
+              end if
+            end do
+          end do
+        end do
+        call afield2%set_dirty()
+        call afield2%final()
+      end do
+    end if
+
   end if
 
   ! cleanup

@@ -9,6 +9,7 @@ module soca_fields_metadata_mod
 use fckit_configuration_module, only: fckit_configuration, fckit_yamlconfiguration
 use fckit_pathname_module, only : fckit_pathname
 use kinds, only: kind_real
+use missing_values_mod, only: missing_value
 
 implicit none
 private
@@ -143,7 +144,7 @@ subroutine soca_fields_metadata_create(self, filename)
     if(.not. conf_list(i)%get("categories", val)) val = -1
     metadata_tmp(i)%categories = val
 
-    if(.not. conf_list(i)%get("fill value", val)) val = 0.0
+    if(.not. conf_list(i)%get("fill value", val)) val = missing_value(0.0_kind_real)
     metadata_tmp(i)%fillvalue = val
 
     if(.not. conf_list(i)%get("vert interp", bool)) then
