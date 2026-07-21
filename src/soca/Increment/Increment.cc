@@ -19,6 +19,7 @@
 #include "soca/Increment/IncrementFortran.h"
 #include "soca/State/State.h"
 
+#include "eckit/config/LocalConfiguration.h"
 #include "eckit/exception/Exceptions.h"
 
 #include "oops/base/GeometryData.h"
@@ -369,6 +370,55 @@ namespace soca {
   void Increment::write(const eckit::Configuration & files) const {
     const util::DateTime * dtp = &time_;
     soca_increment_write_file_f90(toFortran(), &files, &dtp);
+  }
+
+  // -----------------------------------------------------------------------------
+
+  void Increment::writeEnsemble(const std::vector<const Increment*> & increments,
+                                const std::vector<eckit::LocalConfiguration> & configs) {
+    Log::trace() << "soca::Increment::writeEnsemble starting (" << increments.size()
+                 << " members)" << std::endl;
+    ASSERT(increments.size() == configs.size());
+    if (increments.empty()) return;
+
+    const size_t n = increments.size();
+    std::vector<F90flds> keys(n);
+    std::vector<const eckit::Configuration*> confPtrs(n);
+    std::vector<const util::DateTime*> dtPtrs(n);
+    for (size_t i = 0; i < n; ++i) {
+      keys[i]     = increments[i]->keyFlds_;
+      confPtrs[i] = &configs[i];
+      dtPtrs[i]   = &increments[i]->time_;
+    }
+    const int nm = static_cast<int>(n);
+    soca_increment_write_ensemble_f90(nm, keys.data(), confPtrs.data(), dtPtrs.data());
+    Log::trace() << "soca::Increment::writeEnsemble done" << std::endl;
+  }
+
+  // -----------------------------------------------------------------------------
+
+  void Increment::readEnsemble(const std::vector<Increment*> & increments,
+                               const std::vector<eckit::LocalConfiguration> & configs) {
+    Log::trace() << "soca::Increment::readEnsemble starting (" << increments.size()
+                 << " members)" << std::endl;
+    ASSERT(increments.size() == configs.size());
+    if (increments.empty()) return;
+
+    const size_t n = increments.size();
+    std::vector<F90flds> keys(n);
+    std::vector<const eckit::Configuration*> confPtrs(n);
+    std::vector<util::DateTime*> dtPtrs(n);
+    for (size_t i = 0; i < n; ++i) {
+      keys[i]     = increments[i]->keyFlds_;
+      confPtrs[i] = &configs[i];
+      dtPtrs[i]   = &increments[i]->time_;
+    }
+    const int nm = static_cast<int>(n);
+    soca_increment_read_ensemble_f90(nm, keys.data(), confPtrs.data(), dtPtrs.data());
+
+    for (auto* x : increments) x->fieldSet_.set_dirty();
+
+    Log::trace() << "soca::Increment::readEnsemble done" << std::endl;
   }
 
   // -----------------------------------------------------------------------------

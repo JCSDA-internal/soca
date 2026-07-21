@@ -289,6 +289,59 @@ namespace soca {
 
   // -----------------------------------------------------------------------------
 
+  void State::writeEnsemble(const std::vector<const State*> & states,
+                            const std::vector<eckit::LocalConfiguration> & configs) {
+    Log::trace() << "soca::State::writeEnsemble starting (" << states.size()
+                 << " members)" << std::endl;
+    ASSERT(states.size() == configs.size());
+    if (states.empty()) return;
+
+    const size_t n = states.size();
+    std::vector<F90flds> keys(n);
+    std::vector<const eckit::Configuration*> confPtrs(n);
+    std::vector<const util::DateTime*> dtPtrs(n);
+    for (size_t i = 0; i < n; ++i) {
+      keys[i]     = states[i]->keyFlds_;
+      confPtrs[i] = &configs[i];
+      dtPtrs[i]   = &states[i]->time_;
+    }
+    const int nm = static_cast<int>(n);
+    soca_state_write_ensemble_f90(nm, keys.data(), confPtrs.data(), dtPtrs.data());
+    Log::trace() << "soca::State::writeEnsemble done" << std::endl;
+  }
+
+  // -----------------------------------------------------------------------------
+
+  void State::readEnsemble(const std::vector<State*> & states,
+                           const std::vector<eckit::LocalConfiguration> & configs) {
+    Log::trace() << "soca::State::readEnsemble starting (" << states.size()
+                 << " members)" << std::endl;
+    ASSERT(states.size() == configs.size());
+    if (states.empty()) return;
+
+    const size_t n = states.size();
+    std::vector<F90flds> keys(n);
+    std::vector<const eckit::Configuration*> confPtrs(n);
+    std::vector<util::DateTime*> dtPtrs(n);
+    for (size_t i = 0; i < n; ++i) {
+      keys[i]     = states[i]->keyFlds_;
+      confPtrs[i] = &configs[i];
+      dtPtrs[i]   = &states[i]->time_;
+    }
+    const int nm = static_cast<int>(n);
+    soca_state_read_ensemble_f90(nm, keys.data(), confPtrs.data(), dtPtrs.data());
+
+    // Fortran-side soca_fields_read_finalize marks each atlas::Field dirty,
+    // but the C++ atlas::FieldSet wrapper keeps its own dirty-bit cache that
+    // doesn't auto-update from the underlying fields. Mirror the writeEnsemble
+    // pattern and re-mark here so downstream FieldSet consumers refresh.
+    for (auto* x : states) x->fieldSet_.set_dirty();
+
+    Log::trace() << "soca::State::readEnsemble done" << std::endl;
+  }
+
+  // -----------------------------------------------------------------------------
+
   void State::updateFields(const oops::Variables & vars) {
     // remove fields from the fieldset that are no longer in vars
     atlas::FieldSet orig = util::shareFields(fieldSet_);
