@@ -64,6 +64,7 @@ observations:
     - filter: Thinning
       amount: 0.1
       random seed: 0
+      apply at iterations: 0,1
 
   - obs space:
       name: ADT

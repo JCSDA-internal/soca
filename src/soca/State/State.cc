@@ -248,6 +248,11 @@ namespace soca {
     const auto missing = util::missingValue<double>();
     for (const auto & src : dx_interp->fieldSet()) {
       const auto v_src = atlas::array::make_view<double, 2>(src);
+      if (!fieldSet_.has(src.name())) {
+        oops::Log::warning() << "State does not have variable " << src.name()
+                             << " from Increment, skipping." << std::endl;
+        continue;
+      }
       auto & dst = fieldSet_.field(src.name());
       auto v_dst = atlas::array::make_view<double, 2>(dst);
       for (size_t i = 0; i < src.shape(0); ++i) {

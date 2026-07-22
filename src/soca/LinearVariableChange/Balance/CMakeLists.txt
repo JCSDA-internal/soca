@@ -6,4 +6,5 @@ soca_target_sources(
   soca_balance.interface.F90
   soca_ksshts_mod.F90
   soca_kst_mod.F90
+  soca_write_jacobian_mod.F90
 )

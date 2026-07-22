@@ -1,12 +1,12 @@
-! (C) Copyright 2017-2021 UCAR
+! (C) Copyright 2017-2026 UCAR
 !
 ! This software is licensed under the terms of the Apache Licence Version 2.0
 ! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
 
+!> Variable balance operators for SOCA
 module soca_balance_mod
 
 use fckit_configuration_module, only: fckit_configuration
-use fms_mod, only: read_data
 use kinds, only: kind_real
 use atlas_module, only: atlas_field
 
@@ -14,9 +14,11 @@ use atlas_module, only: atlas_field
 use soca_fields_mod, only: soca_field
 use soca_geom_mod, only: soca_geom
 use soca_increment_mod, only: soca_increment
+use soca_io_mod, only: soca_io_reader
 use soca_ksshts_mod, only: soca_ksshts, soca_steric_jacobian
 use soca_kst_mod, only: soca_kst, soca_soft_jacobian
 use soca_state_mod, only: soca_state
+use soca_write_jacobian_mod, only: write_jacobian_to_netcdf
 
 implicit none
 private
@@ -33,7 +35,7 @@ type, public :: soca_balance
   type(soca_kst), private             :: kst                 !< T/S balance
   type(soca_ksshts), private          :: ksshts              !< SSH/T/S balance
   real(kind=kind_real), private, allocatable :: kct(:,:)     !< C/T Jacobian
-  type(soca_geom),  pointer, private       :: geom !< geometry
+  type(soca_geom),  pointer, private       :: geom                 !< Geometry
 
 contains
   !> \copybrief soca_balance_setup \see soca_balance_setup
@@ -62,6 +64,10 @@ contains
 ! ------------------------------------------------------------------------------
 
 
+!> Tanh filter function
+!! @param[in] l   Input value
+!! @param[in] l0  Transition center
+!! @return        Filtered coefficient between 0 and 1
 function soca_tanh_filt(l, l0) result (coef)
   real(kind=kind_real), intent(in) :: l
   real(kind=kind_real), intent(in) :: l0
@@ -96,10 +102,12 @@ subroutine soca_balance_setup(self, f_conf, traj, geom)
 
   ! declarations related to the dynamic height Jacobians
   character(len=:), allocatable :: filename
+  character(len=:), allocatable :: str
 
   ! declarations related to the sea-ice Jacobian
   character(len=:), allocatable :: kct_name
-  real(kind=kind_real), allocatable :: kct(:,:) !> dc/dT
+  real(kind=kind_real), allocatable, target :: kct(:,:) !> dc/dT (target for soca_io_reader pointer association)
+  type(soca_io_reader) :: dcdt_reader
 
   self%geom => geom
 
@@ -165,6 +173,12 @@ subroutine soca_balance_setup(self, f_conf, traj, geom)
         end do
      end do
      deallocate(jac)
+
+    ! optionally write out Kst Jacobian
+    if ( f_conf%has("kst.jacobian_output")) then
+      call f_conf%get_or_die("kst.jacobian_output.filename", str)
+      call write_jacobian_to_netcdf(self%kst%jacobian, geom, str, "kst_jacobian")
+    end if
   end if
 
   ! Get configuration for Ksshts
@@ -193,6 +207,13 @@ subroutine soca_balance_setup(self, f_conf, traj, geom)
   end do
   deallocate(jac)
 
+  ! optionally write out Ksshts Jacobian
+  if ( f_conf%has("ksshts.jacobian_output")) then
+    call f_conf%get_or_die("ksshts.jacobian_output.filename", str)
+    call write_jacobian_to_netcdf(self%ksshts%kssht, geom, str, "kssht_jacobian", &
+                                  jacobian2=self%ksshts%ksshs, varname2="ksshs_jacobian")
+  end if
+
   ! Compute Kct
   if (traj%has("sea_ice_area_fraction")) then
     ! Setup dc/dT
@@ -201,7 +222,9 @@ subroutine soca_balance_setup(self, f_conf, traj, geom)
     if ( f_conf%has("dcdt") ) then
       call f_conf%get_or_die("dcdt.filename", filename)
       call f_conf%get_or_die("dcdt.name", kct_name)
-      call read_data(filename, kct_name, kct, domain=geom%Domain%mpp_domain)
+      call dcdt_reader%init(geom%Domain%mpp_domain, filename)
+      call dcdt_reader%enqueue(kct_name, kct)
+      call dcdt_reader%commit()
     end if
     allocate(self%kct(isc:iec,jsc:jec))
     self%kct = 0.0_kind_real

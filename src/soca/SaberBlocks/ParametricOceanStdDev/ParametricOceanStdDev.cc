@@ -5,6 +5,8 @@
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
  */
 
+#include <cmath>
+
 #include "oops/util/Logger.h"
 #include "oops/util/Timer.h"
 
@@ -144,7 +146,7 @@ ParametricOceanStdDev::ParametricOceanStdDev(
       double sstVal = v_sstErr(i, 0);
       for (size_t z = 0; z < levels; z++) {
         // step 1: calc value from dT/dz
-        auto val = abs(tocnParams.dz.value() * v_dtdz(i, z));
+        auto val = std::abs(tocnParams.dz.value() * v_dtdz(i, z));
 
         // step 2: calc a min from the e-folding scale, and min SST value
         auto localMin = minVal + (sstVal - minVal) * exp(-v_depth(i, z) / efold);

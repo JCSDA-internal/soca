@@ -31,5 +31,5 @@ CostJo   : Nonlinear Jo(ADT) = 0.0101958572706805, nobs = 94, Jo/n = 0.000108466
 CostJo   : Nonlinear Jo(InsituTemperature) = 347.7244132153076634, nobs = 206, Jo/n = 1.6879825884238235, err = 0.8991441572394548
 CostJo   : Nonlinear Jo(InsituSalinity) = 344.0217265365836852, nobs = 218, Jo/n = 1.5780813143879986, err = 0.6081969954577753
 CostJo   : Nonlinear Jo(SeaIceFraction) = 596.7488520764163695, nobs = 89, Jo/n = 6.7050432817574874, err = 0.1000000014901161
-CostJb   : Nonlinear Jb = 0.0405075523985125
+CostJb   : Nonlinear Jb = 0.0406755001040948
 CostFunction: Nonlinear J = 18808.9914255193289137

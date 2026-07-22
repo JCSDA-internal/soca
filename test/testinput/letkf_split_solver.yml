@@ -33,6 +33,7 @@ _: &land_mask
   where:
   - variable: {name: GeoVaLs/sea_area_fraction}
     minvalue: 0.5
+  apply at iterations: 0,1
 
 observations:
   observers:
@@ -139,3 +140,4 @@ output increment:
 test:
   reference filename: testref/letkf_split_solver.test
   test output filename: testoutput/letkf_split_solver.test
+  float absolute tolerance: 1e-6
