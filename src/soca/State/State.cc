@@ -289,6 +289,13 @@ namespace soca {
 
   // -----------------------------------------------------------------------------
 
+  void State::writeCice(const eckit::Configuration & files) const {
+    const util::DateTime * dtp = &time_;
+    soca_state_write_cice_f90(toFortran(), &files, &dtp);
+  }
+
+  // -----------------------------------------------------------------------------
+
   void State::updateFields(const oops::Variables & vars) {
     // remove fields from the fieldset that are no longer in vars
     atlas::FieldSet orig = util::shareFields(fieldSet_);

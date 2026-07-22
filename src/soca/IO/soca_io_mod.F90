@@ -26,7 +26,7 @@ module soca_io_mod
 use netcdf
 use kinds, only: kind_real
 use mpp_mod, only: mpp_gather, mpp_scatter, mpp_broadcast, mpp_pe, mpp_root_pe, mpp_npes, &
-                   mpp_get_current_pelist, mpp_error, FATAL
+                   mpp_get_current_pelist, mpp_error, FATAL, WARNING
 use mpp_domains_mod, only: domain2D, &
                            mpp_get_compute_domain, mpp_get_global_domain, &
                            mpp_get_data_domain
@@ -78,6 +78,12 @@ end type axis_entry
 
 type :: soca_io_writer
   character(len=:), allocatable :: filename
+  ! Update mode: when `template` is set, commit copies `template`->`filename`
+  ! (skipped when the two paths are identical) and overwrites only the
+  ! enqueued vars in place, leaving every other variable, dim and global
+  ! attribute of the template untouched. Used for CICE restarts, where SOCA
+  ! models only a subset of the ~50 variables.
+  character(len=:), allocatable :: template
   type(domain2D), pointer :: domain => null()
   integer :: isc, iec, jsc, jec        ! local compute domain (1-based as mpp returns)
   integer :: isd, ied, jsd, jed        ! data domain (for compute-slice offsets)
@@ -130,13 +136,21 @@ contains
 !==============================================================================
 ! init: prepare a writer for a specific file. The domain pointer is stored, so
 ! the caller must keep the domain alive until commit returns.
+!
+! When `template` is present, the writer runs in update mode: commit copies
+! `template`->`filename` and overwrites only the enqueued variables in place,
+! preserving every other variable, dimension and global attribute of the
+! template. Used for CICE restarts.
 !==============================================================================
-subroutine writer_init(self, domain, filename)
+subroutine writer_init(self, domain, filename, template)
   class(soca_io_writer), intent(inout) :: self
   type(domain2D), target, intent(in)   :: domain
   character(len=*),       intent(in)   :: filename
+  character(len=*), optional, intent(in) :: template
 
   self%filename = filename
+  if (allocated(self%template)) deallocate(self%template)
+  if (present(template)) self%template = template
   self%domain => domain
 
   call mpp_get_compute_domain(self%domain, self%isc, self%iec, self%jsc, self%jec)
@@ -255,6 +269,13 @@ subroutine writer_commit(self)
   integer, parameter :: MAX_AXES_PER_DIR = 32
   integer :: nx_c, ny_c, i_off, j_off, nlev
   real(kind=kind_real), allocatable :: tile2(:,:), tile3(:,:,:)
+
+  ! Update mode: overwrite enqueued vars into a copy of the template,
+  ! leaving every other variable/dim/attribute intact.
+  if (allocated(self%template)) then
+    call writer_commit_update(self)
+    return
+  end if
 
   is_root = (mpp_pe() == mpp_root_pe())
   call mpi_pelist(pelist)
@@ -419,6 +440,183 @@ subroutine writer_commit(self)
   if (allocated(self%vars)) deallocate(self%vars)
   self%nvars = 0
 end subroutine writer_commit
+
+
+!==============================================================================
+! writer_commit_update: update-existing mode. Root byte-copies the template to
+! the output path once (skipped when the two paths are identical -- the file
+! already is its own template), then each enqueued var is mpp_gather'd to
+! root and written in place over the existing variable. Every other variable,
+! dimension and global attribute of the template is preserved untouched.
+! No dims/coords are defined -- the file structure is the template's.
+!
+! Used for CICE restarts, where SOCA models only ~10 of the ~50 variables and
+! the rest (iceumask, istep1, stresses, global attrs) must pass through.
+! Variables enqueued but absent from the template are skipped with a warning,
+! mirroring CiceRestartIO::inqVarOptional.
+!==============================================================================
+subroutine writer_commit_update(self)
+  class(soca_io_writer), intent(inout) :: self
+
+  integer :: ncid, v, status, varid
+  integer, allocatable :: pelist(:)
+  logical :: is_root
+  integer :: nx_c, ny_c, i_off, j_off, i_start, j_start, nlev
+  real(kind=kind_real), allocatable :: gbuf2d(:,:), gbuf3d(:,:,:)
+  real(kind=kind_real), allocatable :: tile2(:,:), tile3(:,:,:)
+
+  is_root = (mpp_pe() == mpp_root_pe())
+  call mpi_pelist(pelist)
+
+  ! Root copies the template to the output path, then reopens NF90_WRITE.
+  ! When template and output paths are identical, skip the copy and open
+  ! the file directly for in-place update -- the on-disk bytes already
+  ! match the template by definition.
+  ! All PEs must reach the gather calls, but only root touches the file.
+  if (is_root) then
+    if (trim(self%template) /= trim(self%filename)) then
+      call soca_io_copy_file(self%template, self%filename)
+    end if
+    call ncc(nf90_open(self%filename, NF90_WRITE, ncid), &
+        'nf90_open (update) '//trim(self%filename))
+  end if
+
+  nx_c    = self%iec - self%isc + 1
+  ny_c    = self%jec - self%jsc + 1
+  i_off   = self%isc - self%isd + 1     ! 1-based offset into data-domain buf
+  j_off   = self%jsc - self%jsd + 1
+  i_start = self%isc - self%isg + 1     ! 1-based start in the global file dim
+  j_start = self%jsc - self%jsg + 1
+
+  if (is_root) then
+    allocate(gbuf2d(self%nx_g, self%ny_g))
+  else
+    allocate(gbuf2d(1, 1))
+  end if
+  allocate(tile2(nx_c, ny_c))
+
+  do v = 1, self%nvars
+    ! Probe the var on root and broadcast presence so all PEs agree on whether
+    ! to run the (collective) gather for this var.
+    status = NF90_NOERR
+    if (is_root) status = nf90_inq_varid(ncid, trim(self%vars(v)%name), varid)
+    call broadcast_int(status)
+    if (status /= NF90_NOERR) then
+      if (is_root) call mpp_error(WARNING, 'soca_io_mod writer_commit_update: '// &
+          'variable "'//trim(self%vars(v)%name)//'" not in template '// &
+          trim(self%template)//' -- skipped')
+      cycle
+    end if
+
+    if (self%vars(v)%ndims == 1) then
+      if (is_root) call write_var_strided(ncid, self%vars(v)%name, &
+          1, 1, size(self%vars(v)%data1d), 1, src1=self%vars(v)%data1d)
+
+    else if (self%vars(v)%ndims == 2) then
+      tile2 = self%vars(v)%data2d(i_off : i_off + nx_c - 1, &
+                                  j_off : j_off + ny_c - 1)
+      call mpp_gather(self%isc, self%iec, self%jsc, self%jec, pelist, &
+                      tile2, gbuf2d, is_root)
+      if (is_root) call write_var_strided(ncid, self%vars(v)%name, &
+          1, 1, self%nx_g, self%ny_g, src2=gbuf2d)
+
+    else
+      nlev = self%vars(v)%nlevels
+      if (is_root) then
+        if (allocated(gbuf3d)) then
+          if (size(gbuf3d, 3) /= nlev) deallocate(gbuf3d)
+        end if
+        if (.not. allocated(gbuf3d)) allocate(gbuf3d(self%nx_g, self%ny_g, nlev))
+      else
+        if (.not. allocated(gbuf3d)) allocate(gbuf3d(1, 1, 1))
+      end if
+      if (allocated(tile3)) then
+        if (size(tile3, 3) /= nlev) deallocate(tile3)
+      end if
+      if (.not. allocated(tile3)) allocate(tile3(nx_c, ny_c, nlev))
+      tile3 = self%vars(v)%data3d(i_off : i_off + nx_c - 1, &
+                                  j_off : j_off + ny_c - 1, :)
+      call mpp_gather(self%isc, self%iec, self%jsc, self%jec, nlev, pelist, &
+                      tile3, gbuf3d, is_root)
+      if (is_root) call write_var_strided(ncid, self%vars(v)%name, &
+          1, 1, self%nx_g, self%ny_g, src3=gbuf3d)
+    end if
+  end do
+
+  if (is_root) call ncc(nf90_close(ncid), 'nf90_close (update)')
+
+  deallocate(gbuf2d, tile2, pelist)
+  if (allocated(gbuf3d)) deallocate(gbuf3d)
+  if (allocated(tile3)) deallocate(tile3)
+
+  ! drop pointer entries; caller's data is unaffected
+  if (allocated(self%vars)) deallocate(self%vars)
+  self%nvars = 0
+end subroutine writer_commit_update
+
+
+!==============================================================================
+! soca_io_copy_file: byte-copy src -> dst (root-only helper). Used by
+! writer_commit_update to seed the output with the full template before
+! overwriting the modelled variables. Stream I/O so it is netcdf-agnostic and
+! preserves the file exactly (compression, chunking, unmodelled vars).
+!
+! The total size is taken once via INQUIRE; the copy walks it in fixed chunks
+! with explicit POS, so the trailing partial chunk needs no special-casing.
+!==============================================================================
+subroutine soca_io_copy_file(src, dst)
+  character(len=*), intent(in) :: src, dst
+  integer, parameter :: CHUNK = 1048576    ! 1 MiB
+  integer :: u_in, u_out, ios
+  integer(kind=8) :: total, pos, n
+  character(len=1), allocatable :: buf(:)
+
+  if (.not. soca_io_file_exists(src)) call mpp_error(FATAL, &
+      'soca_io_mod soca_io_copy_file: template not found: '//trim(src))
+
+  inquire(file=trim(src), size=total)
+  if (total < 0) call mpp_error(FATAL, &
+      'soca_io_mod soca_io_copy_file: cannot determine size of '//trim(src))
+
+  open(newunit=u_in,  file=trim(src), form='unformatted', access='stream', &
+       status='old',     action='read',  iostat=ios)
+  if (ios /= 0) call mpp_error(FATAL, &
+      'soca_io_mod soca_io_copy_file: cannot open template '//trim(src))
+  open(newunit=u_out, file=trim(dst), form='unformatted', access='stream', &
+       status='replace', action='write', iostat=ios)
+  if (ios /= 0) call mpp_error(FATAL, &
+      'soca_io_mod soca_io_copy_file: cannot open output '//trim(dst))
+
+  allocate(buf(CHUNK))
+  pos = 1
+  do while (pos <= total)
+    n = min(int(CHUNK, kind=8), total - pos + 1)
+    read (u_in,  pos=pos, iostat=ios) buf(1:n)
+    if (ios /= 0) call mpp_error(FATAL, &
+        'soca_io_mod soca_io_copy_file: read error on '//trim(src))
+    write(u_out, pos=pos, iostat=ios) buf(1:n)
+    if (ios /= 0) call mpp_error(FATAL, &
+        'soca_io_mod soca_io_copy_file: write error on '//trim(dst))
+    pos = pos + n
+  end do
+  deallocate(buf)
+
+  close(u_in)
+  close(u_out)
+end subroutine soca_io_copy_file
+
+
+!==============================================================================
+! broadcast_int: broadcast a single integer from root to all PEs. Thin wrapper
+! used to share a per-var nf90_inq_varid status before a collective gather.
+!==============================================================================
+subroutine broadcast_int(val)
+  integer, intent(inout) :: val
+  integer :: buf(1)
+  buf(1) = val
+  call mpp_broadcast(buf, 1, mpp_root_pe())
+  val = buf(1)
+end subroutine broadcast_int
 
 
 !==============================================================================
@@ -945,6 +1143,107 @@ subroutine read_var_strided(ncid, name, i_start, j_start, nx, ny, &
         'get '//trim(name))
   end if
 end subroutine read_var_strided
+
+
+!==============================================================================
+! Strided write of one variable from a caller-owned global buffer into an
+! existing variable of an already-open file. The write companion to
+! read_var_strided: it builds start/count from the file's actual dim layout
+! (including degenerate size-1 middle dims and an optional trailing time/record
+! dim) so it overwrites the existing variable in place. Used by
+! writer_commit_update; the buffer is the root-gathered global field.
+!
+! Concrete cases:
+!   - CICE aicen(ncat, nj, ni): file_ndims=3, src3 (nx, ny, ncat),
+!     count=[nx, ny, ncat] -- no time dim, all dims spatial/category.
+!   - SOCA Salt(time, Layer, lath, lonh): file_ndims=4, src3 (nx, ny, Layer),
+!     count=[nx, ny, Layer, 1].
+!==============================================================================
+subroutine write_var_strided(ncid, name, i_start, j_start, nx, ny, &
+                             src1, src2, src3)
+  integer,                       intent(in) :: ncid
+  integer,                       intent(in) :: i_start, j_start, nx, ny
+  character(len=*),              intent(in) :: name
+  real(kind=kind_real), optional, intent(in) :: src1(:)
+  real(kind=kind_real), optional, intent(in) :: src2(:,:)
+  real(kind=kind_real), optional, intent(in) :: src3(:,:,:)
+
+  integer :: varid, file_ndims, dd, sz, src_rank
+  integer :: file_dimids(MAX_FILE_NDIMS)
+  integer :: st(MAX_FILE_NDIMS), ct(MAX_FILE_NDIMS)
+  integer :: total_ct, expected_total
+  character(len=8) :: total_str
+
+  call ncc(nf90_inq_varid(ncid, trim(name), varid), 'inq (write) '//trim(name))
+  call ncc(nf90_inquire_variable(ncid, varid, ndims=file_ndims, dimids=file_dimids), &
+           'inquire (write) '//trim(name))
+  if (file_ndims > MAX_FILE_NDIMS) call mpp_error(FATAL, &
+      'soca_io_mod write_var_strided: '//trim(name)//' exceeds MAX_FILE_NDIMS')
+
+  if (present(src1)) then
+    src_rank = 1
+  else if (present(src2)) then
+    src_rank = 2
+  else if (present(src3)) then
+    src_rank = 3
+  else
+    call mpp_error(FATAL, 'soca_io_mod write_var_strided: no source provided')
+  end if
+  if (file_ndims < src_rank) call mpp_error(FATAL, &
+      'soca_io_mod write_var_strided: '//trim(name)//' has fewer file dims than source rank')
+
+  st(1:file_ndims) = 1
+  ct(1:file_ndims) = 1
+  if (src_rank == 1) then
+    ct(1) = nx
+  else
+    st(1) = i_start
+    st(2) = j_start
+    ct(1) = nx
+    ct(2) = ny
+    if (file_ndims == src_rank) then
+      ! All file dims are spatial/category (no trailing time/record).
+      do dd = 3, file_ndims
+        call ncc(nf90_inquire_dimension(ncid, file_dimids(dd), len=sz), &
+                 'inq dim (write) '//trim(name))
+        ct(dd) = sz
+      end do
+    else
+      ! file_ndims > src_rank: one trailing time/record dim plus any squeezable
+      ! middle size-1 dims.
+      ct(file_ndims) = 1
+      do dd = 3, file_ndims - 1
+        call ncc(nf90_inquire_dimension(ncid, file_dimids(dd), len=sz), &
+                 'inq dim (write) '//trim(name))
+        ct(dd) = sz
+      end do
+    end if
+    ! Total-count check: file var must hold exactly as many elements as the
+    ! source buffer; catches a z-size mismatch or wrong-shape var.
+    total_ct = 1
+    do dd = 1, file_ndims
+      total_ct = total_ct * ct(dd)
+    end do
+    expected_total = nx * ny
+    if (present(src3)) expected_total = expected_total * size(src3, 3)
+    if (total_ct /= expected_total) then
+      write(total_str, '(i0)') expected_total
+      call mpp_error(FATAL, 'soca_io_mod write_var_strided: '//trim(name)// &
+          ' file element count does not match source ('//trim(total_str)//')')
+    end if
+  end if
+
+  if (present(src2)) then
+    call ncc(nf90_put_var(ncid, varid, src2, start=st(1:file_ndims), count=ct(1:file_ndims)), &
+        'put (update) '//trim(name))
+  else if (present(src3)) then
+    call ncc(nf90_put_var(ncid, varid, src3, start=st(1:file_ndims), count=ct(1:file_ndims)), &
+        'put (update) '//trim(name))
+  else if (present(src1)) then
+    call ncc(nf90_put_var(ncid, varid, src1, start=st(1:file_ndims), count=ct(1:file_ndims)), &
+        'put (update) '//trim(name))
+  end if
+end subroutine write_var_strided
 
 
 !==============================================================================
