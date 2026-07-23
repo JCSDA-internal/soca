@@ -959,6 +959,7 @@ subroutine soca_fields_write_rst(self, f_conf, vdate)
   integer :: i, j, k, idx, d, f, n
   type(soca_field), pointer :: field
   logical :: date_cols
+  real(kind=kind_real) :: missing_val
 
   character(len=3), allocatable :: domains(:)
   character(len=:), allocatable :: domain_filename
@@ -970,6 +971,14 @@ subroutine soca_fields_write_rst(self, f_conf, vdate)
   if (f_conf%has("date colons")) then
     call f_conf%get_or_die("date colons", date_cols)
   end if
+
+  ! Value written to masked (land) cells. Defaults to 0.0 for backward
+  ! compatibility (the historical output of this writer); the optional
+  ! "set missing value" key in the output config overrides it for the whole
+  ! state/increment write (e.g. the netcdf missing value instead of zero).
+  missing_val = 0.0_kind_real
+  if (f_conf%has("set missing value")) &
+    call f_conf%get_or_die("set missing value", missing_val)
 
   ! Set up domain info
   domains = [character(len=3) :: "ocn", "sfc", "ice", "wav", "bio"]
@@ -1000,8 +1009,9 @@ subroutine soca_fields_write_rst(self, f_conf, vdate)
       allocate(vars(n)%data(self%geom%isd:self%geom%ied, &
                             self%geom%jsd:self%geom%jed, vars(n)%afield%shape(1)))
 
-      ! copy, setting masked values to fillvalue
-      if (associated(self%fields(f)%mask)) vars(n)%data = self%fields(f)%metadata%fillvalue
+      ! copy, setting masked (land) values to the missing value (0.0 by
+      ! default, or the "set missing value" override from the output config)
+      if (associated(self%fields(f)%mask)) vars(n)%data = missing_val
       do j=self%geom%jsc, self%geom%jec
         do i=self%geom%isc, self%geom%iec
           idx = self%geom%atlas_ij2idx(i,j)
