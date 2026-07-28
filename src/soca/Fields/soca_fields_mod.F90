@@ -140,6 +140,9 @@ contains
   !> \copybrief soca_fields_write_rst \see soca_fields_write_rst
   procedure :: write_rst => soca_fields_write_rst
 
+  !> \copybrief soca_fields_write_cice \see soca_fields_write_cice
+  procedure :: write_cice => soca_fields_write_cice
+
   !> \}
 
   !> \name misc
@@ -939,7 +942,6 @@ subroutine soca_fields_write_rst(self, f_conf, vdate)
 
   ! for each domain, get the fields to be written out and write them
   do d=1,size(domains)
-    domain_filename = soca_genfilename(f_conf,max_string_length,vdate,date_cols,domains(d))
 
     ! count the number of vars that we will write in this file
     n = 0
@@ -947,6 +949,8 @@ subroutine soca_fields_write_rst(self, f_conf, vdate)
       if (self%fields(f)%metadata%io_file == domains(d)) n = n +1
     end do
     if (n == 0) cycle
+
+    domain_filename = soca_genfilename(f_conf,max_string_length,vdate,date_cols,domains(d))
     allocate(vars(n))
 
     ! copy atlas fields into per-PE compute-domain temporaries and enqueue with the writer
@@ -993,6 +997,149 @@ subroutine soca_fields_write_rst(self, f_conf, vdate)
     deallocate(vars)
   end do
 end subroutine soca_fields_write_rst
+
+
+! ------------------------------------------------------------------------------
+!> Write the "ice" domain as a CICE restart in update mode (entry point).
+!!
+!! Public entry into the per-category CICE restart writer. The config block
+!! must carry both `cice template` (path to the input restart used as the
+!! update-mode template) and `output filename` (path to the output restart).
+!! Used by PostProcessIce::writeRestart; not called by the generic write_rst
+!! path, which knows nothing about CICE update mode.
+!!
+!! \relates soca_fields_mod::soca_fields
+subroutine soca_fields_write_cice(self, f_conf, vdate)
+  class(soca_fields), target, intent(inout) :: self      !< Fields
+  type(fckit_configuration),  intent(in)    :: f_conf    !< Configuration
+  type(datetime),             intent(inout) :: vdate     !< DateTime
+
+  integer, parameter :: max_string_length = 800
+  logical :: date_cols
+  character(len=:), allocatable :: cice_template
+
+  call f_conf%get_or_die("cice template", cice_template)
+
+  date_cols = .true.
+  if (f_conf%has("date colons")) then
+    call f_conf%get_or_die("date colons", date_cols)
+  end if
+
+  call soca_fields_write_cice_rst(self, f_conf, vdate, date_cols, &
+                                  max_string_length, cice_template)
+end subroutine soca_fields_write_cice
+
+
+! ------------------------------------------------------------------------------
+!> Write the "ice" domain as a CICE restart in update mode.
+!!
+!! Copies `cice_template` to the output path and overwrites only the modelled
+!! variables. Per-category atlas fields (categories > 0) are grouped by their
+!! CICE variable name (io sup name) and assembled into one (ni,nj,ncat) buffer
+!! per variable, so each CICE restart variable aicen / qice00N / ... is written
+!! with a single enqueue. Non-category ice fields, if any, are written by their
+!! io_name as usual.
+!!
+!! \relates soca_fields_mod::soca_fields
+subroutine soca_fields_write_cice_rst(self, f_conf, vdate, date_cols, &
+                                      max_string_length, cice_template)
+  class(soca_fields), target, intent(inout) :: self
+  type(fckit_configuration),  intent(in)    :: f_conf
+  type(datetime),             intent(inout) :: vdate
+  logical,                    intent(in)    :: date_cols
+  integer,                    intent(in)    :: max_string_length
+  character(len=*),           intent(in)    :: cice_template
+
+  type(soca_io_writer) :: writer
+  character(len=:), allocatable :: domain_filename
+  integer :: i, j, k, idx, f, g, ncat
+  integer :: nsup                                   ! number of unique io sup names
+  character(len=256), allocatable :: sup_names(:)    ! unique CICE variable names
+  type(varwrapper), allocatable, target :: vars(:)   ! one buffer per unique sup name
+  type(atlas_field) :: afield
+  real(kind=kind_real), pointer :: adata(:,:)
+
+  ! Output path: honour `output filename` if set (PostProcessIce's writeRestart
+  ! sets this so the user picks the exact on-disk output path). Otherwise fall
+  ! back to soca_genfilename's datadir/exp/type/date construction.
+  if (f_conf%has("output filename")) then
+    call f_conf%get_or_die("output filename", domain_filename)
+  else
+    domain_filename = soca_genfilename(f_conf, max_string_length, vdate, date_cols, "ice")
+  end if
+
+  ! 1. collect the unique CICE variable names (io sup name) across all
+  !    per-category ice fields.
+  nsup = 0
+  allocate(sup_names(64))
+  do f=1,size(self%fields)
+    if (self%fields(f)%metadata%io_file /= "ice") cycle
+    if (self%fields(f)%metadata%categories <= 0) cycle
+    if (any(sup_names(1:nsup) == self%fields(f)%metadata%io_sup_name)) cycle
+    nsup = nsup + 1
+    if (nsup > size(sup_names)) call abor1_ftn( &
+        "soca_fields_write_cice_rst: too many unique CICE variables")
+    sup_names(nsup) = self%fields(f)%metadata%io_sup_name
+  end do
+
+  if (nsup == 0) then
+    deallocate(sup_names)
+    return
+  end if
+
+  ! 2. for each unique CICE variable, build a (isd:ied, jsd:jed, ncat) buffer
+  !    by placing each per-category field into its category slab.
+  allocate(vars(nsup))
+  call writer%init(self%geom%Domain%mpp_domain, domain_filename, cice_template)
+
+  do g=1,nsup
+    ! ncat = number of category fields sharing this io sup name
+    ncat = 0
+    do f=1,size(self%fields)
+      if (self%fields(f)%metadata%io_file == "ice" .and. &
+          self%fields(f)%metadata%categories > 0 .and. &
+          self%fields(f)%metadata%io_sup_name == sup_names(g)) then
+        ncat = max(ncat, self%fields(f)%metadata%category)
+      end if
+    end do
+
+    allocate(vars(g)%data(self%geom%isd:self%geom%ied, &
+                          self%geom%jsd:self%geom%jed, ncat))
+    vars(g)%data = 0.0_kind_real
+
+    do f=1,size(self%fields)
+      if (self%fields(f)%metadata%io_file /= "ice") cycle
+      if (self%fields(f)%metadata%categories <= 0) cycle
+      if (self%fields(f)%metadata%io_sup_name /= sup_names(g)) cycle
+
+      k = self%fields(f)%metadata%category
+      afield = self%aFieldset%field(self%fields(f)%name)
+      call afield%data(adata)
+      if (associated(self%fields(f)%mask)) &
+          vars(g)%data(:,:,k) = self%fields(f)%metadata%fillvalue
+      do j=self%geom%jsc, self%geom%jec
+        do i=self%geom%isc, self%geom%iec
+          idx = self%geom%atlas_ij2idx(i,j)
+          if (associated(self%fields(f)%mask)) then
+            if (self%fields(f)%mask(i,j) == 0) cycle
+          end if
+          vars(g)%data(i,j,k) = adata(1, idx)
+        end do
+      end do
+      call afield%final()
+    end do
+
+    call writer%enqueue(trim(sup_names(g)), vars(g)%data(:,:,:))
+  end do
+
+  ! 3. write (copies the template, overwrites the enqueued variables in place).
+  call writer%commit()
+
+  do g=1,nsup
+    deallocate(vars(g)%data)
+  end do
+  deallocate(vars, sup_names)
+end subroutine soca_fields_write_cice_rst
 
 ! ------------------------------------------------------------------------------
 !> Interpolates from uv-points location to h-points.

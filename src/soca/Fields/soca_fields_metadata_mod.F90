@@ -30,6 +30,7 @@ type, public :: soca_field_metadata
   character(len=:),  allocatable :: property  !< physical property of the field, "none" or "positive_definite"
   integer                        :: categories  !< number of seaice categories
   integer                        :: category    !< category index of the seaice field
+  integer                        :: layers      !< number of <LEVEL>-templated per-layer entries (CICE per-layer restart vars)
   real(kind=kind_real)           :: fillvalue
   logical                        :: vert_interp   !< true if the field can be vertically interpolated
   real(kind=kind_real)           :: constant_value !< An optional value to use globally for the field
@@ -143,6 +144,13 @@ subroutine soca_fields_metadata_create(self, filename)
     if(.not. conf_list(i)%get("categories", val)) val = -1
     metadata_tmp(i)%categories = val
 
+    ! `layers` drives the <LEVEL> placeholder expansion (separate from `levels`,
+    ! which is the array level-count of a single field). Used for CICE per-layer
+    ! restart variables (qice001.., sice001.., qsno001..) where each layer is a
+    ! distinct file variable rather than one level of a 4D variable.
+    if(.not. conf_list(i)%get("layers", val)) val = -1
+    metadata_tmp(i)%layers = val
+
     if(.not. conf_list(i)%get("fill value", val)) val = 0.0
     metadata_tmp(i)%fillvalue = val
 
@@ -169,28 +177,48 @@ subroutine soca_fields_metadata_create(self, filename)
   end do
   deallocate(conf_list)
 
-  ! break out any templated category fields
+  ! break out any templated <CATEGORY> / <LEVEL> fields. A field with
+  ! `categories: C` expands into C entries; if it also has `layers: L`, each
+  ! of those further expands into L entries -> C*L total. <CATEGORY> and
+  ! <LEVEL> placeholders are substituted in name / io_name / io_sup_name /
+  ! name_surface.
   ! 1. determine final array size
   j = 0
   do i=1,size(metadata_tmp)
-    j = j + merge(metadata_tmp(i)%categories, 1, metadata_tmp(i)%categories > 0)
+    j = j + merge(metadata_tmp(i)%categories, 1, metadata_tmp(i)%categories > 0) &
+              * merge(metadata_tmp(i)%layers,     1, metadata_tmp(i)%layers     > 0)
   end do
   allocate(self%metadata(j))
-  ! 2. create final metadata with categories expanded
+  ! 2. create final metadata with categories and layers expanded
   j = 1
   do i=1,size(metadata_tmp)
-    if (metadata_tmp(i)%categories <= 0) then
+    if (metadata_tmp(i)%categories <= 0 .and. metadata_tmp(i)%layers <= 0) then
       self%metadata(j) = metadata_tmp(i)
       j = j + 1
     else
-      do k=1,metadata_tmp(i)%categories
-        write(str10, '(I10)') k
-        self%metadata(j) = metadata_tmp(i)
-        self%metadata(j)%category = k
-        self%metadata(j)%name = templateStr(metadata_tmp(i)%name, "<CATEGORY>", str10)
-        self%metadata(j)%io_name = templateStr(metadata_tmp(i)%io_name, "<CATEGORY>", str10)
-        self%metadata(j)%name_surface = templateStr(metadata_tmp(i)%name_surface, "<CATEGORY>", str10)
-        j = j + 1
+      do k=1,merge(metadata_tmp(i)%categories, 1, metadata_tmp(i)%categories > 0)
+        do l=1,merge(metadata_tmp(i)%layers, 1, metadata_tmp(i)%layers > 0)
+          self%metadata(j) = metadata_tmp(i)
+
+          if (metadata_tmp(i)%categories > 0) then
+            write(str10, '(I10)') k
+            self%metadata(j)%category    = k
+            self%metadata(j)%name        = templateStr(self%metadata(j)%name,        "<CATEGORY>", str10)
+            self%metadata(j)%io_name     = templateStr(self%metadata(j)%io_name,     "<CATEGORY>", str10)
+            self%metadata(j)%io_sup_name = templateStr(self%metadata(j)%io_sup_name, "<CATEGORY>", str10)
+            self%metadata(j)%name_surface = templateStr(self%metadata(j)%name_surface, "<CATEGORY>", str10)
+          end if
+
+          if (metadata_tmp(i)%layers > 0) then
+            write(str10, '(I10)') l
+            self%metadata(j)%name        = templateStr(self%metadata(j)%name,        "<LEVEL>", str10)
+            self%metadata(j)%io_name     = templateStr(self%metadata(j)%io_name,     "<LEVEL>", str10)
+            self%metadata(j)%io_sup_name = templateStr(self%metadata(j)%io_sup_name, "<LEVEL>", str10)
+            self%metadata(j)%name_surface = templateStr(self%metadata(j)%name_surface, "<LEVEL>", str10)
+          end if
+
+          j = j + 1
+        end do
       end do
     end if
   end do

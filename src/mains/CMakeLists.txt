@@ -55,6 +55,11 @@ ecbuild_add_executable( TARGET  soca_anpproc.x
                         LIBS    soca
                       )
 
+ecbuild_add_executable( TARGET  soca_postproc.x
+                        SOURCES Postproc.cc
+                        LIBS    soca
+                      )
+
 ecbuild_add_executable( TARGET  soca_hybridgain.x
                         SOURCES HybridGain.cc
                         LIBS    soca
