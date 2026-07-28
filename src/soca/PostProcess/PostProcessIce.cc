@@ -256,23 +256,26 @@ State PostProcessIce::runPostprocess(State & pproc,
       "and sea_ice_snow_volume; pick one", Here());
   }
 
-  auto a_aice = atlas::array::make_view<double, 2>(
-      anfields.field("sea_ice_area_fraction"));
-
-  // Per-jnode per-ice-area thickness targets, materialized once. Negative-as-
-  // sentinel "no analysis here, fall back to bg" propagates through the
-  // existing per-cell loop logic.
+  // Per-jnode ice concentration and per-ice-area thickness, materialized once.
+  // The thickness targets init to a negative sentinel meaning "no analysis
+  // here, fall back to bg", which propagates through the per-cell loop logic.
+  std::vector<double> a_aice_vec(field_size, 0.0);
   std::vector<double> a_hice_vec(field_size, -1.0);
   std::vector<double> a_hsno_vec(field_size, -1.0);
+  {
+    const auto v = atlas::array::make_view<double, 2>(
+        anfields.field("sea_ice_area_fraction"));
+    for (size_t jn = 0; jn < field_size; ++jn) a_aice_vec[jn] = v(jn, 0);
+  }
   if (has_hice_th) {
-    auto v = atlas::array::make_view<double, 2>(
+    const auto v = atlas::array::make_view<double, 2>(
         anfields.field("sea_ice_thickness"));
     for (size_t jn = 0; jn < field_size; ++jn) a_hice_vec[jn] = v(jn, 0);
   } else if (has_hice_vol) {
-    auto v = atlas::array::make_view<double, 2>(
+    const auto v = atlas::array::make_view<double, 2>(
         anfields.field("sea_ice_volume"));
     for (size_t jn = 0; jn < field_size; ++jn) {
-      const double ai = a_aice(jn, 0);
+      const double ai = a_aice_vec[jn];
       a_hice_vec[jn] = (ai > icephysics::Constants::puny) ? v(jn, 0) / ai : 0.0;
     }
   } else {
@@ -285,14 +288,14 @@ State PostProcessIce::runPostprocess(State & pproc,
     }
   }
   if (has_hsno_th) {
-    auto v = atlas::array::make_view<double, 2>(
+    const auto v = atlas::array::make_view<double, 2>(
         anfields.field("sea_ice_snow_thickness"));
     for (size_t jn = 0; jn < field_size; ++jn) a_hsno_vec[jn] = v(jn, 0);
   } else if (has_hsno_vol) {
-    auto v = atlas::array::make_view<double, 2>(
+    const auto v = atlas::array::make_view<double, 2>(
         anfields.field("sea_ice_snow_volume"));
     for (size_t jn = 0; jn < field_size; ++jn) {
-      const double ai = a_aice(jn, 0);
+      const double ai = a_aice_vec[jn];
       a_hsno_vec[jn] = (ai > icephysics::Constants::puny) ? v(jn, 0) / ai : 0.0;
     }
   }
@@ -362,20 +365,20 @@ State PostProcessIce::runPostprocess(State & pproc,
   //   6. freeboard enforcement (when enabled);
   //   7. min-vice cleanup; recompute aggregates.
   for (size_t jnode = 0; jnode < field_size; ++jnode) {
-    // Clamp bounds on analysis first.
-    if (a_aice(jnode, 0) < 0.0)      a_aice(jnode, 0) = 0.0;
-    if (a_aice(jnode, 0) > 1.0)      a_aice(jnode, 0) = 1.0;
+    // Clamp bounds on the local analysis copies first.
+    if (a_aice_vec[jnode] < 0.0)     a_aice_vec[jnode] = 0.0;
+    if (a_aice_vec[jnode] > 1.0)     a_aice_vec[jnode] = 1.0;
     if (a_hice_vec[jnode] < 0.0)     a_hice_vec[jnode] = 0.0;
     if (a_hsno_vec[jnode] < 0.0)     a_hsno_vec[jnode] = 0.0;
     // Drop output ice on cells where analysis aice is below the noise floor.
     // The rebin can otherwise produce micro-vicen layouts that show up as
     // thick-ice-on-edge artifacts.
-    if (a_aice(jnode, 0) > 0.0 && a_aice(jnode, 0) < min_aice_output) {
-      a_aice(jnode, 0) = 0.0;
+    if (a_aice_vec[jnode] > 0.0 && a_aice_vec[jnode] < min_aice_output) {
+      a_aice_vec[jnode] = 0.0;
     }
 
     const double ai_bg = bg_aice[jnode];
-    const double ai_an = a_aice(jnode, 0);
+    const double ai_an = a_aice_vec[jnode];
     const bool   isLand = (mask_(jnode, 0) == 0.0);
 
     // -------------------- Case 1: LAND or ICE2NOICE -----------------------
