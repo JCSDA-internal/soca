@@ -34,6 +34,9 @@ namespace soca {
     void soca_state_write_file_f90(const F90flds &,
                                    const eckit::Configuration * const &,
                                    const util::DateTime * const *);
+    void soca_state_write_cice_f90(const F90flds &,
+                                   const eckit::Configuration * const &,
+                                   const util::DateTime * const *);
     void soca_state_tohgrid_f90(const F90flds &);
     void soca_state_analytic_f90(const F90flds &,
                                  const eckit::Configuration * const &,
