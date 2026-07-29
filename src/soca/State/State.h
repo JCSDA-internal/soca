@@ -82,6 +82,11 @@ namespace soca {
       /// I/O and diagnostics
       void read(const eckit::Configuration &);
       void write(const eckit::Configuration &) const;
+      /// Write the per-category sea-ice fields as a CICE restart in update
+      /// mode. The config must carry both `cice template` (path to the
+      /// input restart used as the template) and `output filename` (path
+      /// to the output restart). Used by PostProcessIce::writeRestart.
+      void writeCice(const eckit::Configuration &) const;
 
       int & toFortran() {return keyFlds_;}
       const int & toFortran() const {return keyFlds_;}

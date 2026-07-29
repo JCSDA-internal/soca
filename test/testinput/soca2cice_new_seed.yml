@@ -1,0 +1,48 @@
+geometry: &geom
+  geom_grid_file: data_generated/gridgen/soca_gridspec.72x35x25.nc
+  mom6_input_nml: data_static/72x35x25/input.nml
+  fields metadata: data_static/fields_metadata.yml
+
+background:
+  read_from_file: 1
+  basename: data_static/72x35x25/restarts/
+  ocn_filename: MOM.res.nc
+  ice_filename: cice.res.nc
+  date: &bkg_date 2018-04-15T00:00:00Z
+  state variables: &bg_vars
+  - sea_ice_area_fraction
+  - sea_ice_thickness
+  - sea_ice_snow_thickness
+  - sea_water_potential_temperature
+  - sea_water_salinity
+
+increment:
+  date: *bkg_date
+  basename: data_generated/3dvar/
+  ocn_filename: ocn.3dvar.iter1.incr.2018-04-15T00:00:00Z.nc
+  ice_filename: ice.3dvar.iter1.incr.2018-04-15T00:00:00Z.nc
+
+postprocess ice:
+  ncat: 5
+  ice_lev: 7
+  sno_lev: 1
+  cice restart:
+    input:  data_static/72x35x25/restarts/iced.2018-04-15-00000.nc
+    output: data_output/ice.cice_restart_postproc_seed.an.2018-04-15T00:00:00Z.nc
+  itd:
+    rebin: true
+    category bounds: [0.0, 0.6445072, 1.391433, 2.470179, 4.567288, 9.333887]
+    min thickness gap: 0.01
+  freeboard:
+    enforce: true
+  thermo:
+    update snow thermo: true
+    reset ponds: true
+    seed new ice: true
+    seed search neighbors: 64
+    max Tsfc: -1.0
+    min Tsfc: -100.0
+
+test:
+  reference filename: testref/soca2cice_new_seed.test
+  test output filename: testoutput/soca2cice_new_seed.test

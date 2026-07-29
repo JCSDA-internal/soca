@@ -93,6 +93,10 @@ set( soca_test_input
   testinput/varchange_ana2model.yml
   testinput/varchange_balance_TSSSH.yml
   testinput/varchange_balance.yml
+  testinput/soca2cice_new.yml
+  testinput/soca2cice_new_freeboard.yml
+  testinput/soca2cice_new_seed.yml
+  testinput/soca2cice_new_bgfallback.yml
 )
 
 set( soca_test_ref
@@ -153,6 +157,10 @@ set( soca_test_ref
   testref/setcorscales.test
   testref/sqrtvertloc.test
   testref/tlm_toolbox_linearization_error.test
+  testref/soca2cice_new.test
+  testref/soca2cice_new_freeboard.test
+  testref/soca2cice_new_seed.test
+  testref/soca2cice_new_bgfallback.test
 )
 
 # Create directory for test input/output/reference and symlink all files
@@ -818,3 +826,65 @@ soca_add_test( NAME convertstate_soca2cice
               NOTRAPFPE
               TEST_DEPENDS test_soca_gridgen
                            test_soca_3dvar )
+
+file(COPY ${CMAKE_CURRENT_BINARY_DIR}/data_static/72x35x25/restarts/iced.2018-04-15-00000.nc
+     DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/data_generated/soca2cice_new/ )
+soca_add_test( NAME soca2cice_new
+              EXE  soca_postproc.x
+              MPI 2
+              NOTRAPFPE
+              TEST_DEPENDS test_soca_gridgen
+                           test_soca_3dvar )
+
+file(COPY ${CMAKE_CURRENT_BINARY_DIR}/data_static/72x35x25/restarts/iced.2018-04-15-00000.nc
+     DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/data_generated/soca2cice_new_freeboard/ )
+soca_add_test( NAME soca2cice_new_freeboard
+              EXE  soca_postproc.x
+              MPI 2
+              NOTRAPFPE
+              TEST_DEPENDS test_soca_gridgen
+                           test_soca_3dvar )
+
+file(COPY ${CMAKE_CURRENT_BINARY_DIR}/data_static/72x35x25/restarts/iced.2018-04-15-00000.nc
+     DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/data_generated/soca2cice_new_seed/ )
+soca_add_test( NAME soca2cice_new_seed
+              EXE  soca_postproc.x
+              MPI 2
+              NOTRAPFPE
+              TEST_DEPENDS test_soca_gridgen
+                           test_soca_3dvar )
+
+# bg-fallback variant: analysis has only sea_ice_area_fraction; hice and hsno
+# both fall back to background per-cell means. Exercises the new
+# `analysis variables` parameter in PostProcessIce.
+file(COPY ${CMAKE_CURRENT_BINARY_DIR}/data_static/72x35x25/restarts/iced.2018-04-15-00000.nc
+     DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/data_generated/soca2cice_new_bgfallback/ )
+soca_add_test( NAME soca2cice_new_bgfallback
+              EXE  soca_postproc.x
+              MPI 2
+              NOTRAPFPE
+              TEST_DEPENDS test_soca_gridgen
+                           test_soca_3dvar )
+
+# Pure-C++ unit test for the per-column ice physics helpers
+# (adjustThicknessCategories, enforceFreeboard). No YAML / MPI / Geometry needed.
+ecbuild_add_test( TARGET  test_soca_icephysics
+                  SOURCES executables/TestIcePhysics.cc
+                  LIBS    soca )
+
+# Regression test: legacy Fortran Soca2Cice path vs new C++ PostProcessIce
+# path on the same inputs. Compares the two output CICE restarts and accepts
+# a small bounded number of differing cells (marginal-zone shuffle picks
+# different donors between the two implementations). The 5th argument is the
+# input CICE template -- the script also verifies that the variables soca does
+# not model are passed through byte-identically by the update-mode writer.
+ecbuild_add_test(
+    TARGET test_soca_postprocice_vs_soca2cice
+    COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/postprocice_vs_soca2cice.sh
+    ARGS
+      ${CMAKE_CURRENT_BINARY_DIR}/test_workdir/convertstate_soca2cice/data_output/iced.2018-04-15-00000.nc
+      ${CMAKE_CURRENT_BINARY_DIR}/test_workdir/soca2cice_new/data_output/ice.cice_restart_postproc.an.2018-04-15T00:00:00Z.nc
+      1e-10
+      2
+      ${CMAKE_CURRENT_BINARY_DIR}/test_workdir/soca2cice_new/data_static/72x35x25/restarts/iced.2018-04-15-00000.nc
+    TEST_DEPENDS test_soca_convertstate_soca2cice test_soca_soca2cice_new )
