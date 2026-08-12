@@ -807,7 +807,7 @@ void PostProcessIce::applyThermoStage(
     sLayer[l] = icephysics::siceLayerCice4(static_cast<int>(l)+1,
                                            static_cast<int>(iceLev));
   }
-  const std::size_t lSurf = iceLev - 1;
+  const std::size_t lSurf = 0;
 
   for (std::size_t jnode = 0; jnode < field_size; ++jnode) {
     for (std::size_t k = 0; k < ncat_; ++k) {
