@@ -10,6 +10,7 @@
 #include <algorithm>
 #include <cmath>
 #include <limits>
+#include <map>
 #include <string>
 #include <tuple>
 #include <unordered_map>
@@ -428,6 +429,13 @@ inline void applyCoastalIncrementFilter(
  * @param viewBathy [in] Array view containing bathymetry data (positive for water points)
  * @param stateBounds [in] Map of field names to their valid value ranges (min,max)
  *
+ * @return Per-variable count of the points that were clamped, as
+ *         {variable name, {number clamped to the minimum, number clamped to the maximum}}.
+ *         The counts are local to this MPI task; the caller is responsible for reducing
+ *         them if global numbers are wanted. A variable that is bounded but never clamped
+ *         is present in the map with zero counts, so that the caller can tell "bound did
+ *         not bite" apart from "variable was not bounded at all".
+ *
  * @details The function iterates through fields in dxFs and applies the following logic:
  *   1. Skip if the field doesn't exist in xbFs or doesn't have bounds defined in stateBounds
  *   2. For each non-ghost point with positive bathymetry:
@@ -435,12 +443,14 @@ inline void applyCoastalIncrementFilter(
  *      - If xA < minBound: set dX = minBound - xB
  *      - If xA > maxBound: set dX = maxBound - xB
  */
-inline void applyBruteForceBoundsCheck(
+inline std::map<std::string, std::pair<size_t, size_t>> applyBruteForceBoundsCheck(
     atlas::FieldSet& dxFs,
     const atlas::FieldSet& xbFs,
     const atlas::array::ArrayView<const int, 1>& ghostView,
     const atlas::array::ArrayView<const double, 2>& viewBathy,
     const std::unordered_map<std::string, std::pair<double, double>>& stateBounds) {
+
+  std::map<std::string, std::pair<size_t, size_t>> clampCounts;
 
   for (auto& field : dxFs) {
     const std::string name = field.name();
@@ -455,6 +465,9 @@ inline void applyBruteForceBoundsCheck(
     const double minBound = bounds.first;
     const double maxBound = bounds.second;
 
+    size_t nAtMin = 0;
+    size_t nAtMax = 0;
+
     for (atlas::idx_t jnode = 0; jnode < dxView.shape(0); ++jnode) {
       if (ghostView(jnode) > 0) continue;
       if (viewBathy(jnode, 0) <= 0.0) continue;
@@ -466,12 +479,18 @@ inline void applyBruteForceBoundsCheck(
 
         if (xA < minBound) {
           dxView(jnode, level) = minBound - xB;
+          ++nAtMin;
         } else if (xA > maxBound) {
           dxView(jnode, level) = maxBound - xB;
+          ++nAtMax;
         }
       }  // end for level
     }  // end for jnode
+
+    clampCounts[name] = {nAtMin, nAtMax};
   }  // end for field
+
+  return clampCounts;
 }  // end function
 
 
