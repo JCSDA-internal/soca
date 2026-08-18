@@ -77,6 +77,18 @@ increment postprocessing:
       ocn_filename: restarts/MOM.res.nc
       read_from_file: 3
 
+  # Bounds-only QC: no steric height adjustment (this increment has no
+  # sea_surface_height_above_geoid), no coastal filter, no stability check.
+  # The bounds are tightened slightly inside the range of the background, so
+  # that the clamping is exercised by the test rather than never firing. They
+  # are kept close to the background extremes on purpose: a bound far inside
+  # the background range would force increments of size (background - bound),
+  # which would swamp the increment statistics compared with this test.
+  bounds check:
+    state bounds:
+      sea_water_potential_temperature: [-1.5, 30.0]
+      sea_water_salinity: [0.0, 37.0]
+
 test:
   reference filename: testref/ensanpproc_ensda.test
   test output filename: testoutput/ensanpproc_ensda.test
