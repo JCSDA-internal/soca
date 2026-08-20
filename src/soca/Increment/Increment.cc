@@ -283,7 +283,9 @@ namespace soca {
   void Increment::schur_product_with(const Increment & dx) {
     util::multiplyFieldSets(fieldSet_, dx.fieldSet_);
   }
-// -----------------------------------------------------------------------------
+
+  // -----------------------------------------------------------------------------
+
   void Increment::schur_quotient_with(const Increment & dx) {
     util::divideFieldSets(fieldSet_, dx.fieldSet_);
   }

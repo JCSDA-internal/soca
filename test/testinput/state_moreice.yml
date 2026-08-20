@@ -4,6 +4,10 @@ geometry:
   fields metadata: data_static/fields_metadata_moreice.yml
 
 state test:
+  # FMS binds to one communicator per process (soca_geom_mod.F90: mpp_init(localcomm)),
+  # and the fixture geometry has already bound it to world, so the allReduceInPlace test
+  # cannot build its task-local member geometry here.
+  skip allreduce test: true
   statefile:
     read_from_file: 1
     date: &date 2018-04-15T00:00:00Z

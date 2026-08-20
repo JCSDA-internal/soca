@@ -12,6 +12,7 @@
 #include <string>
 
 #include "atlas/field.h"
+#include "oops/mpi/mpi.h"
 #include "oops/util/FieldSetHelpers.h"
 #include "oops/util/FieldSetOperations.h"
 
@@ -52,6 +53,12 @@ void Fields::accumul(const double & zz, const Fields & xx) {
     }
     field.set_dirty(field.dirty() || otherField.dirty());
   }
+}
+
+// -----------------------------------------------------------------------------
+
+void Fields::allReduceInPlace(const eckit::mpi::Comm & comm) {
+  oops::mpi::allReduceInPlace(comm, fieldSet_);
 }
 
 // -----------------------------------------------------------------------------
