@@ -1,12 +1,4 @@
-Input Dirac increment:
-  Valid time: 2018-04-15T00:00:00Z
-             sea_water_salinity   min=0.0000000000000000   max=1.0000000000000000   mean=0.0000243457090688
-sea_water_potential_temperature   min=0.0000000000000000   max=1.0000000000000000   mean=0.0000973828362751
- sea_surface_height_above_geoid   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
-       sea_water_cell_thickness   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
-          sea_ice_area_fraction   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
-              sea_ice_thickness   min=0.0000000000000000   max=1.0000000000000000   mean=0.0006086427267194
-Covariance(SABER) * Increment:
+Dirac test for SABER-parametric:
   Valid time: 2018-04-15T00:00:00Z
              sea_water_salinity   min=0.0000000000000000   max=0.9999999999999998   mean=0.0300603806163751
 sea_water_potential_temperature   min=0.0000000000000000   max=1.0006323337504124   mean=0.3270386817150498
@@ -14,3 +6,10 @@ sea_water_potential_temperature   min=0.0000000000000000   max=1.000632333750412
        sea_water_cell_thickness   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
           sea_ice_area_fraction   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
               sea_ice_thickness   min=0.0000000000000000   max=0.9999999999999996   mean=0.3051297084042984
+  + Value for variable sea_water_salinity, subwindow 0, at (longitude, latitude, vertical index) point (-122.46168, 71.13133, 1): 9.9999999999999978e-01
+  + Value for variable sea_water_potential_temperature, subwindow 0, at (longitude, latitude, vertical index) point (-277.50000, -47.50000, 1): 1.0006323337504124e+00
+  + Value for variable sea_water_potential_temperature, subwindow 0, at (longitude, latitude, vertical index) point (32.50000, 42.50000, 1): 1.0000000000000000e+00
+  + Value for variable sea_water_potential_temperature, subwindow 0, at (longitude, latitude, vertical index) point (-27.50000, 57.50000, 1): 1.0000000000000002e+00
+  + Value for variable sea_water_potential_temperature, subwindow 0, at (longitude, latitude, vertical index) point (-197.50000, 17.50000, 5): 9.9776147705641327e-01
+  + Value for variable sea_surface_height_above_geoid, subwindow 0, at (longitude, latitude, vertical index) point (-77.50000, 7.50000, 1): 0.0000000000000000e+00
+  + Value for variable sea_ice_thickness, subwindow 0, at (longitude, latitude, vertical index) point (-202.50000, -62.50000, 1): 9.9999999999999956e-01
