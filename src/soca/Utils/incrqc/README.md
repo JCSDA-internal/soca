@@ -9,11 +9,44 @@ The QC process ensures:
 
 ## Features
 
-- **Analysis Bounds Enforcement**: Adjusts increments so that the analysis stays within user-specified bounds for temperature and salinity.
+- **Analysis Bounds Enforcement**: Adjusts increments so that the analysis stays within user-specified bounds, for any variable.
 - **Water Column Stability Check**: Ensures that the increment does not introduce new static instabilities in the water column by checking density profiles.
-- **Steric Height Constraint**: Limits the steric height increment to prevent unrealistically large changes to sea surface height.
+- **Steric Height Adjustment**: Replaces the SSH increment with a steric height increment, and limits it to prevent unrealistically large changes to sea surface height.
 - **Coastal Increment Filter**: Smoothly tapers T/S increments to zero near coastlines using a cosine taper on the `distance_from_coast` field.
 - **Iterative Refinement**: Applies stability checks iteratively with optional smoothing to refine corrections.
+
+## Stages are individually optional
+
+Every stage runs **only if its own configuration key is present**, so any subset
+of them can be used. Nothing is on by default:
+
+| Stage | Enabled by |
+|---|---|
+| Analysis bounds enforcement | `state bounds` |
+| Steric height adjustment | `steric variable change` |
+| Water column stability check | `stability check` |
+| Coastal increment filter | `coastal increment filter` |
+
+The steric variable change and the steric height limit are a single stage: the
+limit rescales T/S and overwrites the SSH increment with the recomputed steric
+height, so it is only meaningful once SSH holds a steric height increment.
+`absolute steric increment max` sets the limit within that stage, defaulting to
+10.0 m (i.e. effectively no limit) when it is not given.
+
+If no stage is configured at all, the increment is left untouched and a warning
+is logged.
+
+The stages that are enabled are reported in the log, together with the bounds
+applied to each variable and the number of points each bound clamped:
+
+```
+QC: steric height adjustment: off
+QC: coastal increment filter: off
+QC: water column stability check: off
+QC: state bounds: on
+QC: bounding the analysis of sea_water_potential_temperature to [-2.500000, 36.000000]
+QC: state bounds on sea_water_potential_temperature: clamped 59 points to the minimum and 0 points to the maximum
+```
 
 ## Usage
 
@@ -26,7 +59,9 @@ The main entry point is `soca::incrqc::qcIncrement()`, which performs in-place Q
 soca::incrqc::qcIncrement(xb, dx, config, geom);
 ```
 
-## Configuration Example
+## Configuration Examples
+
+All stages enabled:
 
 ```yaml
 state bounds:
@@ -46,6 +81,16 @@ stability check:
 coastal increment filter:
   min distance: 0.0       # [m] zero increments at the coast
   max distance: 200000.0  # [m] full increments beyond 200 km from coast
+```
+
+Bounds only, with no steric height adjustment, coastal filter or stability
+check. Note that bounds can be given for any variable, not just T and S:
+
+```yaml
+state bounds:
+  sea_water_potential_temperature: [-2.5, 36.0]
+  sea_water_salinity: [0.0, 44.0]
+  sea_ice_area_fraction: [0.0, 1.0]
 ```
 
 ---
@@ -186,14 +231,20 @@ The weight *w* is applied uniformly to all vertical levels at a given node.
 
 #### Notes
 
-- The filter is optional; it is only activated when the `coastal increment filter` key is present in the configuration.
+- Like every stage, the filter is only activated when the `coastal increment filter` key is present in the configuration.
 - The `distance_from_coast` field must be present in the background state.
 - Applied before the stability and steric height checks so that downstream QC operates on already-tapered increments.
 
 ### 4. Hard Bounds Enforcement
 
-- Brute-force check to make sure analysis values of temperature and salinity remain within defined minimum and maximum values.
+- Brute-force check to make sure analysis values remain within defined minimum and maximum values.
 - Adjusts the increment field accordingly.
+- Bounds can be given for any variable, as a `[minimum, maximum]` pair under
+  `state bounds`. A variable with no entry there is left unbounded. Bounds given
+  for a name that is not an increment variable are reported and ignored, which
+  catches misspelled variable names.
+- Applied to ocean points only, i.e. where the bathymetry derived from
+  `sea_water_cell_thickness` is positive.
 
 ---
 
