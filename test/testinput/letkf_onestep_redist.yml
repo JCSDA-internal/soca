@@ -2,7 +2,6 @@ geometry:
   geom_grid_file: data_generated/gridgen/soca_gridspec.72x35x25.nc
   mom6_input_nml: data_static/72x35x25/input.nml
   fields metadata: data_static/fields_metadata.yml
-  iterator dimension: 3
 
 time window:
   begin: &date 2018-04-14T00:00:00Z
@@ -31,7 +30,8 @@ observations:
   observers:
   - obs space:
       name: SeaSurfaceTemp
-      distribution:
+      use data frame container: true
+      redistribution:
         name: Halo
         halo size: 3500.0e3
       obsdataout:
@@ -55,11 +55,6 @@ observations:
       min grid mult: 2.0
       min value: 200.0e3
       max value: 900.0e3
-    - localization method: Vertical localization
-      vertical lengthscale: 5
-      assign constant vertical coordinate to obs: true
-      constant vertical coordinate value: 1
-      localization function: Gaspari Cohn
     obs filters:
     - filter: Domain Check
       where:
@@ -69,7 +64,8 @@ observations:
 
   - obs space:
       name: ADT
-      distribution:
+      use data frame container: true
+      redistribution:
         name: Halo
         halo size: 3500.0e3
       obsdataout:
@@ -108,11 +104,10 @@ local ensemble DA:
 output:
   datadir: data_output/
   date: *date
-  exp: letkf3d
+  exp: letkf_onestep_redist
   type: ens
 
 test:
-  reference filename: testref/letkf3d.test
-  test output filename: testoutput/letkf3d.test
-  float relative tolerance: 1.e-5
-  float absolute tolerance: 1e-8
+  reference filename: testref/letkf_onestep_redist.test
+  test output filename: testoutput/letkf_onestep_redist.test
+  float relative tolerance: 1e-5
