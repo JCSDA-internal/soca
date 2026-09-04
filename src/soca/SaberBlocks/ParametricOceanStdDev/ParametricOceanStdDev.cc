@@ -17,7 +17,7 @@ namespace soca {
 
 // ----------------------------------------------------------------------------------------
 
-static saber::SaberOuterBlockMaker<ParametricOceanStdDev>
+static saber::OuterBlockMaker<ParametricOceanStdDev>
   makerParametricOceanStdDev_("SOCAParametricOceanStdDev");
 
 // ----------------------------------------------------------------------------------------
@@ -29,7 +29,7 @@ ParametricOceanStdDev::ParametricOceanStdDev(
     const Parameters_ & params,
     const oops::FieldSet3D & xb,
     const oops::FieldSet3D & fg)
-  : saber::SaberOuterBlockBase(params, xb.validTime(), geom, outerVars),
+  : saber::OuterBlockBase(params, xb.validTime(), geom, outerVars),
     geom_(geom),
     innerVars_(outerVars)
 {

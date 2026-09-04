@@ -9,8 +9,8 @@
 
 #include <string>
 
-#include "saber/blocks/SaberBlockParametersBase.h"
-#include "saber/blocks/SaberOuterBlockBase.h"
+#include "saber/blocks/BlockParametersBase.h"
+#include "saber/blocks/OuterBlockBase.h"
 
 // ----------------------------------------------------------------------------------------
 
@@ -19,8 +19,8 @@ namespace soca {
 
 // ----------------------------------------------------------------------------------------
 
-class BkgErrFiltParameters : public saber::SaberBlockParametersBase {
-  OOPS_CONCRETE_PARAMETERS(BkgErrFiltParameters, saber::SaberBlockParametersBase)
+class BkgErrFiltParameters : public saber::BlockParametersBase {
+  OOPS_CONCRETE_PARAMETERS(BkgErrFiltParameters, saber::BlockParametersBase)
  public:
   oops::Variables mandatoryActiveVars() const override {return oops::Variables();}
   oops::RequiredParameter<float> oceanDepthMin{"ocean_depth_min", this};
@@ -30,7 +30,7 @@ class BkgErrFiltParameters : public saber::SaberBlockParametersBase {
 
 // ----------------------------------------------------------------------------------------
 
-class BkgErrFilt : public saber::SaberOuterBlockBase {
+class BkgErrFilt : public saber::OuterBlockBase {
  public:
   static const std::string classname() {return "soca::BkgErrFilt";}
   typedef BkgErrFiltParameters Parameters_;
