@@ -15,8 +15,8 @@
 #include "oops/util/parameters/ConfigurationParameter.h"
 #include "oops/util/parameters/NumericConstraints.h"
 
-#include "saber/blocks/SaberBlockParametersBase.h"
-#include "saber/blocks/SaberOuterBlockBase.h"
+#include "saber/blocks/BlockParametersBase.h"
+#include "saber/blocks/OuterBlockBase.h"
 
 #include "soca/Utils/OceanSmoother.h"
 
@@ -34,12 +34,12 @@ namespace soca
  * of the atmospheric sciences, applied meteorology and physical oceanography,
  * 131(613), 3605-3625.
  */
-class ParametricOceanStdDev : public saber::SaberOuterBlockBase {
+class ParametricOceanStdDev : public saber::OuterBlockBase {
  public:
   // ----------------------------------------------------------------------------------------
   /// @brief Yaml parameters for ParametricOceanStdDev
-  class Parameters : public saber::SaberBlockParametersBase {
-    OOPS_CONCRETE_PARAMETERS(Parameters, saber::SaberBlockParametersBase)
+  class Parameters : public saber::BlockParametersBase {
+    OOPS_CONCRETE_PARAMETERS(Parameters, saber::BlockParametersBase)
 
    public:
     // --------------------------------------------------------------------------------------
