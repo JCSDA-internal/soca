@@ -1,21 +1,18 @@
-Input Dirac increment:
-  Valid time: 2018-04-15T00:00:00Z
-  cicen   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
-  hicen   min=0.0000000000000000   max=1.0000000000000000   mean=0.0006086427267194
-   socn   min=0.0000000000000000   max=1.0000000000000000   mean=0.0000243457090688
-   tocn   min=0.0000000000000000   max=1.0000000000000000   mean=0.0000973828362751
-    ssh   min=0.0000000000000000   max=1.0000000000000000   mean=0.0006086427267194
-   hocn   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
-    mld   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
-layer_depth   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
 Adjoint test for block diffusion passed
-Covariance(SABER) * Increment:
+Dirac test for SABER-parametric:
   Valid time: 2018-04-15T00:00:00Z
-  cicen   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
-  hicen   min=0.0000000000000000   max=1.0000000000000000   mean=0.0006086427267194
-   socn   min=0.0000000000000000   max=0.9719591576549972   mean=0.0156098466997459
-   tocn   min=0.0000000000000000   max=1.0525891664602380   mean=0.1203299299401694
-    ssh   min=0.0000000000000000   max=0.9947575154898022   mean=0.0068267320452945
-   hocn   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
-    mld   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
-layer_depth   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
+          sea_ice_area_fraction   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
+              sea_ice_thickness   min=0.0000000000000000   max=1.0000000000000000   mean=0.0006086427267194
+             sea_water_salinity   min=0.0000000000000000   max=0.9719554022500023   mean=0.0156098466997459
+sea_water_potential_temperature   min=0.0000000000000000   max=1.0525891664602378   mean=0.1203299299401694
+ sea_surface_height_above_geoid   min=0.0000000000000000   max=0.9947575154898022   mean=0.0068267320452945
+       sea_water_cell_thickness   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
+    ocean_mixed_layer_thickness   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
+                sea_water_depth   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
+  + Value for variable sea_ice_thickness, subwindow 0, at (longitude, latitude, vertical index) point (-202.50000, -62.50000, 1): 1.0000000000000000e+00
+  + Value for variable sea_water_salinity, subwindow 0, at (longitude, latitude, vertical index) point (-122.46168, 71.13133, 1): 9.7163013241584295e-01
+  + Value for variable sea_water_potential_temperature, subwindow 0, at (longitude, latitude, vertical index) point (-277.50000, -47.50000, 1): 9.5875063130948357e-01
+  + Value for variable sea_water_potential_temperature, subwindow 0, at (longitude, latitude, vertical index) point (32.50000, 42.50000, 1): 1.0047122981164531e+00
+  + Value for variable sea_water_potential_temperature, subwindow 0, at (longitude, latitude, vertical index) point (-27.50000, 57.50000, 1): 1.0105294898059178e+00
+  + Value for variable sea_water_potential_temperature, subwindow 0, at (longitude, latitude, vertical index) point (-197.50000, 17.50000, 5): 1.0525891664602378e+00
+  + Value for variable sea_surface_height_above_geoid, subwindow 0, at (longitude, latitude, vertical index) point (-27.50000, -7.50000, 1): 9.9475751548980218e-01
