@@ -16,6 +16,7 @@
 #include "soca/Geometry/Geometry.h"
 #include "soca/GeometryIterator/GeometryIterator.h"
 #include "soca/Increment/Increment.h"
+#include "soca/JcTerm/CalcDiagonalNorm.h"
 #include "soca/LinearModel/OceanIceEmulator/LinearModelOceanIceEmulator.h"
 #include "soca/LinearVariableChange/LinearVariableChange.h"
 #include "soca/Model/OceanIceEmulator/ModelOceanIceEmulator.h"
@@ -56,6 +57,8 @@ struct Traits {
   typedef soca::LinearVariableChange LinearVariableChange;
   typedef soca::VariableChange       VariableChange;
   typedef soca::ModelData            ModelData;
+
+  typedef soca::CalcDiagonalNorm     CalcDiagonalNorm;
 
   typedef ufo::ObsLocalization<GeometryIterator>   ObsLocalization;
 };
