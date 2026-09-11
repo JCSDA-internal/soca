@@ -128,19 +128,16 @@ variational:
           type: incr
 
 output:
-  datadir: data_output/
-  exp: 3dvar_diffmlb
-  type: an
-
-final:
+  analysis:
+    datadir: data_output/
+    exp: 3dvar_diffmlb
+    type: an
   increment:
-    output:
-      state component:
-        datadir: data_output/
-        date: *bkg_date
-        exp: 3dvar_diffmlb
-        type: incr
     geometry: *geom
+    datadir: data_output/
+    date: *bkg_date
+    exp: 3dvar_diffmlb
+    type: incr
 
 test:
   reference filename: testref/3dvar_diffmlb.test

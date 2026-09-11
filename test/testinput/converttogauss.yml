@@ -25,7 +25,7 @@ states to structured grid:
     interpolation method:
       type: finite-element
     number of latitude gridpoints: 12
-    variables to output:
+    variables:
     - sea_surface_height_above_geoid
     - sea_water_potential_temperature
     - sea_water_salinity

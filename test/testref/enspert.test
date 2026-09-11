@@ -18,16 +18,16 @@ molar_concentration_of_biomass_in_sea_water_in_p_units   min=0.0000000000000000 
                           friction_velocity_over_water   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
                            ocean_mixed_layer_thickness   min=2.2854716757984130   max=4593.1533423819937525   mean=192.4109073940401515
                                        sea_water_depth   min=2.2854716757984130   max=5658.3057467114012979   mean=1200.5229536158342398
-Member 0 final state: 
+Writing State:
   Valid time: 2018-04-15T00:00:00Z
                                  sea_ice_area_fraction   min=-0.0254804386848384   max=1.0194307172329691   mean=0.1163027461242328
-                                     sea_ice_thickness   min=-1.6892928379385062   max=5.0916175628519982   mean=0.4300591940372677
+                                     sea_ice_thickness   min=-1.6892928379385066   max=5.0916175628519982   mean=0.4300591940372677
                                 sea_ice_snow_thickness   min=0.0000000000000000   max=1.2712833951042413   mean=0.0886865877527975
                                     sea_water_salinity   min=10.7210460395083924   max=40.4416591897031168   mean=34.5505565935110965
                        sea_water_potential_temperature   min=-3.4575219346899932   max=32.8929626639715877   mean=6.0052019161457517
-                           eastward_sea_water_velocity   min=-0.9333710125748955   max=0.7808732235399238   mean=-0.0004932081276983
+                           eastward_sea_water_velocity   min=-0.9333710125748954   max=0.7808732235399238   mean=-0.0004932081276983
                           northward_sea_water_velocity   min=-0.8105570276758784   max=1.4377766409421606   mean=0.0028768515455612
-                        sea_surface_height_above_geoid   min=-1.9156138016397037   max=0.8922075694926211   mean=-0.2682647038517887
+                        sea_surface_height_above_geoid   min=-1.9156130035265904   max=0.8922070232997386   mean=-0.2682646532446498
                               sea_water_cell_thickness   min=0.0009999999999977   max=1345.6400000000003274   mean=128.6280642064969300
         mass_concentration_of_chlorophyll_in_sea_water   min=-0.0247023765312916   max=5.0876715321024788   mean=0.1177678295447603
 molar_concentration_of_biomass_in_sea_water_in_p_units   min=-0.0000000025670296   max=0.0000002804204911   mean=0.0000000064578834
@@ -38,18 +38,38 @@ molar_concentration_of_biomass_in_sea_water_in_p_units   min=-0.0000000025670296
                           friction_velocity_over_water   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
                            ocean_mixed_layer_thickness   min=2.2854716757984130   max=4593.1533423819937525   mean=192.4109073940401515
                                        sea_water_depth   min=2.2854716757984130   max=5658.3057467114012979   mean=1200.5229536158342398
-Member 1 final state: 
+Member 0 final state: 
+  Valid time: 2018-04-15T00:00:00Z
+                                 sea_ice_area_fraction   min=-0.0254804386848384   max=1.0194307172329691   mean=0.1163027461242328
+                                     sea_ice_thickness   min=-1.6892928379385066   max=5.0916175628519982   mean=0.4300591940372677
+                                sea_ice_snow_thickness   min=0.0000000000000000   max=1.2712833951042413   mean=0.0886865877527975
+                                    sea_water_salinity   min=10.7210460395083924   max=40.4416591897031168   mean=34.5505565935110965
+                       sea_water_potential_temperature   min=-3.4575219346899932   max=32.8929626639715877   mean=6.0052019161457517
+                           eastward_sea_water_velocity   min=-0.9333710125748954   max=0.7808732235399238   mean=-0.0004932081276983
+                          northward_sea_water_velocity   min=-0.8105570276758784   max=1.4377766409421606   mean=0.0028768515455612
+                        sea_surface_height_above_geoid   min=-1.9156130035265904   max=0.8922070232997386   mean=-0.2682646532446498
+                              sea_water_cell_thickness   min=0.0009999999999977   max=1345.6400000000003274   mean=128.6280642064969300
+        mass_concentration_of_chlorophyll_in_sea_water   min=-0.0247023765312916   max=5.0876715321024788   mean=0.1177678295447603
+molar_concentration_of_biomass_in_sea_water_in_p_units   min=-0.0000000025670296   max=0.0000002804204911   mean=0.0000000064578834
+                   net_downwelling_shortwave_radiation   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
+                        upward_latent_heat_flux_in_air   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
+                      upward_sensible_heat_flux_in_air   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
+                    net_downwelling_longwave_radiation   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
+                          friction_velocity_over_water   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
+                           ocean_mixed_layer_thickness   min=2.2854716757984130   max=4593.1533423819937525   mean=192.4109073940401515
+                                       sea_water_depth   min=2.2854716757984130   max=5658.3057467114012979   mean=1200.5229536158342398
+Writing State:
   Valid time: 2018-04-15T00:00:00Z
                                  sea_ice_area_fraction   min=-0.0337737141904136   max=1.0092555616595495   mean=0.1176330236375896
-                                     sea_ice_thickness   min=-1.5660525028062400   max=4.4898621469200366   mean=0.4886585831103003
+                                     sea_ice_thickness   min=-1.5660525028062398   max=4.4898621469200366   mean=0.4886585831103003
                                 sea_ice_snow_thickness   min=0.0000000000000000   max=1.2712833951042413   mean=0.0886865877527975
-                                    sea_water_salinity   min=10.7210460395083924   max=40.4416591897031168   mean=34.5485685661845636
-                       sea_water_potential_temperature   min=-2.3427540756277221   max=31.7004645720658580   mean=6.0219289489996495
-                           eastward_sea_water_velocity   min=-0.8323167555566954   max=0.5814920833553341   mean=-0.0001940086465938
+                                    sea_water_salinity   min=10.7210460395083924   max=40.4416591897031168   mean=34.5485685661845707
+                       sea_water_potential_temperature   min=-2.3427540756277225   max=31.7004645720658580   mean=6.0219289489996495
+                           eastward_sea_water_velocity   min=-0.8323167555566953   max=0.5814920833553341   mean=-0.0001940086465938
                           northward_sea_water_velocity   min=-0.9016872156748872   max=1.4377766409421606   mean=0.0028065431405658
-                        sea_surface_height_above_geoid   min=-1.8927145230415174   max=1.0000681902588540   mean=-0.2749446478909064
+                        sea_surface_height_above_geoid   min=-1.8927132612445474   max=1.0000696725113083   mean=-0.2749446303788481
                               sea_water_cell_thickness   min=0.0009999999999977   max=1345.6400000000003274   mean=128.6280642064969300
-        mass_concentration_of_chlorophyll_in_sea_water   min=-0.0285008729600841   max=4.5199280365838348   mean=0.1172176659930803
+        mass_concentration_of_chlorophyll_in_sea_water   min=-0.0285008729600841   max=4.5199280365838357   mean=0.1172176659930803
 molar_concentration_of_biomass_in_sea_water_in_p_units   min=-0.0000000008939798   max=0.0000002571296921   mean=0.0000000066180379
                    net_downwelling_shortwave_radiation   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
                         upward_latent_heat_flux_in_air   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
@@ -58,16 +78,36 @@ molar_concentration_of_biomass_in_sea_water_in_p_units   min=-0.0000000008939798
                           friction_velocity_over_water   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
                            ocean_mixed_layer_thickness   min=2.2854716757984130   max=4593.1533423819937525   mean=192.4109073940401515
                                        sea_water_depth   min=2.2854716757984130   max=5658.3057467114012979   mean=1200.5229536158342398
-Member 2 final state: 
+Member 1 final state: 
   Valid time: 2018-04-15T00:00:00Z
-                                 sea_ice_area_fraction   min=-0.0284327477026419   max=1.0111310986766546   mean=0.1180135871908032
-                                     sea_ice_thickness   min=-1.5585711686017574   max=4.7095421682951200   mean=0.4568043377261044
+                                 sea_ice_area_fraction   min=-0.0337737141904136   max=1.0092555616595495   mean=0.1176330236375896
+                                     sea_ice_thickness   min=-1.5660525028062398   max=4.4898621469200366   mean=0.4886585831103003
+                                sea_ice_snow_thickness   min=0.0000000000000000   max=1.2712833951042413   mean=0.0886865877527975
+                                    sea_water_salinity   min=10.7210460395083924   max=40.4416591897031168   mean=34.5485685661845707
+                       sea_water_potential_temperature   min=-2.3427540756277225   max=31.7004645720658580   mean=6.0219289489996495
+                           eastward_sea_water_velocity   min=-0.8323167555566953   max=0.5814920833553341   mean=-0.0001940086465938
+                          northward_sea_water_velocity   min=-0.9016872156748872   max=1.4377766409421606   mean=0.0028065431405658
+                        sea_surface_height_above_geoid   min=-1.8927132612445474   max=1.0000696725113083   mean=-0.2749446303788481
+                              sea_water_cell_thickness   min=0.0009999999999977   max=1345.6400000000003274   mean=128.6280642064969300
+        mass_concentration_of_chlorophyll_in_sea_water   min=-0.0285008729600841   max=4.5199280365838357   mean=0.1172176659930803
+molar_concentration_of_biomass_in_sea_water_in_p_units   min=-0.0000000008939798   max=0.0000002571296921   mean=0.0000000066180379
+                   net_downwelling_shortwave_radiation   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
+                        upward_latent_heat_flux_in_air   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
+                      upward_sensible_heat_flux_in_air   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
+                    net_downwelling_longwave_radiation   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
+                          friction_velocity_over_water   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
+                           ocean_mixed_layer_thickness   min=2.2854716757984130   max=4593.1533423819937525   mean=192.4109073940401515
+                                       sea_water_depth   min=2.2854716757984130   max=5658.3057467114012979   mean=1200.5229536158342398
+Writing State:
+  Valid time: 2018-04-15T00:00:00Z
+                                 sea_ice_area_fraction   min=-0.0284327477026419   max=1.0111310986766546   mean=0.1180135871908033
+                                     sea_ice_thickness   min=-1.5585711686017574   max=4.7095421682951200   mean=0.4568043377261046
                                 sea_ice_snow_thickness   min=0.0000000000000000   max=1.2712833951042413   mean=0.0886865877527975
                                     sea_water_salinity   min=10.7210460395083924   max=40.4416591897031168   mean=34.5376422591837411
                        sea_water_potential_temperature   min=-2.5246599289654670   max=32.3165835540432198   mean=6.0106612465502414
-                           eastward_sea_water_velocity   min=-0.9559268820889811   max=0.8088147699988902   mean=-0.0006185518980288
-                          northward_sea_water_velocity   min=-0.7532188639207180   max=1.4377766409421606   mean=0.0034635395704369
-                        sea_surface_height_above_geoid   min=-1.8898279570644347   max=0.9517323077804990   mean=-0.2761827254860690
+                           eastward_sea_water_velocity   min=-0.9559268820889811   max=0.8088147699988901   mean=-0.0006185518980288
+                          northward_sea_water_velocity   min=-0.7532188639207179   max=1.4377766409421606   mean=0.0034635395704369
+                        sea_surface_height_above_geoid   min=-1.8898286177378409   max=0.9517328637808810   mean=-0.2761827611871519
                               sea_water_cell_thickness   min=0.0009999999999977   max=1345.6400000000003274   mean=128.6280642064969300
         mass_concentration_of_chlorophyll_in_sea_water   min=-0.0752897855507706   max=4.8190262280146854   mean=0.1185147819105805
 molar_concentration_of_biomass_in_sea_water_in_p_units   min=-0.0000000013221665   max=0.0000002188768213   mean=0.0000000067016645
@@ -78,16 +118,36 @@ molar_concentration_of_biomass_in_sea_water_in_p_units   min=-0.0000000013221665
                           friction_velocity_over_water   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
                            ocean_mixed_layer_thickness   min=2.2854716757984130   max=4593.1533423819937525   mean=192.4109073940401515
                                        sea_water_depth   min=2.2854716757984130   max=5658.3057467114012979   mean=1200.5229536158342398
-Member 3 final state: 
+Member 2 final state: 
+  Valid time: 2018-04-15T00:00:00Z
+                                 sea_ice_area_fraction   min=-0.0284327477026419   max=1.0111310986766546   mean=0.1180135871908033
+                                     sea_ice_thickness   min=-1.5585711686017574   max=4.7095421682951200   mean=0.4568043377261046
+                                sea_ice_snow_thickness   min=0.0000000000000000   max=1.2712833951042413   mean=0.0886865877527975
+                                    sea_water_salinity   min=10.7210460395083924   max=40.4416591897031168   mean=34.5376422591837411
+                       sea_water_potential_temperature   min=-2.5246599289654670   max=32.3165835540432198   mean=6.0106612465502414
+                           eastward_sea_water_velocity   min=-0.9559268820889811   max=0.8088147699988901   mean=-0.0006185518980288
+                          northward_sea_water_velocity   min=-0.7532188639207179   max=1.4377766409421606   mean=0.0034635395704369
+                        sea_surface_height_above_geoid   min=-1.8898286177378409   max=0.9517328637808810   mean=-0.2761827611871519
+                              sea_water_cell_thickness   min=0.0009999999999977   max=1345.6400000000003274   mean=128.6280642064969300
+        mass_concentration_of_chlorophyll_in_sea_water   min=-0.0752897855507706   max=4.8190262280146854   mean=0.1185147819105805
+molar_concentration_of_biomass_in_sea_water_in_p_units   min=-0.0000000013221665   max=0.0000002188768213   mean=0.0000000067016645
+                   net_downwelling_shortwave_radiation   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
+                        upward_latent_heat_flux_in_air   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
+                      upward_sensible_heat_flux_in_air   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
+                    net_downwelling_longwave_radiation   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
+                          friction_velocity_over_water   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
+                           ocean_mixed_layer_thickness   min=2.2854716757984130   max=4593.1533423819937525   mean=192.4109073940401515
+                                       sea_water_depth   min=2.2854716757984130   max=5658.3057467114012979   mean=1200.5229536158342398
+Writing State:
   Valid time: 2018-04-15T00:00:00Z
                                  sea_ice_area_fraction   min=-0.0240881883633958   max=1.0190731314754147   mean=0.1192954404274192
-                                     sea_ice_thickness   min=-1.6897252869765838   max=4.7958326146344330   mean=0.5396440002260705
+                                     sea_ice_thickness   min=-1.6897252869765835   max=4.7958326146344330   mean=0.5396440002260704
                                 sea_ice_snow_thickness   min=0.0000000000000000   max=1.2712833951042413   mean=0.0886865877527975
                                     sea_water_salinity   min=10.7210460395083924   max=40.4416591897031168   mean=34.5385414327741742
                        sea_water_potential_temperature   min=-3.0001465247790753   max=31.7004645720658580   mean=6.0120740135523079
-                           eastward_sea_water_velocity   min=-0.7387341714175558   max=0.6967766771644331   mean=0.0002452807571744
+                           eastward_sea_water_velocity   min=-0.7387341714175558   max=0.6967766771644330   mean=0.0002452807571744
                           northward_sea_water_velocity   min=-0.8718682015635104   max=1.4377766409421606   mean=0.0021427498133720
-                        sea_surface_height_above_geoid   min=-1.9046144300569279   max=0.9102501835518694   mean=-0.2744947258662753
+                        sea_surface_height_above_geoid   min=-1.9046129664512943   max=0.9102501577867481   mean=-0.2744946625801748
                               sea_water_cell_thickness   min=0.0009999999999977   max=1345.6400000000003274   mean=128.6280642064969300
         mass_concentration_of_chlorophyll_in_sea_water   min=-0.0862965355645813   max=4.6536055945756720   mean=0.1174151370670093
 molar_concentration_of_biomass_in_sea_water_in_p_units   min=-0.0000000013248215   max=0.0000002173168464   mean=0.0000000066099491
@@ -98,18 +158,58 @@ molar_concentration_of_biomass_in_sea_water_in_p_units   min=-0.0000000013248215
                           friction_velocity_over_water   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
                            ocean_mixed_layer_thickness   min=2.2854716757984130   max=4593.1533423819937525   mean=192.4109073940401515
                                        sea_water_depth   min=2.2854716757984130   max=5658.3057467114012979   mean=1200.5229536158342398
-Member 4 final state: 
+Member 3 final state: 
+  Valid time: 2018-04-15T00:00:00Z
+                                 sea_ice_area_fraction   min=-0.0240881883633958   max=1.0190731314754147   mean=0.1192954404274192
+                                     sea_ice_thickness   min=-1.6897252869765835   max=4.7958326146344330   mean=0.5396440002260704
+                                sea_ice_snow_thickness   min=0.0000000000000000   max=1.2712833951042413   mean=0.0886865877527975
+                                    sea_water_salinity   min=10.7210460395083924   max=40.4416591897031168   mean=34.5385414327741742
+                       sea_water_potential_temperature   min=-3.0001465247790753   max=31.7004645720658580   mean=6.0120740135523079
+                           eastward_sea_water_velocity   min=-0.7387341714175558   max=0.6967766771644330   mean=0.0002452807571744
+                          northward_sea_water_velocity   min=-0.8718682015635104   max=1.4377766409421606   mean=0.0021427498133720
+                        sea_surface_height_above_geoid   min=-1.9046129664512943   max=0.9102501577867481   mean=-0.2744946625801748
+                              sea_water_cell_thickness   min=0.0009999999999977   max=1345.6400000000003274   mean=128.6280642064969300
+        mass_concentration_of_chlorophyll_in_sea_water   min=-0.0862965355645813   max=4.6536055945756720   mean=0.1174151370670093
+molar_concentration_of_biomass_in_sea_water_in_p_units   min=-0.0000000013248215   max=0.0000002173168464   mean=0.0000000066099491
+                   net_downwelling_shortwave_radiation   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
+                        upward_latent_heat_flux_in_air   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
+                      upward_sensible_heat_flux_in_air   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
+                    net_downwelling_longwave_radiation   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
+                          friction_velocity_over_water   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
+                           ocean_mixed_layer_thickness   min=2.2854716757984130   max=4593.1533423819937525   mean=192.4109073940401515
+                                       sea_water_depth   min=2.2854716757984130   max=5658.3057467114012979   mean=1200.5229536158342398
+Writing State:
   Valid time: 2018-04-15T00:00:00Z
                                  sea_ice_area_fraction   min=-0.0298325129619190   max=1.0285370194252550   mean=0.1187808206074773
-                                     sea_ice_thickness   min=-1.7107132969898800   max=4.5862935647297975   mean=0.4184901410886703
+                                     sea_ice_thickness   min=-1.7107132969898795   max=4.5862935647297984   mean=0.4184901410886703
                                 sea_ice_snow_thickness   min=0.0000000000000000   max=1.2712833951042413   mean=0.0886865877527975
                                     sea_water_salinity   min=10.7210460395083924   max=40.4416591897031168   mean=34.5269205627835873
                        sea_water_potential_temperature   min=-3.4032180703777373   max=31.8030835159044614   mean=6.0268598616683722
                            eastward_sea_water_velocity   min=-1.1346295410536964   max=0.5837834762707256   mean=-0.0003456969315353
                           northward_sea_water_velocity   min=-0.7087776323079892   max=1.4377766409421606   mean=0.0022514831589559
-                        sea_surface_height_above_geoid   min=-1.8429694058613675   max=0.9906721762458529   mean=-0.2673907914546214
+                        sea_surface_height_above_geoid   min=-1.8429678658351198   max=0.9906632412785529   mean=-0.2673907313499805
                               sea_water_cell_thickness   min=0.0009999999999977   max=1345.6400000000003274   mean=128.6280642064969300
-        mass_concentration_of_chlorophyll_in_sea_water   min=-0.0288068965564429   max=4.9282809614532219   mean=0.1182829823860450
+        mass_concentration_of_chlorophyll_in_sea_water   min=-0.0288068965564430   max=4.9282809614532219   mean=0.1182829823860450
+molar_concentration_of_biomass_in_sea_water_in_p_units   min=-0.0000000079601969   max=0.0000002211054610   mean=0.0000000063787900
+                   net_downwelling_shortwave_radiation   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
+                        upward_latent_heat_flux_in_air   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
+                      upward_sensible_heat_flux_in_air   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
+                    net_downwelling_longwave_radiation   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
+                          friction_velocity_over_water   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
+                           ocean_mixed_layer_thickness   min=2.2854716757984130   max=4593.1533423819937525   mean=192.4109073940401515
+                                       sea_water_depth   min=2.2854716757984130   max=5658.3057467114012979   mean=1200.5229536158342398
+Member 4 final state: 
+  Valid time: 2018-04-15T00:00:00Z
+                                 sea_ice_area_fraction   min=-0.0298325129619190   max=1.0285370194252550   mean=0.1187808206074773
+                                     sea_ice_thickness   min=-1.7107132969898795   max=4.5862935647297984   mean=0.4184901410886703
+                                sea_ice_snow_thickness   min=0.0000000000000000   max=1.2712833951042413   mean=0.0886865877527975
+                                    sea_water_salinity   min=10.7210460395083924   max=40.4416591897031168   mean=34.5269205627835873
+                       sea_water_potential_temperature   min=-3.4032180703777373   max=31.8030835159044614   mean=6.0268598616683722
+                           eastward_sea_water_velocity   min=-1.1346295410536964   max=0.5837834762707256   mean=-0.0003456969315353
+                          northward_sea_water_velocity   min=-0.7087776323079892   max=1.4377766409421606   mean=0.0022514831589559
+                        sea_surface_height_above_geoid   min=-1.8429678658351198   max=0.9906632412785529   mean=-0.2673907313499805
+                              sea_water_cell_thickness   min=0.0009999999999977   max=1345.6400000000003274   mean=128.6280642064969300
+        mass_concentration_of_chlorophyll_in_sea_water   min=-0.0288068965564430   max=4.9282809614532219   mean=0.1182829823860450
 molar_concentration_of_biomass_in_sea_water_in_p_units   min=-0.0000000079601969   max=0.0000002211054610   mean=0.0000000063787900
                    net_downwelling_shortwave_radiation   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
                         upward_latent_heat_flux_in_air   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
