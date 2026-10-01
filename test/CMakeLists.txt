@@ -166,15 +166,15 @@ file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/testinput)
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/testoutput)
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/testref)
 foreach(FILENAME ${soca_test_input} ${soca_test_ref})
-    execute_process( COMMAND ${CMAKE_COMMAND} -E create_symlink
-           ${CMAKE_CURRENT_SOURCE_DIR}/${FILENAME}
-           ${CMAKE_CURRENT_BINARY_DIR}/${FILENAME} )
+    file( CREATE_LINK
+          ${CMAKE_CURRENT_SOURCE_DIR}/${FILENAME}
+          ${CMAKE_CURRENT_BINARY_DIR}/${FILENAME} SYMBOLIC )
 endforeach(FILENAME)
 
 # create static data directory, and symlink all files.
-execute_process( COMMAND ${CMAKE_COMMAND} -E create_symlink
-          ${CMAKE_CURRENT_SOURCE_DIR}/Data
-          ${CMAKE_CURRENT_BINARY_DIR}/data_static )
+file( CREATE_LINK
+      ${CMAKE_CURRENT_SOURCE_DIR}/Data
+      ${CMAKE_CURRENT_BINARY_DIR}/data_static SYMBOLIC )
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/data_generated)
 
 
@@ -291,23 +291,22 @@ function(soca_add_test)
   set( WORKDIR ${CMAKE_CURRENT_BINARY_DIR}/test_workdir/${ARG_NAME})
   file( MAKE_DIRECTORY ${WORKDIR} )
   foreach(DIRNAME data_generated data_static testinput testoutput testref)
-    execute_process( COMMAND ${CMAKE_COMMAND} -E create_symlink
-      ${CMAKE_CURRENT_BINARY_DIR}/${DIRNAME}
-      ${WORKDIR}/${DIRNAME} )
+    file( CREATE_LINK
+          ${CMAKE_CURRENT_BINARY_DIR}/${DIRNAME}
+          ${WORKDIR}/${DIRNAME} SYMBOLIC )
   endforeach()
   file(MAKE_DIRECTORY ${WORKDIR}/RESTART)
   foreach(FILENAME diag_table field_table INPUT)
-    execute_process( COMMAND ${CMAKE_COMMAND} -E create_symlink
-      ${WORKDIR}/data_static/workdir/${FILENAME}
-      ${WORKDIR}/${FILENAME} )
+    file( CREATE_LINK
+          ${WORKDIR}/data_static/workdir/${FILENAME}
+          ${WORKDIR}/${FILENAME} SYMBOLIC )
   endforeach()
 
   # setup output directory
   file( MAKE_DIRECTORY ${WORKDIR}/data_generated/${ARG_NAME})
-  execute_process( COMMAND ${CMAKE_COMMAND} -E create_symlink
-    ${WORKDIR}/data_generated/${ARG_NAME}
-    ${WORKDIR}/data_output
-  )
+  file( CREATE_LINK
+        ${WORKDIR}/data_generated/${ARG_NAME}
+        ${WORKDIR}/data_output SYMBOLIC )
 
   # Are we building a unit test / or running a soca executable?
   if ( ARG_SRC )
