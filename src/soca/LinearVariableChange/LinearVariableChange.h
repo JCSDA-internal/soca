@@ -22,6 +22,8 @@
 #include "oops/util/parameters/RequiredParameter.h"
 #include "oops/util/Printable.h"
 
+#include "vader/vader.h"
+
 #include "soca/LinearVariableChange/Base/LinearVariableChangeBase.h"
 
 namespace soca {
@@ -38,6 +40,7 @@ class LinearVariableChangeParameters : public oops::Parameters {
   oops::OptionalParameter<oops::Variables> outputVariables{"output variables", this};
   oops::OptionalParameter<std::vector<LinearVariableChangeParametersWrapper>>
          linearVariableChangesWrapper{"linear variable changes", this};
+  oops::Parameter<vader::VaderParameters> vader{"vader", {}, this};
 };
 
 // -----------------------------------------------------------------------------
@@ -65,10 +68,15 @@ class LinearVariableChange : public util::Printable {
 
  private:
   void print(std::ostream &) const override;
+  void initVaderTLAD(oops::Variables & ingredientVars) const;
   Parameters_ params_;
   const Geometry & geom_;
   std::unique_ptr<State> bkg_;
   LinVarChaVec_ linVarChas_;
+
+  std::unique_ptr<vader::Vader> vader_;
+  mutable oops::Variables varsVaderPopulates_;
+  bool default_;
 };
 
 // -----------------------------------------------------------------------------
