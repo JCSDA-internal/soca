@@ -1,35 +1,51 @@
-CostJo   : Nonlinear Jo(CoolSkin) = 1.6662190934085287e+04, nobs = 199, Jo/n = 8.3729602683845670e+01, err = 3.6419991997020579e-01
-CostJo   : Nonlinear Jo(SeaSurfaceTemp) = 1.6138515459546188e+03, nobs = 174, Jo/n = 9.2750088847966605e+00, err = 3.6280357515271239e-01
-CostJo   : Nonlinear Jo(SeaSurfaceSalinity) = 5.5606890102213562e+00, nobs = 29, Jo/n = 1.9174789690418470e-01, err = 1.0000000000000000e+00
-CostJo   : Nonlinear Jo(ADT) = 1.1270412782399767e-02, nobs = 94, Jo/n = 1.1989800832340178e-04, err = 2.7723482761832383e+01
-CostJo   : Nonlinear Jo(InsituTemperature) = 3.5224618031508822e+02, nobs = 206, Jo/n = 1.7099329141509136e+00, err = 8.9914415723945484e-01
-CostJo   : Nonlinear Jo(InsituSalinity) = 3.4706220681200733e+02, nobs = 218, Jo/n = 1.5920284716147126e+00, err = 6.0819699545777528e-01
+CostJo   : Nonlinear Jo(CoolSkin) = 1.6662190934085280e+04, nobs = 199, Jo/n = 8.3729602683845627e+01, err = 3.6419991997020579e-01
+CostJo   : Nonlinear Jo(SeaSurfaceTemp) = 1.6138515459546179e+03, nobs = 174, Jo/n = 9.2750088847966552e+00, err = 3.6280357515271239e-01
+CostJo   : Nonlinear Jo(SeaSurfaceSalinity) = 5.5606890102213500e+00, nobs = 29, Jo/n = 1.9174789690418448e-01, err = 1.0000000000000000e+00
+CostJo   : Nonlinear Jo(ADT) = 1.1270412782399769e-02, nobs = 94, Jo/n = 1.1989800832340179e-04, err = 2.7723482761832383e+01
+CostJo   : Nonlinear Jo(InsituTemperature) = 3.5224618031508862e+02, nobs = 206, Jo/n = 1.7099329141509156e+00, err = 8.9914415723945484e-01
+CostJo   : Nonlinear Jo(InsituSalinity) = 3.4706220681200750e+02, nobs = 218, Jo/n = 1.5920284716147133e+00, err = 6.0819699545777528e-01
 CostJo   : Nonlinear Jo(SeaIceFraction) = 5.9780675099388782e+02, nobs = 89, Jo/n = 6.7169297864481781e+00, err = 1.0000000149011612e-01
 CostJb   : Nonlinear Jb = 0.0000000000000000e+00
-CostFunction: Nonlinear J = 1.9578729577583890e+04
-RPCGMinimizer: reduction in residual norm = 1.6798456710091236e-01
+CostFunction: Nonlinear J = 1.9578729577583883e+04
+RPCGMinimizer: reduction in residual norm = 1.6798456105653600e-01
 CostFunction::addIncrement: Analysis: 
   Valid time: 2018-04-15T00:00:00Z
-              sea_ice_area_fraction   min=0.0000000000000000   max=1.0001739928041302   mean=0.1175450695098800
+              sea_ice_area_fraction   min=0.0000000000000000   max=1.0001739928014139   mean=0.1175450695093726
                   sea_ice_thickness   min=0.0000000000000000   max=4.0326673084246947   mean=0.4712515705773916
              sea_ice_snow_thickness   min=0.0000000000000000   max=1.2712833951042413   mean=0.0886865877527975
-                 sea_water_salinity   min=10.7210460393753291   max=40.4416591897031168   mean=34.5444001924723807
-    sea_water_potential_temperature   min=-1.8872560747261700   max=31.7004645720658580   mean=6.0192112086055714
-     sea_surface_height_above_geoid   min=-1.9244814179363521   max=0.9273331346174769   mean=-0.2767600797140565
+                 sea_water_salinity   min=10.7210460393753291   max=40.4416591897031168   mean=34.5444001924692188
+    sea_water_potential_temperature   min=-1.8872560747378058   max=31.7004645720658580   mean=6.0192112110852660
+     sea_surface_height_above_geoid   min=-1.9244814179844432   max=0.9273331338295671   mean=-0.2767600795342977
            sea_water_cell_thickness   min=0.0009999999999977   max=1345.6400000000003274   mean=128.6280642064969300
-net_downwelling_shortwave_radiation   min=-225.0971745035074605   max=0.0058681146464603   mean=-71.7383449394478845
-     upward_latent_heat_flux_in_air   min=-38.1374752421388479   max=256.5934457623904450   mean=42.0096977083826815
-   upward_sensible_heat_flux_in_air   min=-58.9492937080077652   max=201.3742980516327350   mean=6.0753290765468808
- net_downwelling_longwave_radiation   min=-0.0000011444667760   max=88.0360883318999043   mean=31.3955342525900036
-       friction_velocity_over_water   min=0.0043981523358741   max=0.0196623554591752   mean=0.0086847585619131
+net_downwelling_shortwave_radiation   min=-225.0971745035102458   max=0.0058681145723745   mean=-71.7383449394622517
+     upward_latent_heat_flux_in_air   min=-38.1374752421377181   max=256.5934457624440483   mean=42.0096977083875061
+   upward_sensible_heat_flux_in_air   min=-58.9492937080077866   max=201.3742980516327350   mean=6.0753290765469581
+ net_downwelling_longwave_radiation   min=-0.0000011444667593   max=88.0360883318998901   mean=31.3955342525899361
+       friction_velocity_over_water   min=0.0043981523358384   max=0.0196623554591053   mean=0.0086847585613461
         ocean_mixed_layer_thickness   min=2.2854716757984130   max=4593.1533423819937525   mean=192.4109073940401515
                     sea_water_depth   min=2.2854716757984130   max=5658.3057467114012979   mean=1200.5229536158342398
-CostJo   : Nonlinear Jo(CoolSkin) = 15951.1081213185316301, nobs = 199, Jo/n = 80.1563222176810655, err = 0.3641999199702058
-CostJo   : Nonlinear Jo(SeaSurfaceTemp) = 1563.3738547619477686, nobs = 174, Jo/n = 8.9849072112755621, err = 0.3628035751527124
-CostJo   : Nonlinear Jo(SeaSurfaceSalinity) = 5.5600719036017647, nobs = 29, Jo/n = 0.1917266173655781, err = 1.0000000000000000
-CostJo   : Nonlinear Jo(ADT) = 0.0112666827048730, nobs = 94, Jo/n = 0.0001198583266476, err = 27.7234827618323827
-CostJo   : Nonlinear Jo(InsituTemperature) = 347.7093362425155192, nobs = 206, Jo/n = 1.6879093992355123, err = 0.8991441572394548
-CostJo   : Nonlinear Jo(InsituSalinity) = 344.0138387066696168, nobs = 218, Jo/n = 1.5780451316819708, err = 0.6081969954577753
-CostJo   : Nonlinear Jo(SeaIceFraction) = 596.7488315719261891, nobs = 89, Jo/n = 6.7050430513699570, err = 0.1000000014901161
-CostJb   : Nonlinear Jb = 0.0406755480213571
-CostFunction: Nonlinear J = 18808.5659967359169968
+Writing State:
+  Valid time: 2018-04-15T00:00:00Z
+              sea_ice_area_fraction   min=0.0000000000000000   max=1.0001739928014139   mean=0.1175450695093726
+                  sea_ice_thickness   min=0.0000000000000000   max=4.0326673084246947   mean=0.4712515705773916
+             sea_ice_snow_thickness   min=0.0000000000000000   max=1.2712833951042413   mean=0.0886865877527975
+                 sea_water_salinity   min=10.7210460393753291   max=40.4416591897031168   mean=34.5444001924692188
+    sea_water_potential_temperature   min=-1.8872560747378058   max=31.7004645720658580   mean=6.0192112110852660
+     sea_surface_height_above_geoid   min=-1.9244814179844432   max=0.9273331338295671   mean=-0.2767600795342977
+           sea_water_cell_thickness   min=0.0009999999999977   max=1345.6400000000003274   mean=128.6280642064969300
+net_downwelling_shortwave_radiation   min=-225.0971745035102458   max=0.0058681145723745   mean=-71.7383449394622517
+     upward_latent_heat_flux_in_air   min=-38.1374752421377181   max=256.5934457624440483   mean=42.0096977083875061
+   upward_sensible_heat_flux_in_air   min=-58.9492937080077866   max=201.3742980516327350   mean=6.0753290765469581
+ net_downwelling_longwave_radiation   min=-0.0000011444667593   max=88.0360883318998901   mean=31.3955342525899361
+       friction_velocity_over_water   min=0.0043981523358384   max=0.0196623554591053   mean=0.0086847585613461
+        ocean_mixed_layer_thickness   min=2.2854716757984130   max=4593.1533423819937525   mean=192.4109073940401515
+                    sea_water_depth   min=2.2854716757984130   max=5658.3057467114012979   mean=1200.5229536158342398
+CostJo   : Nonlinear Jo(CoolSkin) = 15951.1079919603689632, nobs = 199, Jo/n = 80.1563215676400489, err = 0.3641999199702058
+CostJo   : Nonlinear Jo(SeaSurfaceTemp) = 1563.3739680264359322, nobs = 174, Jo/n = 8.9849078622208953, err = 0.3628035751527124
+CostJo   : Nonlinear Jo(SeaSurfaceSalinity) = 5.5600718942190142, nobs = 29, Jo/n = 0.1917266170420350, err = 1.0000000000000000
+CostJo   : Nonlinear Jo(ADT) = 0.0112666825799572, nobs = 94, Jo/n = 0.0001198583253187, err = 27.7234827618323827
+CostJo   : Nonlinear Jo(InsituTemperature) = 347.7093250714171973, nobs = 206, Jo/n = 1.6879093450068796, err = 0.8991441572394548
+CostJo   : Nonlinear Jo(InsituSalinity) = 344.0138390676206086, nobs = 218, Jo/n = 1.5780451333377092, err = 0.6081969954577753
+CostJo   : Nonlinear Jo(SeaIceFraction) = 596.7488315884329495, nobs = 89, Jo/n = 6.7050430515554265, err = 0.1000000014901161
+CostJb   : Nonlinear Jb = 0.0406755008143072
+CostFunction: Nonlinear J = 18808.5659697918927122

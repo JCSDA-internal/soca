@@ -133,11 +133,12 @@ variational:
       variable change: Identity
 
 output:
-  datadir: data_output/
-  exp: 4dvar_identity
-  type: incr
-  first: PT0H
-  frequency: PT6H
+  analysis:
+    datadir: data_output/
+    exp: 4dvar_identity
+    type: incr
+    first: PT0H
+    frequency: PT6H
 
 test:
   reference filename: testref/4dvar_identity.test

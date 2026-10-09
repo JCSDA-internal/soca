@@ -223,9 +223,10 @@ minimizer:
   algorithm: RPCG
 
 output:
-  datadir: data_output/
-  exp: 3dvarfgat_pseudo
-  type: an
+  analysis:
+    datadir: data_output/
+    exp: 3dvarfgat_pseudo
+    type: an
 
 test:
   reference filename: testref/3dvarfgat_pseudo.test

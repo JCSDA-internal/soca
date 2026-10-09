@@ -196,9 +196,10 @@ variational:
           type: incr
 
 output:
-  datadir: data_output/
-  exp: 3dhybfgat
-  type: an
+  analysis:
+    datadir: data_output/
+    exp: 3dhybfgat
+    type: an
 
 test:
   reference filename: testref/3dhybfgat_pseudo.test

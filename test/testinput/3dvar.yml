@@ -297,9 +297,10 @@ variational:
           type: incr
 
 output:
-  datadir: data_output
-  exp: 3dvar
-  type: an
+  analysis:
+    datadir: data_output
+    exp: 3dvar
+    type: an
 
 test:
   reference filename: testref/3dvar.test
