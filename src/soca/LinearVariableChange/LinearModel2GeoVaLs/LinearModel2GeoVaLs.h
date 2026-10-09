@@ -33,9 +33,7 @@ class LinearModel2GeoVaLs: public LinearVariableChangeBase {
   ~LinearModel2GeoVaLs();
 
   void multiply(const Increment &, Increment &) const;
-  void multiplyInverse(const Increment &, Increment &) const;
   void multiplyAD(const Increment &, Increment &) const;
-  void multiplyInverseAD(const Increment &, Increment &) const;
 
  private:
   const Geometry & geom_;

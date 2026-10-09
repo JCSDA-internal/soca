@@ -16,7 +16,7 @@
 #include "soca/Geometry/Geometry.h"
 #include "soca/Increment/Increment.h"
 #include "soca/State/State.h"
-#include "soca/LinearVariableChange/Balance/Balance.h"
+#include "soca/LinearVariableChange/Balance/InverseBalance.h"
 #include "soca/LinearVariableChange/Balance/BalanceFortran.h"
 
 using oops::Log;
@@ -25,16 +25,16 @@ namespace soca {
 
   // -----------------------------------------------------------------------------
 
-  static LinearVariableChangeMaker<Balance>
-                         makerLinearVariableChangeBalance_("BalanceSOCA");
+  static LinearVariableChangeMaker<InverseBalance>
+                         makerLinearVariableChangeBalance_("Inverse BalanceSOCA");
 
   // -----------------------------------------------------------------------------
-  Balance::Balance(const State & bkg,
-                   const State & traj,
-                   const Geometry & geom,
-                   const eckit::Configuration & conf) {
-    oops::Log::trace() << "soca::Balance::setup " << std::endl;
-    util::Timer timer("soca::Balance", "Balance");
+  InverseBalance::InverseBalance(const State & bkg,
+                                 const State & traj,
+                                 const Geometry & geom,
+                                 const eckit::Configuration & conf) {
+    oops::Log::trace() << "soca::InverseBalance::setup " << std::endl;
+    util::Timer timer("soca::InverseBalance", "InverseBalance");
 
     const eckit::Configuration * configc = &conf;
 
@@ -48,27 +48,28 @@ namespace soca {
                            geom.toFortran());
   }
   // -----------------------------------------------------------------------------
-  Balance::~Balance() {
-    oops::Log::trace() << "soca::Balance::delete " << std::endl;
+  InverseBalance::~InverseBalance() {
+    oops::Log::trace() << "soca::InverseBalance::delete " << std::endl;
     soca_balance_delete_f90(keyFtnConfig_);
   }
   // -----------------------------------------------------------------------------
-  void Balance::multiply(const Increment & dxa, Increment & dxm) const {
-    // dxm = K dxa
-    oops::Log::trace() << "soca::Balance::multiply " << std::endl;
-    util::Timer timer("soca::Balance", "multiply");
-    soca_balance_mult_f90(keyFtnConfig_, dxa.toFortran(), dxm.toFortran());
+  void InverseBalance::multiply(const Increment & dxm, Increment & dxa) const {
+    // dxa = K^-1 dxm
+    oops::Log::trace() << "soca::InverseBalance::multiply " << std::endl;
+    util::Timer timer("soca::InverseBalance", "multiply");
+    soca_balance_multinv_f90(keyFtnConfig_, dxm.toFortran(), dxa.toFortran());
   }
   // -----------------------------------------------------------------------------
-  void Balance::multiplyAD(const Increment & dxm, Increment & dxa) const {
-    // dxa = K^T dxm
-    oops::Log::trace() << "soca::Balance::multiplyAD " << std::endl;
-    util::Timer timer("soca::Balance", "multiplyAD");
-    soca_balance_multad_f90(keyFtnConfig_, dxm.toFortran(), dxa.toFortran());
+  void InverseBalance::multiplyAD(const Increment & dxa,
+                           Increment & dxm) const {
+    // dxm = (K^-1)^T dxa
+    oops::Log::trace() << "soca::InverseBalance::multiplyAD " << std::endl;
+    util::Timer timer("soca::InverseBalance", "multiplyAD");
+    soca_balance_multinvad_f90(keyFtnConfig_, dxa.toFortran(), dxm.toFortran());
   }
   // -----------------------------------------------------------------------------
-  void Balance::print(std::ostream & os) const {
-    os << "SOCA linear change variable: Balance";
+  void InverseBalance::print(std::ostream & os) const {
+    os << "SOCA linear change variable: inverse Balance";
   }
   // -----------------------------------------------------------------------------
 }  // namespace soca

@@ -48,7 +48,6 @@ class VariableChange : public util::Printable {
   ~VariableChange();
 
   void changeVar(State &, const oops::Variables &) const;
-  void changeVarInverse(State &, const oops::Variables &) const;
 
  private:
   void print(std::ostream &) const override;

@@ -37,7 +37,7 @@ class Model2Ana: public VariableChangeBase {
   ~Model2Ana();
 
   void changeVar(const State &, State &) const override;
-  void changeVarInverse(const State &, State &) const override;
+  void changeVarInverse(const State &, State &) const;
 
   std::vector<std::string> initRotate(const eckit::Configuration & conf,
                                       const std::string & uv) const
