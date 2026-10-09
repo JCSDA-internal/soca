@@ -112,6 +112,26 @@ end subroutine soca_state_write_file_c
 
 
 ! ------------------------------------------------------------------------------
+!> C++ interface for soca_fields_mod::soca_fields::write_cice().
+!! Writes the per-category sea-ice fields as a CICE restart in update mode.
+!! The config block must carry `cice template` and `output filename`.
+subroutine soca_state_write_cice_c(c_key_fld, c_conf, c_dt) &
+    bind(c,name='soca_state_write_cice_f90')
+    integer(c_int), intent(in) :: c_key_fld  !< Fields
+    type(c_ptr),    intent(in) :: c_conf     !< Configuration
+    type(c_ptr),    intent(in) :: c_dt       !< DateTime
+
+    type(soca_state), pointer :: fld
+    type(datetime)            :: fdate
+
+    call soca_state_registry%get(c_key_fld,fld)
+    call c_f_datetime(c_dt, fdate)
+    call fld%write_cice(fckit_configuration(c_conf), fdate)
+
+end subroutine soca_state_write_cice_c
+
+
+! ------------------------------------------------------------------------------
 !> C++ interface for soca_state_mod::soca_state::tohgrid()
 subroutine soca_state_tohgrid_c(c_key_self) bind(c,name='soca_state_tohgrid_f90')
   integer(c_int),     intent(in) :: c_key_self

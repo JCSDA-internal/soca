@@ -126,7 +126,12 @@ What the code does (in this order):
 3. `change precision`: rounds selected variables to configured precision.
 4. `bounds check`: runs `soca::incrqc::qcIncrement` member-by-member.
 
-For details of `bounds check` options and behavior, see
+Each of the four is optional, and so is each QC stage within `bounds check`:
+a stage runs only if its own key (`state bounds`, `steric variable change`,
+`stability check`, `coastal increment filter`) is present. The sample below
+enables all of them, but for example `bounds check` with only `state bounds`
+keeps the analysis within bounds without touching the SSH increment or tapering
+increments near coasts. For details of the options and their behavior, see
 [`soca::incrqc` documentation](../src/soca/Utils/incrqc/README.md).
 
 A sample yaml:
