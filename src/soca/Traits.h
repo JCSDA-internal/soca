@@ -23,6 +23,7 @@
 #include "soca/ModelBias/ModelBiasCovariance.h"
 #include "soca/ModelBias/ModelBiasIncrement.h"
 #include "soca/ModelData/ModelData.h"
+#include "soca/Norm/Norm.h"
 #include "soca/State/State.h"
 #include "soca/VariableChange/VariableChange.h"
 #include "ufo/obslocalization/ObsLocalization.h"
@@ -52,6 +53,8 @@ struct Traits {
   typedef soca::ModelBias            ModelAuxControl;
   typedef soca::ModelBiasIncrement   ModelAuxIncrement;
   typedef soca::ModelBiasCovariance  ModelAuxCovariance;
+
+  typedef soca::Norm                 Norm;
 
   typedef soca::LinearVariableChange LinearVariableChange;
   typedef soca::VariableChange       VariableChange;
