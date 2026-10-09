@@ -11,24 +11,24 @@
 
 namespace soca {
 
-Norm::Norm(const oops::Variables & vars,
-           const eckit::Configuration & conf) {
+Norm::Norm(const oops::Variables &,
+           const eckit::Configuration &) {
   ABORT("Norm::Norm not implemented.");
 }
 
-void Norm::calculate(const State & xx) {
+void Norm::calculate(const State &) {
   ABORT("Norm::calculate not implemented.");
 }
 
-void Norm::apply(Increment & dx) const {
+void Norm::apply(Increment &) const {
   ABORT("Norm::apply not implemented.");
 }
 
-void Norm::applyInverse(Increment & dx) const {
+void Norm::applyInverse(Increment &) const {
   ABORT("Norm::applyInverse not implemented.");
 }
 
-void Norm::print(std::ostream & os) const {
+void Norm::print(std::ostream &) const {
   ABORT("Norm::print not implemented.");
 }
 
