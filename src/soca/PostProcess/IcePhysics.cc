@@ -80,6 +80,59 @@ bool runVicenPhase(const std::vector<double> & aicen,
   return std::fabs(viceTarget - v) < std::max(vTol, 1.0e-9);
 }
 
+// Phase 1, proportional rule: scale the thickness of every free category
+// (populated and not yet at the bound in the direction of the residual) by a
+// common factor. Each pass either hits the target or clamps at least one more
+// category, so it converges in at most ncat+1 passes when the target is
+// inside the feasibility envelope.
+bool runVicenPhaseProportional(const std::vector<double> & aicen,
+                               const std::vector<double> & hLo,
+                               const std::vector<double> & hHi,
+                               double viceTarget,
+                               double vTol,
+                               std::vector<double> & h /* in/out: clamped to bounds */) {
+  const size_t ncat = aicen.size();
+  double vLo = 0.0, vHi = 0.0;
+  for (size_t k = 0; k < ncat; ++k) {
+    if (aicen[k] > Constants::puny) {
+      vLo += aicen[k] * hLo[k];
+      vHi += aicen[k] * hHi[k];
+    }
+  }
+  if (viceTarget < vLo - 1.0e-12 || viceTarget > vHi + 1.0e-12) return false;
+
+  for (size_t iter = 0; iter <= ncat + 1; ++iter) {
+    double v = 0.0;
+    for (size_t k = 0; k < ncat; ++k) v += aicen[k] * h[k];
+    const double resid = viceTarget - v;
+    if (std::fabs(resid) < std::max(vTol, 1.0e-14)) return true;
+
+    double vFree = 0.0, aFree = 0.0;
+    for (size_t k = 0; k < ncat; ++k) {
+      if (aicen[k] <= Constants::puny) continue;
+      const bool atBound = (resid > 0) ? (h[k] >= hHi[k]) : (h[k] <= hLo[k]);
+      if (atBound) continue;
+      vFree += aicen[k] * h[k];
+      aFree += aicen[k];
+    }
+    if (aFree <= 0.0) return false;
+
+    for (size_t k = 0; k < ncat; ++k) {
+      if (aicen[k] <= Constants::puny) continue;
+      const bool atBound = (resid > 0) ? (h[k] >= hHi[k]) : (h[k] <= hLo[k]);
+      if (atBound) continue;
+      // Equal dh when the free categories carry no volume (not expected:
+      // hLo > 0 for every category).
+      const double hNew = (vFree > 0.0) ? h[k] * (1.0 + resid / vFree)
+                                        : h[k] + resid / aFree;
+      h[k] = std::min(std::max(hNew, hLo[k]), hHi[k]);
+    }
+  }
+  double v = 0.0;
+  for (size_t k = 0; k < ncat; ++k) v += aicen[k] * h[k];
+  return std::fabs(viceTarget - v) < std::max(vTol, 1.0e-9);
+}
+
 // Phase 2: shift aicen between cats so that viceTarget lies inside the new
 // feasibility envelope. Conserves Sum(aicen) = aiceTarget. Strategy: while
 // viceTarget > Sum(aicen*hHi), move aicen from the thinnest cat with mass to
@@ -177,7 +230,8 @@ bool adjustThicknessCategories(std::vector<double> & aicen,
                                double aTol,
                                double vTol,
                                int * aicenMutated,
-                               double * maxDeltaAicen) {
+                               double * maxDeltaAicen,
+                               VolumeRedistribution redistribution) {
   if (aicenMutated)   *aicenMutated   = 0;
   if (maxDeltaAicen)  *maxDeltaAicen  = 0.0;
 
@@ -203,6 +257,19 @@ bool adjustThicknessCategories(std::vector<double> & aicen,
 
   std::vector<double> hLo(ncat), hHi(ncat);
   buildBounds(hicat, dhiMin, hLo, hHi);
+
+  const bool proportional = (redistribution == VolumeRedistribution::Proportional);
+  if (proportional && ncat >= 2) {
+    // The top category is open-ended (e.g. 1000 m). Its headroom is what lets
+    // a thin top-category sliver absorb volume, and what Phase 2 relies on
+    // when it moves only a sliver of area to the top category. Cap the upper
+    // bound used by Phases 1-2 at twice the category's lower edge, but never
+    // below the thickness the category already has.
+    const size_t top = ncat - 1;
+    double cap = 2.0 * hicat[top];
+    if (aicen[top] > Constants::puny) cap = std::max(cap, vicen[top] / aicen[top]);
+    hHi[top] = std::max(hLo[top], std::min(hHi[top], cap));
+  }
 
   // ----- Step 1: early-out when bins OK and totals match the targets.
   bool binsOK = true;
@@ -248,7 +315,11 @@ bool adjustThicknessCategories(std::vector<double> & aicen,
   }
 
   // ----- Step 4: Phase 1 (vicen-only redistribution).
-  bool ok = runVicenPhase(aicen, hLo, hHi, viceTarget, vTol, h);
+  auto vicenPhase = [&]() {
+    return proportional ? runVicenPhaseProportional(aicen, hLo, hHi, viceTarget, vTol, h)
+                        : runVicenPhase(aicen, hLo, hHi, viceTarget, vTol, h);
+  };
+  bool ok = vicenPhase();
 
   // ----- Step 5: Phase 2 only if Phase 1 failed.
   if (!ok) {
@@ -263,7 +334,7 @@ bool adjustThicknessCategories(std::vector<double> & aicen,
         h[k] = 0.0;
       }
     }
-    ok = runVicenPhase(aicen, hLo, hHi, viceTarget, vTol, h);
+    ok = vicenPhase();
     if (!ok) return false;
   }
 

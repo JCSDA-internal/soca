@@ -389,6 +389,91 @@ void testFreeboard_GrowIce() {
   EXPECT(nearEq(vicen[0], 0.30 * 330.0 / (1025.0 - 917.0), 1.0e-9));
 }
 
+// ---------------------------------------------------------------------------
+// adjustThicknessCategories: volume redistribution rules
+// ---------------------------------------------------------------------------
+using soca::icephysics::VolumeRedistribution;
+
+// Ice-covered cell with a thin category-5 sliver (letkf5d member 1, typical
+// cell) and a +0.4% volume target, as produced every cycle by a 3-h thickness
+// mismatch. Headroom sends about half of the gain into the sliver (+3.8 m).
+// Proportional: the sliver (13.8 m, above 2 x 4.57 m) sits at its capped top
+// bound and keeps its thickness; categories 1-4 share the gain by one factor.
+void testAdjustThkncats_SliverGain(VolumeRedistribution rule) {
+  std::vector<double> hicat{0.0, 0.64, 1.39, 2.47, 4.57, 1000.0};
+  std::vector<double> aicen{0.19, 0.27, 0.036, 0.022, 2.5e-4};
+  const std::vector<double> hIn{0.39, 0.88, 1.74, 3.72, 13.8};
+  std::vector<double> vicen(5);
+  for (size_t k = 0; k < 5; ++k) vicen[k] = aicen[k] * hIn[k];
+  const double aT = sumv(aicen);
+  const double vT = 1.004 * sumv(vicen);
+
+  const bool ok = soca::icephysics::adjustThicknessCategories(
+      aicen, vicen, aT, vT, hicat, 0.01, 1.0e-8, 1.0e-8, 1.0e-9,
+      nullptr, nullptr, rule);
+  EXPECT(ok);
+  EXPECT(nearEq(sumv(vicen), vT, 1.0e-8));
+  EXPECT(nearEq(sumv(aicen), aT, 1.0e-12));
+  const double h5 = vicen[4] / aicen[4];
+  if (rule == VolumeRedistribution::Headroom) {
+    EXPECT(h5 > 15.0);                       // the runaway this rule causes
+  } else {
+    EXPECT(nearEq(h5, hIn[4], 1.0e-9));
+    double v4 = 0.0;
+    for (size_t k = 0; k < 4; ++k) v4 += aicen[k] * hIn[k];
+    const double g = (vT - aicen[4] * hIn[4]) / v4;
+    for (size_t k = 0; k < 4; ++k) {
+      EXPECT(nearEq(vicen[k] / aicen[k], g * hIn[k], 1.0e-6 * hIn[k]));
+    }
+  }
+}
+
+// Volume loss: proportional scales every category down by the same factor.
+void testAdjustThkncats_ProportionalLoss() {
+  std::vector<double> hicat{0.0, 0.64, 1.39, 2.47, 4.57, 1000.0};
+  std::vector<double> aicen{0.19, 0.27, 0.036, 0.022, 2.5e-4};
+  const std::vector<double> hIn{0.39, 0.88, 1.74, 3.72, 13.8};
+  std::vector<double> vicen(5);
+  for (size_t k = 0; k < 5; ++k) vicen[k] = aicen[k] * hIn[k];
+  const double vT = 0.99 * sumv(vicen);
+
+  const bool ok = soca::icephysics::adjustThicknessCategories(
+      aicen, vicen, sumv(aicen), vT, hicat, 0.01, 1.0e-8, 1.0e-8, 1.0e-9,
+      nullptr, nullptr, VolumeRedistribution::Proportional);
+  EXPECT(ok);
+  EXPECT(nearEq(sumv(vicen), vT, 1.0e-8));
+  for (size_t k = 0; k < 5; ++k) {
+    EXPECT(nearEq(vicen[k] / aicen[k], 0.99 * hIn[k], 1.0e-6 * hIn[k]));
+  }
+}
+
+// Target above what categories 1-4 can hold with category 5 empty: Phase 2
+// moves area into category 5. Headroom moves a sliver and seeds it at mid-bin
+// of [4.57, 1000] m; proportional caps the top bound at 2 x 4.57 m.
+void testAdjustThkncats_Phase2TopSeed(VolumeRedistribution rule) {
+  std::vector<double> hicat{0.0, 0.64, 1.39, 2.47, 4.57, 1000.0};
+  std::vector<double> aicen{0.50, 0.30, 0.10, 0.05, 0.0};
+  std::vector<double> vicen{0.30, 0.405, 0.24, 0.225, 0.0};  // h 0.6,1.35,2.4,4.5
+  const double aT = sumv(aicen);
+  const double vT = 1.32;   // above the cats 1-4 envelope (1.203)
+  int mutated = 0;
+
+  const bool ok = soca::icephysics::adjustThicknessCategories(
+      aicen, vicen, aT, vT, hicat, 0.01, 1.0e-8, 1.0e-8, 1.0e-9,
+      &mutated, nullptr, rule);
+  EXPECT(ok);
+  EXPECT(mutated == 1);
+  EXPECT(nearEq(sumv(vicen), vT, 1.0e-8));
+  EXPECT(nearEq(sumv(aicen), aT, 1.0e-12));
+  EXPECT(aicen[4] > 0.0);
+  const double h5 = vicen[4] / aicen[4];
+  if (rule == VolumeRedistribution::Headroom) {
+    EXPECT(h5 > 100.0);                      // sliver seeded far above any real ice
+  } else {
+    EXPECT(h5 >= hicat[4] && h5 <= 2.0 * hicat[4] + 1.0e-9);
+  }
+}
+
 }  // namespace
 
 int main() {
@@ -401,6 +486,11 @@ int main() {
   testAdjustThkncats_Phase2_NoiceToIce();
   testAdjustThkncats_TinyAice_Diagnostic();
   testAdjustThkncats_RescaleToAiceTarget();
+  testAdjustThkncats_SliverGain(VolumeRedistribution::Headroom);
+  testAdjustThkncats_SliverGain(VolumeRedistribution::Proportional);
+  testAdjustThkncats_ProportionalLoss();
+  testAdjustThkncats_Phase2TopSeed(VolumeRedistribution::Headroom);
+  testAdjustThkncats_Phase2TopSeed(VolumeRedistribution::Proportional);
   testFreeboard_AlreadyOk();
   testFreeboard_RedistributeSnow();
   testFreeboard_GrowIce();

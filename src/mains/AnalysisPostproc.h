@@ -43,7 +43,8 @@ namespace soca {
 /// - ensemble perturbations: ensemble members minus ensemble mean
 /// - optional scalar or field-based inflation of ensemble perturbations
 /// - ocean recentering increments for MOM6 IAU: deterministic state minus ensemble
-///   mean plus inflation effects. Postprocessing includes appending vertical
+///   mean plus inflation effects; with `recentering variables` only those
+///   variables are recentered. Postprocessing includes appending vertical
 ///   geometry needed by MOM6 IAU, optional zeroing of specified variables and
 ///   optional precision adjustment. If there's no inflation, all ensemble members
 ///   see the same recentering increment.
@@ -249,6 +250,22 @@ class AnalysisPostproc : public oops::Application {
       Increment4D_ recenteringIncr(geometry, socaIncrVars,
                                    centerState.times(), centerState.commTime());
       recenteringIncr.diff(centerState, ensMean);
+      // Optionally recenter only some of the increment variables (e.g. the
+      // ocean but not the sea ice); the others keep the ensemble's own mean.
+      if (fullConfig.has("recentering variables")) {
+        const oops::Variables recenterVars(fullConfig, "recentering variables");
+        if (!(recenterVars <= socaIncrVars)) {
+          throw eckit::UserError("recentering variables must be a subset of the "
+                                 "increment variables", Here());
+        }
+        oops::Variables keepMeanVars(socaIncrVars);
+        keepMeanVars -= recenterVars;
+        for (size_t jj = 0; jj < recenteringIncr.size(); ++jj) {
+          // Note: soca::Increment specific method
+          recenteringIncr[jj].increment().zero(keepMeanVars);
+        }
+        oops::Log::info() << "Recentering only " << recenterVars << std::endl;
+      }
       oops::Log::info() << "Recentering increment: " << recenteringIncr << std::endl;
       oops::Log::test() << "Recentering increment: " << recenteringIncr << std::endl;
       incs += recenteringIncr;

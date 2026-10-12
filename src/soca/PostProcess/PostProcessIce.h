@@ -57,6 +57,17 @@ class PostProcessIce {
       "category edges, so per-cat thicknesses sit inside the bin interior "
       "and the next pass cannot reclassify them by an epsilon. Units: m.",
       0.01, this, {oops::minConstraint(0.0)}};
+    oops::Parameter<std::string> volumeRedistribution{"volume redistribution",
+      "How the rebin shares a volume change between the populated categories. "
+      "`headroom` (default, legacy): in proportion to the room left to each "
+      "bin edge; with an open top category a thin top-category sliver takes "
+      "most of any volume gain and ratchets toward the top bound over cycles. "
+      "`proportional`: every category's thickness is scaled by the same "
+      "factor (ITD shape kept), and the top category's upper bound used by "
+      "the rebin is capped at twice its lower edge (never below its current "
+      "thickness), so newly populated top categories are seeded at a "
+      "physical thickness.",
+      "headroom", this};
   };
 
   // ---------------------------------------------------------------------------
@@ -185,6 +196,12 @@ class PostProcessIce {
             "ice can be found within seed-search-neighbors. Mirrors the Python "
             "reference scripts' hitot_min.",
             0.1, this, {oops::minConstraint(0.0)}};
+    oops::Parameter<double> hitotMax{"max new ice thickness",
+            "Upper bound (m) on the thickness used to seed noice->ice cells "
+            "(analysis thickness or KDTree donor mean). A donor with very little "
+            "ice can carry an unphysical per-ice-area thickness. 0 disables "
+            "the cap (default, legacy behaviour).",
+            0.0, this, {oops::minConstraint(0.0)}};
     oops::Parameter<oops::Variables> analysisVars{"analysis variables",
             "Names of the ice-related analysis fields actually produced by the "
             "DA. `sea_ice_area_fraction` is required. For ice volume, list "
