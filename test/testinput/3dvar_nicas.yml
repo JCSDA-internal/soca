@@ -215,10 +215,12 @@ variational:
     ninner: 5
     gradient norm reduction: 1e-15
     test: on
+
 output:
-  datadir: data_output/
-  exp: 3dvar_nicas
-  type: an
+  analysis:
+    datadir: data_output/
+    exp: 3dvar_nicas
+    type: an
 
 test:
   reference filename: testref/3dvar_nicas.test
