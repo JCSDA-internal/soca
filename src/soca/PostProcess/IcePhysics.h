@@ -37,25 +37,6 @@ struct Constants {
 };
 
 // ---------------------------------------------------------------------------
-// How Phase 1 of adjustThicknessCategories shares a volume residual between
-// the populated categories.
-//
-//   Headroom:     dh[k] proportional to the room left to the bin edge in the
-//                 direction of the residual. With an open top category
-//                 (e.g. 1000 m) a thin category-ncat sliver takes most of any
-//                 volume gain and its thickness ratchets toward the top bound.
-//   Proportional: every free category's thickness is scaled by the same
-//                 factor, so the ITD shape is kept; a remainder left by
-//                 clamping goes to the other free categories by volume share.
-//                 The top category's upper bound used by Phases 1-2 is capped
-//                 at max(2 x its lower edge, its current thickness), so it
-//                 cannot ratchet upward and a newly populated top category is
-//                 seeded at a physical thickness instead of mid-bin of an
-//                 open-ended bin.
-// ---------------------------------------------------------------------------
-enum class VolumeRedistribution { Headroom, Proportional };
-
-// ---------------------------------------------------------------------------
 // adjustThicknessCategories
 //
 // Re-bin per-category area (aicen) and volume (vicen) so that for every
@@ -66,9 +47,14 @@ enum class VolumeRedistribution { Headroom, Proportional };
 //   0. If aiceTarget <= puny: zero everything, return true.
 //   1. Early-out if every bin already satisfies the bounds and the totals
 //      already match the targets within (aTol, vTol).
-//   2. Phase 1 (vicen-only redistribution): hold aicen fixed, iterate dh per
-//      cat to drive Sum(aicen*h) toward viceTarget (rule: `redistribution`).
-//      Converges when targets are reachable with the current aicen shape.
+//   2. Phase 1 (vicen-only redistribution): hold aicen fixed and scale the
+//      thickness of every category not yet at a bin edge by one common factor
+//      (ITD shape kept) to drive Sum(aicen*h) toward viceTarget. Converges
+//      when targets are reachable with the current aicen shape.
+//      The open top category's upper bound used by Phases 1-2 is capped at
+//      max(2 x its lower edge, its current thickness), so it cannot ratchet
+//      toward the top bound and a newly populated top category is seeded at
+//      a physical thickness.
 //   3. Phase 2 (aicen mutation, only if Phase 1 cannot reach viceTarget):
 //      reshuffle aicen between cats so the feasibility envelope
 //      [Sum(aicen*hLo), Sum(aicen*hHi)] contains viceTarget, then re-enter
@@ -93,9 +79,7 @@ bool adjustThicknessCategories(std::vector<double> & aicen,
                                double aTol   = 1.0e-8,
                                double vTol   = 1.0e-6,
                                int * aicenMutated   = nullptr,
-                               double * maxDeltaAicen = nullptr,
-                               VolumeRedistribution redistribution =
-                                   VolumeRedistribution::Headroom);
+                               double * maxDeltaAicen = nullptr);
 
 // ---------------------------------------------------------------------------
 // enforceFreeboard

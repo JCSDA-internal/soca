@@ -66,15 +66,21 @@ For each owned cell:
    - **ICE2NOICE** (`ai_an ~ 0`, `ai_bg > 0`): zero per-cat output.
    - **NOICE2ICE** (`ai_bg ~ 0`, `ai_an > 0`): seed all area in cat 0; set
      volume target from analysis hice if positive, else from the KDTree
-     donor mean hice, else from `min new ice thickness * ai_an`.
+     donor mean hice, else from `min new ice thickness * ai_an`; the seed
+     thickness is capped at `max new ice thickness` (default 5 m).
    - **ICE2ICE**: alpha-rescale per-cat aicen and vicen by `ai_an / ai_bg`;
      set volume target to `analysis.hice * ai_an`.
 
 3. **ITD rebin** (`itd.rebin: true`, default): solve for `(aicen, vicen)`
    such that `aicen[k] == 0` or `hicat[k] <= vicen[k]/aicen[k] <= hicat[k+1]`
    for every category, while hitting both `Sum(aicen) = a_aice` and
-   `Sum(vicen) = vtot_target`. See [`IcePhysics.h`](IcePhysics.h)
-   `adjustThicknessCategories` for the algorithm.
+   `Sum(vicen) = vtot_target`. A volume change is shared by scaling every
+   category's thickness by one factor (ITD shape kept), and the open top
+   category's upper bound used by the rebin is capped at
+   `max(2 x its lower edge, its current thickness)`, so the top category
+   cannot ratchet toward a large top bound such as 1000 m. See
+   [`IcePhysics.h`](IcePhysics.h) `adjustThicknessCategories` for the
+   algorithm.
 
 4. **Snow distribution**: take the cell-mean snow thickness target from
    analysis hsno (or fall back to background cell-mean), clamp to
@@ -114,12 +120,19 @@ updated in place:
   zero `Tsfcn`, all `qice`, all `sice`, all `qsno`, all pond fields.
   Avoids leaving stale background values on empty slots.
 
-- On cats with ice and `thermo.update snow thermo: true` (default):
-  clamp `Tsfcn` to `[min Tsfc, max Tsfc]`; rebuild
-  `qsno = snowEnthalpy(Tsfcn)` (so qsno is consistent with the prevailing
-  surface temperature, not whatever stale background value happened to be
-  there); cap the surface ice layer enthalpy by
-  `iceEnthalpyBL99(Tsfcn, sice)`.
+- On cats with ice:
+  - `thermo.clamp Tsfc: true` (default): clamp `Tsfcn` to
+    `[min Tsfc, max Tsfc]`.
+  - `thermo.update snow thermo: true` (default): rebuild
+    `qsno = snowEnthalpy(Tsfcn)` on cats with snow (so qsno is consistent
+    with the prevailing surface temperature, not whatever stale background
+    value happened to be there) and zero it on cats without snow.
+  - `thermo.cap surface ice enthalpy: false` (default): when on, cap the
+    top ice layer enthalpy (`qice001`) by `iceEnthalpyBL99(Tsfcn, sice)`.
+    Off by default because the top-layer midpoint is normally warmer than
+    the surface: in winter the cap cools the top layer to the surface
+    temperature on almost every category, and cycling it adds cold content
+    (and ice growth) every cycle.
 
 - On cats where the snow distribution actually modified `vsnon` and
   `thermo.reset ponds: true` (default): zero `apnd` and `hpnd` (the new
@@ -170,6 +183,7 @@ postprocess ice:
   # Cell-mean new-ice thickness used for the rebin's volume target when an
   # noice->ice cell has no analysis hice and no donor with ice is found.
   min new ice thickness: 0.1
+  max new ice thickness: 5.0                   # 0 disables the cap
 
   # Which ice analysis fields are actually produced by the DA. Required:
   # sea_ice_area_fraction. For ice volume, list one of
@@ -198,7 +212,9 @@ postprocess ice:
     enforce: false                             # off by default
 
   thermo:
+    clamp Tsfc: true
     update snow thermo: true
+    cap surface ice enthalpy: false
     reset ponds: true
     seed new ice: true
     seed search neighbors: 64
