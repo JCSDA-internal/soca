@@ -10,14 +10,14 @@
 #include <string>
 #include <vector>
 
-#include "saber/blocks/SaberBlockParametersBase.h"
+#include "saber/blocks/BlockParametersBase.h"
 
 namespace soca {
 
 // --------------------------------------------------------------------------------------
 
-class MLBalanceParameters : public saber::SaberBlockParametersBase {
-  OOPS_CONCRETE_PARAMETERS(MLBalanceParameters, saber::SaberBlockParametersBase)
+class MLBalanceParameters : public saber::BlockParametersBase {
+  OOPS_CONCRETE_PARAMETERS(MLBalanceParameters, saber::BlockParametersBase)
  public:
   oops::RequiredParameter<eckit::LocalConfiguration> mlbalances{"ML Balances", this};
   oops::Variables mandatoryActiveVars() const override {
