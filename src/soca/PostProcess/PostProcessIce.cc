@@ -91,11 +91,6 @@ PostProcessIce::PostProcessIce(const Geometry & geom,
     throw eckit::UserError(
       "PostProcessIce: itd.category bounds must have length ncat+1", Here());
   }
-  const std::string & redist = params_.itd.value().volumeRedistribution.value();
-  if (redist != "headroom" && redist != "proportional") {
-    throw eckit::UserError(
-      "PostProcessIce: itd.volume redistribution must be headroom or proportional", Here());
-  }
 
   // Build a global lat/lon KDTree across all ranks. Payload is the 1-based
   // atlas global_index (gidx). Pattern adapted from oops::GeometryData::setGlobalTree.
@@ -313,10 +308,7 @@ State PostProcessIce::runPostprocess(State & pproc,
   const bool do_rebin = itd.rebin.value();
   const std::vector<double> hicat = itd.hicat.value();
   const double dhi_min = itd.dhiMin.value();
-  const auto redistribution = (itd.volumeRedistribution.value() == "proportional")
-                                  ? icephysics::VolumeRedistribution::Proportional
-                                  : icephysics::VolumeRedistribution::Headroom;
-  // hicat size and the redistribution name already validated at construction.
+  // hicat size already validated at construction.
   // Per-cell scratch buffers for the ITD rebin.
   std::vector<double> rebin_aicen(ncat_, 0.0);
   std::vector<double> rebin_vicen(ncat_, 0.0);
@@ -462,7 +454,7 @@ State PostProcessIce::runPostprocess(State & pproc,
       const bool ok = icephysics::adjustThicknessCategories(
           rebin_aicen, rebin_vicen, ai_an, vtot_target, hicat, dhi_min,
           /*ainMin=*/1.0e-8, /*aTol=*/1.0e-8, /*vTol=*/1.0e-6,
-          &rebin_aicen_mutated, &rebin_max_delta_aicen, redistribution);
+          &rebin_aicen_mutated, &rebin_max_delta_aicen);
       if (ok) {
         for (size_t icat = 0; icat < ncat_; ++icat) {
           new_aice_cat[icat](jnode, 0) = rebin_aicen[icat];
@@ -776,9 +768,10 @@ void PostProcessIce::applyThermoStage(
     const atlas::FieldSet & fset,
     const std::vector<std::uint8_t> & snowTouched) const {
   const auto & thermoParams = params_.thermo.value();
+  const bool clampTsfc        = thermoParams.clampTsfc.value();
   const bool updateSnowThermo = thermoParams.updateSnowThermo.value();
+  const bool capSurfaceQice   = thermoParams.capSurfaceIceEnthalpy.value();
   const bool resetPonds       = thermoParams.resetPonds.value();
-  if (!updateSnowThermo && !resetPonds) return;
 
   const std::size_t iceLev = params_.ice_lev.value();
   const std::size_t snoLev = params_.sno_lev.value();
@@ -841,15 +834,16 @@ void PostProcessIce::applyThermoStage(
         continue;
       }
 
+      // Tsfcn from prior steps (preserved from background for ICE2ICE,
+      // or donor-seeded by seedNewIce for NOICE2ICE) is the physically
+      // meaningful quantity. Rebuild qsno from Tsfcn, not the other way
+      // round -- back-deriving Tsfcn from a stale bg qsno on cats that
+      // gained snow via redistribution introduces a measurable warm bias.
+      double & T = tsfcCat[k](jnode, 0);
+      if (clampTsfc) T = std::min(maxTsfc, std::max(minTsfc, T));
+
       if (updateSnowThermo) {
         const double vsno = vsnoCat[k](jnode, 0);
-        // Tsfcn from prior steps (preserved from background for ICE2ICE,
-        // or donor-seeded by seedNewIce for NOICE2ICE) is the physically
-        // meaningful quantity. Rebuild qsno from Tsfcn, not the other way
-        // round -- back-deriving Tsfcn from a stale bg qsno on cats that
-        // gained snow via redistribution introduces a measurable warm bias.
-        double & T = tsfcCat[k](jnode, 0);
-        T = std::min(maxTsfc, std::max(minTsfc, T));
         if (vsno > 0.0) {
           const double qsfc = icephysics::snowEnthalpy(T);
           const double qClipped = std::min(qsnoHi, std::max(qsnoLo, qsfc));
@@ -862,14 +856,15 @@ void PostProcessIce::applyThermoStage(
             qsnoCatLev[k][l](jnode, 0) = 0.0;
           }
         }
-        // Cap the surface ice layer enthalpy by iceEnthalpyBL99(Tsfcn, sice).
-        if (T < 0.0) {
-          const double sice = siceCatLev[k][lSurf](jnode, 0);
-          const double sBL  = (sice > 0.0) ? sice : sLayer[lSurf];
-          const double qCap = icephysics::iceEnthalpyBL99(T, sBL);
-          double & qIce = qiceCatLev[k][lSurf](jnode, 0);
-          qIce = std::min(qIce, qCap);
-        }
+      }
+
+      // Cap the surface ice layer enthalpy by iceEnthalpyBL99(Tsfcn, sice).
+      if (capSurfaceQice && T < 0.0) {
+        const double sice = siceCatLev[k][lSurf](jnode, 0);
+        const double sBL  = (sice > 0.0) ? sice : sLayer[lSurf];
+        const double qCap = icephysics::iceEnthalpyBL99(T, sBL);
+        double & qIce = qiceCatLev[k][lSurf](jnode, 0);
+        qIce = std::min(qIce, qCap);
       }
 
       if (resetPonds && snowTouched[jnode * ncat_ + k]) {
