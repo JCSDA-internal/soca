@@ -12,12 +12,9 @@
 namespace soca {
 
 Norm::Norm(const oops::Variables &,
-           const eckit::Configuration &) {
+           const eckit::Configuration &,
+           const State &) {
   ABORT("Norm::Norm not implemented.");
-}
-
-void Norm::calculate(const State &) {
-  ABORT("Norm::calculate not implemented.");
 }
 
 void Norm::apply(Increment &) const {
