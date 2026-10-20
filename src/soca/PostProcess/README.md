@@ -64,12 +64,29 @@ For each owned cell:
 2. **Classify** by `(ai_bg, ai_an)`:
    - **LAND** (mask=0): always zero per-cat output.
    - **ICE2NOICE** (`ai_an ~ 0`, `ai_bg > 0`): zero per-cat output.
+   - **Background remnants** (`0 < ai_bg < low concentration.min background
+     aice`, default 1e-3): treated as ice-free background. CICE leaves thick
+     remnants (tens of m) at these concentrations. Where the analysis has
+     ice they are seeded as NOICE2ICE below, without using the remnant's
+     analysis thickness or snow; otherwise they are removed. They are never
+     used as donors.
    - **NOICE2ICE** (`ai_bg ~ 0`, `ai_an > 0`): seed all area in cat 0; set
      volume target from analysis hice if positive, else from the KDTree
      donor mean hice, else from `min new ice thickness * ai_an`; the seed
      thickness is capped at `max new ice thickness` (default 5 m).
-   - **ICE2ICE**: alpha-rescale per-cat aicen and vicen by `ai_an / ai_bg`;
-     set volume target to `analysis.hice * ai_an`.
+   - **ICE2ICE**: the volume target depends on `concentration increment`
+     (`h_bg`, `V_bg` = background restart thickness and volume):
+     - `keep thickness` (default): alpha-rescale per-cat aicen and vicen by
+       `ai_an / ai_bg`; target `analysis.hice * ai_an`.
+     - `keep volume`: same seed; target `V_bg + ai_an * (analysis.hice - h_bg)`,
+       i.e. the background volume when the DA leaves thickness unchanged.
+
+     Then, where `min(ai_bg, ai_an) < low concentration.max aice`, the
+     target thickness is capped at `low concentration.max thickness`
+     (default 5 m where aice < 0.01). CICE leaves thick remnants (tens of m)
+     on cells with ~1e-3 concentration, and the rules above would otherwise
+     carry them onto the analysis area. The targets are reached by the ITD
+     rebin; with `itd.rebin: false` only `keep thickness` is exact.
 
 3. **ITD rebin** (`itd.rebin: true`, default): solve for `(aicen, vicen)`
    such that `aicen[k] == 0` or `hicat[k] <= vicen[k]/aicen[k] <= hicat[k+1]`
@@ -184,6 +201,14 @@ postprocess ice:
   # noice->ice cell has no analysis hice and no donor with ice is found.
   min new ice thickness: 0.1
   max new ice thickness: 5.0                   # 0 disables the cap
+
+  # How ICE2ICE cells set their volume when the analysis changes the
+  # concentration: keep thickness (default) | keep volume.
+  concentration increment: keep thickness
+  low concentration:
+    min background aice: 1.0e-3                # 0 disables the cutoff
+    max aice: 0.01                             # 0 disables the cap
+    max thickness: 5.0                         # m, per ice area
 
   # Which ice analysis fields are actually produced by the DA. Required:
   # sea_ice_area_fraction. For ice volume, list one of

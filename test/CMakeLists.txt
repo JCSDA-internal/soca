@@ -97,6 +97,7 @@ set( soca_test_input
   testinput/soca2cice_new_freeboard.yml
   testinput/soca2cice_new_seed.yml
   testinput/soca2cice_new_bgfallback.yml
+  testinput/soca2cice_new_keepvolume.yml
 )
 
 set( soca_test_ref
@@ -161,6 +162,7 @@ set( soca_test_ref
   testref/soca2cice_new_freeboard.test
   testref/soca2cice_new_seed.test
   testref/soca2cice_new_bgfallback.test
+  testref/soca2cice_new_keepvolume.test
 )
 
 # Create directory for test input/output/reference and symlink all files
@@ -859,6 +861,16 @@ soca_add_test( NAME soca2cice_new_seed
 file(COPY ${CMAKE_CURRENT_BINARY_DIR}/data_static/72x35x25/restarts/iced.2018-04-15-00000.nc
      DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/data_generated/soca2cice_new_bgfallback/ )
 soca_add_test( NAME soca2cice_new_bgfallback
+              EXE  soca_postproc.x
+              MPI 2
+              NOTRAPFPE
+              TEST_DEPENDS test_soca_gridgen
+                           test_soca_3dvar )
+
+# `concentration increment: keep volume` variant (default is keep thickness).
+file(COPY ${CMAKE_CURRENT_BINARY_DIR}/data_static/72x35x25/restarts/iced.2018-04-15-00000.nc
+     DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/data_generated/soca2cice_new_keepvolume/ )
+soca_add_test( NAME soca2cice_new_keepvolume
               EXE  soca_postproc.x
               MPI 2
               NOTRAPFPE
