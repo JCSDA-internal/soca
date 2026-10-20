@@ -151,6 +151,32 @@ class PostProcessIce {
   };
 
   // ---------------------------------------------------------------------------
+  /// @brief Handling of low-concentration cells. CICE leaves thick remnants
+  /// (tens of m) on cells with ~1e-3 concentration; keeping their thickness
+  /// while the analysis raises the concentration would multiply that volume.
+  /// Background cells below `min background aice` are treated as ice-free
+  /// (re-seeded from a neighbour where the analysis has ice), and ICE2ICE
+  /// cells below `max aice` get their thickness target capped.
+  class LowConcentrationParameters : public oops::Parameters {
+    OOPS_CONCRETE_PARAMETERS(LowConcentrationParameters, oops::Parameters)
+   public:
+    oops::Parameter<double> minBackgroundAice{"min background aice",
+      "Background cells with 0 < aice below this value are treated as "
+      "ice-free: their remnant ice is dropped, and where the analysis has "
+      "ice they are seeded as NOICE2ICE cells (neighbour thickness, capped "
+      "at `max new ice thickness`). They are also never used as donors. Set "
+      "to 0 to disable.",
+      1.0e-3, this, {oops::minConstraint(0.0)}};
+    oops::Parameter<double> maxAice{"max aice",
+      "The cap applies where min(background aice, analysis aice) is below "
+      "this value. Set to 0 to disable.",
+      0.01, this, {oops::minConstraint(0.0)}};
+    oops::Parameter<double> maxThickness{"max thickness",
+      "Cap (m, per ice area) on the ICE2ICE thickness target in those cells.",
+      5.0, this, {oops::minConstraint(0.0)}};
+  };
+
+  // ---------------------------------------------------------------------------
   /// @brief Input/output paths for the CICE restart this PostProcessIce
   /// reads and writes. `input` is also used as the update-mode template:
   /// the writer byte-copies it to `output` and then overwrites only the
@@ -203,6 +229,17 @@ class PostProcessIce {
             "ice can carry an unphysical per-ice-area thickness. 0 disables "
             "the cap.",
             5.0, this, {oops::minConstraint(0.0)}};
+    oops::Parameter<std::string> concentrationIncrement{"concentration increment",
+            "How ICE2ICE cells set their ice volume when the analysis changes "
+            "the concentration. `keep thickness` (default): every category is "
+            "rescaled by ai_an/ai_bg, volume target = analysis hice * ai_an. "
+            "`keep volume`: areas are rescaled the same way, volume target = "
+            "background volume + ai_an * (analysis hice - background hice), "
+            "i.e. the background volume when the DA leaves thickness unchanged.",
+            "keep thickness", this};
+    oops::Parameter<LowConcentrationParameters> lowConcentration{"low concentration",
+            "Background cutoff and thickness cap for low-concentration cells.",
+            {}, this};
     oops::Parameter<oops::Variables> analysisVars{"analysis variables",
             "Names of the ice-related analysis fields actually produced by the "
             "DA. `sea_ice_area_fraction` is required. For ice volume, list "

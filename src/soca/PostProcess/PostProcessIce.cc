@@ -91,6 +91,12 @@ PostProcessIce::PostProcessIce(const Geometry & geom,
     throw eckit::UserError(
       "PostProcessIce: itd.category bounds must have length ncat+1", Here());
   }
+  const std::string & concIncr = params_.concentrationIncrement.value();
+  if (concIncr != "keep thickness" && concIncr != "keep volume") {
+    throw eckit::UserError(
+      "PostProcessIce: concentration increment must be `keep thickness` or "
+      "`keep volume`", Here());
+  }
 
   // Build a global lat/lon KDTree across all ranks. Payload is the 1-based
   // atlas global_index (gidx). Pattern adapted from oops::GeometryData::setGlobalTree.
@@ -223,6 +229,17 @@ State PostProcessIce::runPostprocess(State & pproc,
   for (size_t jnode = 0; jnode < field_size; ++jnode) {
     bg_aice[jnode] = totalAice(bg_aice_cat, jnode);
   }
+  // Background remnants: cells with 0 < bg aice < `min background aice` are
+  // treated as ice-free in the per-cell pass (and in the new-ice mask).
+  const double min_bg_aice = params_.lowConcentration.value().minBackgroundAice.value();
+  std::vector<std::uint8_t> bg_remnant(field_size, 0);
+  for (size_t jnode = 0; jnode < field_size; ++jnode) {
+    if (bg_aice[jnode] > icephysics::Constants::puny && bg_aice[jnode] < min_bg_aice) {
+      bg_remnant[jnode] = 1;
+    }
+  }
+  std::size_t remnant_reseeded = 0;
+  std::size_t remnant_removed  = 0;
 
   // Analysis fields. The user lists which ice-related variables are actually
   // produced by the DA in `params_.analysisVars`. We resolve each of the three
@@ -333,6 +350,13 @@ State PostProcessIce::runPostprocess(State & pproc,
   const double hitot_min        = params_.hitotMin.value();
   const double hitot_max        = params_.hitotMax.value();  // 0: no cap
   const double min_aice_output  = params_.minAiceOutput.value();
+  const std::string & conc_incr = params_.concentrationIncrement.value();
+  const bool keep_volume        = (conc_incr == "keep volume");
+  const auto & lowConc          = params_.lowConcentration.value();
+  const double low_conc_aice    = lowConc.maxAice.value();       // 0: no cap
+  const double low_conc_hmax    = lowConc.maxThickness.value();
+  std::size_t low_conc_capped   = 0;
+  double      low_conc_max_h    = 0.0;
   const std::size_t seedK = static_cast<std::size_t>(
       params_.thermo.value().seedSearchK.value());
 
@@ -378,9 +402,17 @@ State PostProcessIce::runPostprocess(State & pproc,
       a_aice_vec[jnode] = 0.0;
     }
 
-    const double ai_bg = bg_aice[jnode];
+    const bool   isRemnant = bg_remnant[jnode];
+    const double ai_bg = isRemnant ? 0.0 : bg_aice[jnode];
     const double ai_an = a_aice_vec[jnode];
     const bool   isLand = (mask_(jnode, 0) == 0.0);
+    if (isRemnant) {
+      if (isLand || ai_an <= icephysics::Constants::puny) {
+        ++remnant_removed;
+      } else {
+        ++remnant_reseeded;
+      }
+    }
 
     // -------------------- Case 1: LAND or ICE2NOICE -----------------------
     // Both cases zero all per-cat ice on output. PostProcessIce does not
@@ -407,12 +439,14 @@ State PostProcessIce::runPostprocess(State & pproc,
     if (noice2ice) {
       // Seed by putting all ice in cat 0; the ITD rebin will spread it.
       // Pick vtot_target in this order:
-      //   1. analysis a_hice when positive (most informative);
+      //   1. analysis a_hice when positive (most informative), except on
+      //      background remnants, whose analysis hice is the remnant's own
+      //      (unphysical) thickness;
       //   2. KDTree donor mean hice when available;
       //   3. hitot_min * ai_an as a floor.
       // The donor-mean Tsfc is also needed for the thermo seed pass;
       // that's computed there, not here.
-      double hice_seed = a_hice_vec[jnode];
+      double hice_seed = isRemnant ? 0.0 : a_hice_vec[jnode];
       if (hice_seed <= 0.0) {
         double Tsfc_donor, hice_donor;
         const bool foundDonor = donorMeanIce(jnode, seedK, donorCache,
@@ -429,9 +463,14 @@ State PostProcessIce::runPostprocess(State & pproc,
       }
     } else {
       // ICE2ICE: alpha-rescale per-cat from background to hit a_aice. The
-      // rebin (if enabled) then corrects ice volume toward analysis
-      // hice * a_aice; trust the analysis hice unconditionally rather than
-      // blending with the rescaled background volume.
+      // volume target depends on `concentration increment` (the rebin, when
+      // enabled, then drives the categories to it):
+      //   keep thickness: target = analysis hice * a_aice;
+      //   keep volume:    target = background volume plus the analysis
+      //                   thickness increment over the analysis area.
+      double v_bg = 0.0;
+      for (std::size_t k = 0; k < ncat_; ++k) v_bg += bg_vice_cat[k](jnode, 0);
+      const double h_bg = v_bg / ai_bg;
       const double alpha = ai_an / ai_bg;
       for (std::size_t k = 0; k < ncat_; ++k) {
         new_aice_cat[k](jnode, 0) = alpha * bg_aice_cat[k](jnode, 0);
@@ -440,7 +479,19 @@ State PostProcessIce::runPostprocess(State & pproc,
         // pass doesn't see stale background snow.
         new_vsno_cat[k](jnode, 0) = 0.0;
       }
-      vtot_target = a_hice_vec[jnode] * ai_an;
+      vtot_target = keep_volume ? v_bg + ai_an * (a_hice_vec[jnode] - h_bg)
+                                : a_hice_vec[jnode] * ai_an;
+      vtot_target = std::max(vtot_target, 0.0);
+
+      // Low-concentration thickness cap: CICE leaves thick remnants on cells
+      // with ~1e-3 concentration, which any of the rules above would carry
+      // (or, with keep volume, create) on the analysis area.
+      if (low_conc_aice > 0.0 && std::min(ai_bg, ai_an) < low_conc_aice &&
+          vtot_target > low_conc_hmax * ai_an) {
+        low_conc_max_h = std::max(low_conc_max_h, vtot_target / ai_an);
+        vtot_target = low_conc_hmax * ai_an;
+        ++low_conc_capped;
+      }
     }
 
     // -------------------- ITD rebin ---------------------------------------
@@ -479,8 +530,10 @@ State PostProcessIce::runPostprocess(State & pproc,
       // Target cell-mean snow thickness:
       //   * use analysis hsno when available;
       //   * fall back to background cell-mean.
-      double hsn_target = a_hsno_vec[jnode];
-      if (hsn_target <= 0.0) {
+      // Background remnants are re-seeded like NOICE2ICE cells, without snow
+      // (their analysis hsno is the remnant's own).
+      double hsn_target = isRemnant ? 0.0 : a_hsno_vec[jnode];
+      if (!isRemnant && hsn_target <= 0.0) {
         // Recover from background.
         double bg_vsno_sum = 0.0;
         for (size_t icat = 0; icat < ncat_; ++icat) {
@@ -570,6 +623,10 @@ State PostProcessIce::runPostprocess(State & pproc,
   diagComm.allReduceInPlace(freeboard_failures,        eckit::mpi::sum());
   diagComm.allReduceInPlace(bin_clip_slots,            eckit::mpi::sum());
   diagComm.allReduceInPlace(bin_clip_max_abs_dh,       eckit::mpi::max());
+  diagComm.allReduceInPlace(remnant_reseeded,          eckit::mpi::sum());
+  diagComm.allReduceInPlace(remnant_removed,           eckit::mpi::sum());
+  diagComm.allReduceInPlace(low_conc_capped,           eckit::mpi::sum());
+  diagComm.allReduceInPlace(low_conc_max_h,            eckit::mpi::max());
 
   if (do_rebin) {
     oops::Log::info() << "PostProcessIce: ITD rebin visited "
@@ -583,6 +640,19 @@ State PostProcessIce::runPostprocess(State & pproc,
                         << "catches any resulting out-of-bin hi."
                         << std::endl;
     }
+  }
+  if (remnant_reseeded + remnant_removed > 0) {
+    oops::Log::info() << "PostProcessIce: " << remnant_reseeded + remnant_removed
+                      << " background cells below min background aice ("
+                      << min_bg_aice << ") treated as ice-free: "
+                      << remnant_reseeded << " re-seeded from the analysis, "
+                      << remnant_removed << " removed." << std::endl;
+  }
+  if (low_conc_capped > 0) {
+    oops::Log::info() << "PostProcessIce: low-concentration thickness cap ("
+                      << low_conc_hmax << " m) fired on " << low_conc_capped
+                      << " cells; max thickness before the cap = "
+                      << low_conc_max_h << " m." << std::endl;
   }
   if (do_freeboard && freeboard_failures > 0) {
     oops::Log::info() << "PostProcessIce: freeboard enforcement failed at "
@@ -609,7 +679,7 @@ State PostProcessIce::runPostprocess(State & pproc,
   newIce.data.assign(field_size * ncat_, 0);
   for (std::size_t jnode = 0; jnode < field_size; ++jnode) {
     for (std::size_t k = 0; k < ncat_; ++k) {
-      const bool wasZero = (bg_aice_cat[k](jnode, 0) == 0.0);
+      const bool wasZero = bg_remnant[jnode] || (bg_aice_cat[k](jnode, 0) == 0.0);
       const bool nowPos  = (new_aice_cat[k](jnode, 0) > 0.0);
       if (wasZero && nowPos) {
         newIce.data[jnode * ncat_ + k] = 1;
@@ -977,6 +1047,8 @@ bool PostProcessIce::donorMeanIce(
   const auto & fs   = geom_.functionSpace();
   const auto gindex = atlas::array::make_view<atlas::gidx_t, 1>(fs.global_index());
   const std::int64_t myG = static_cast<std::int64_t>(gindex(jnode));
+  // Background remnants (below `min background aice`) are never donors.
+  const double minBgAice = params_.lowConcentration.value().minBackgroundAice.value();
 
   atlas::PointLonLat target(lonlat_(jnode, 0), lonlat_(jnode, 1));
   target.normalise();
@@ -999,7 +1071,7 @@ bool PostProcessIce::donorMeanIce(
         vIceTot   += rec.vicen[k];
       }
     }
-    if (aiceTot <= 0.0) continue;
+    if (aiceTot <= 0.0 || aiceTot < minBgAice) continue;
     Tsfc_mean = tWeighted / aiceTot;
     hice_mean = vIceTot   / aiceTot;
     return true;
@@ -1020,6 +1092,8 @@ std::size_t PostProcessIce::seedNewIce(
   const double maxTsfc = std::min(thermoParams.maxTsfc.value(), -1e-6);
   const double minTsfc = thermoParams.minTsfc.value();
   const double Tfrz    = icephysics::Constants::Tfrz;
+  // Background remnants (below `min background aice`) are never donors.
+  const double minBgAice = params_.lowConcentration.value().minBackgroundAice.value();
 
   auto tsfcCat = ppiCatViews(fset, ncat_, "sea_ice_category", "_surface_temperature");
   auto qiceCatLev = ppiCatLevViews(fset, ncat_, ice_lev,
@@ -1066,7 +1140,7 @@ std::size_t PostProcessIce::seedNewIce(
           tWeighted += rec.aicen[k] * rec.Tsfcn[k];
         }
       }
-      if (aiceTot <= 0.0) continue;
+      if (aiceTot <= 0.0 || aiceTot < minBgAice) continue;
       donorTsfc = tWeighted / aiceTot;
       foundDonor = true;
       break;
