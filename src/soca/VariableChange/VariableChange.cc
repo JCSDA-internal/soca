@@ -125,14 +125,6 @@ void VariableChange::changeVar(State & x, const oops::Variables & vars) const {
 
 // -----------------------------------------------------------------------------
 
-void VariableChange::changeVarInverse(State & x,
-                                      const oops::Variables & vars) const {
-  util::Timer timer("soca::VariableChange", "changeVarInverse");
-  changeVar(x, vars);
-}
-
-// -----------------------------------------------------------------------------
-
 void VariableChange::print(std::ostream & os) const {
   os << *variableChange_;
 }
