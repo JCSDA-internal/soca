@@ -33,9 +33,6 @@ integer :: root=0
 !!
 !! - forward: deaggregates a 2D analysis of sea-ice and inserts
 !!            analysis in CICE restarts
-!! - inverse: TODO(G), aggregates seaice variables along CICE sea-ice
-!!            categories, save the aggregated variables in a file
-!!            readable by soca
 
 type, public :: soca_soca2cice_params
    real(kind=kind_real) :: seaice_edge

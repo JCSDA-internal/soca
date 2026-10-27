@@ -43,5 +43,5 @@ sea_water_potential_temperature   min=-1.8878639735195433   max=31.8539272915280
     ocean_mixed_layer_thickness   min=2.2813122613173684   max=4593.1766477043065606   mean=190.6540394407817303
                 sea_water_depth   min=2.2813122613173684   max=5658.2956097892638354   mean=1210.8412365282770224
 CostJo   : Nonlinear Jo(SeaSufaceTemp) = 594.7760346489026233, nobs = 90, Jo/n = 6.6086226072100294, err = 0.3727400724804861
-CostJb   : Nonlinear Jb = 52.6836668350627377
-CostFunction: Nonlinear J = 647.4597014839653184
+CostJb   : Nonlinear Jb = 52.6711102542828371
+CostFunction: Nonlinear J = 647.4471449312934510
