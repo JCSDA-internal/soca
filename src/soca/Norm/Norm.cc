@@ -27,6 +27,7 @@ void Norm::applyInverse(Increment &) const {
 
 const double Norm::computeNorm(const Increment &) const {
   ABORT("Norm::computeNorm not implemented.");
+  return 0.0;
 }
 
 void Norm::print(std::ostream &) const {
