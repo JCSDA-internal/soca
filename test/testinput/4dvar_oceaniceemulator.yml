@@ -100,6 +100,9 @@ variational:
       - sea_surface_height_above_geoid
 final j evaluation: false
 
+# oops now requires an output block; this test writes nothing.
+output: {}
+
 test:
   reference filename: testref/4dvar_oceaniceemulator.test
   test output filename: testoutput/4dvar_oceaniceemulator.out
