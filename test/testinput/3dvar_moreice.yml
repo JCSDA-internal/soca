@@ -165,13 +165,10 @@ variational:
           type: incr
 
 output:
-  datadir: data_output
-  exp: 3dvar_moreice
-  type: an
-
-final:
-  diagnostics:
-    departures: oman
+  analysis:
+    datadir: data_output
+    exp: 3dvar_moreice
+    type: an
 
 test:
   reference filename: testref/3dvar_moreice.test
