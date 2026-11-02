@@ -36,13 +36,19 @@ ObsLocRossby::ObsLocRossby(const eckit::Configuration & config,
 
 void ObsLocRossby::computeLocalization(
     const GeometryIterator & i,
-    ioda::ObsVector & locvector) const {
+    ioda::ObsVector & locvector,
+    oops::ObsSpaceMaskHandler & maskHandler) const {
   const eckit::geometry::Point3 refPoint = *i;
   const eckit::geometry::Point2 refPoint2(refPoint[0], refPoint[1]);
   if (refPoint2 == cachePoint_) {
     locvector = cacheVector_;
+    // Use cached weights at this point.
+    maskHandler.useCache();
     return;
   }
+
+  // Do not use cached weights at this point.
+  maskHandler.doNotUseCache();
 
   // calculate the length scale at this location
   double lengthscale = options_.base;
@@ -59,9 +65,10 @@ void ObsLocRossby::computeLocalization(
   // Apply GC99 localization
   const LocalObs_ & localobs =
   ufo::ObsHorLocGC99<GeometryIterator>::getLocalObs(i, lengthscale);
-  ufo::ObsHorLocGC99<GeometryIterator>::localizeLocalObs(i, locvector, localobs);
+  ufo::ObsHorLocGC99<GeometryIterator>::localizeLocalObs(locvector, maskHandler, localobs);
   cacheVector_ = locvector;
   cachePoint_ = refPoint2;
+  maskHandler.setCache();
 }
 
 // -----------------------------------------------------------------------------
