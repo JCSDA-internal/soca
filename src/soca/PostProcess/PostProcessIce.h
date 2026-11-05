@@ -106,8 +106,8 @@ class PostProcessIce {
 
    public:
     oops::Parameter<bool> clampTsfc{"clamp Tsfc",
-      "Clamp Tsfcn into [min Tsfc, max Tsfc] on every category with ice. On "
-      "by default.",
+      "Clamp Tsfcn into [min Tsfc, max Tsfc] on every category with ice, "
+      "including the Tsfc seeded on new-ice categories. On by default.",
       true, this};
     oops::Parameter<bool> updateSnowThermo{"update snow thermo",
       "Rebuild per-layer snow enthalpy (qsno) from Tsfcn on cats with snow "
@@ -235,7 +235,9 @@ class PostProcessIce {
             "rescaled by ai_an/ai_bg, volume target = analysis hice * ai_an. "
             "`keep volume`: areas are rescaled the same way, volume target = "
             "background volume + ai_an * (analysis hice - background hice), "
-            "i.e. the background volume when the DA leaves thickness unchanged.",
+            "i.e. the background volume when the DA leaves thickness unchanged. "
+            "When `analysis variables` lists `sea_ice_volume`, both give the "
+            "analysed volume.",
             "keep thickness", this};
     oops::Parameter<LowConcentrationParameters> lowConcentration{"low concentration",
             "Background cutoff and thickness cap for low-concentration cells.",

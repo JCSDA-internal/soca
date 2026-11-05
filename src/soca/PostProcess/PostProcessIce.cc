@@ -468,6 +468,7 @@ State PostProcessIce::runPostprocess(State & pproc,
       //   keep thickness: target = analysis hice * a_aice;
       //   keep volume:    target = background volume plus the analysis
       //                   thickness increment over the analysis area.
+      // When the DA analyses `sea_ice_volume`, both give the analysed volume.
       double v_bg = 0.0;
       for (std::size_t k = 0; k < ncat_; ++k) v_bg += bg_vice_cat[k](jnode, 0);
       const double h_bg = v_bg / ai_bg;
@@ -479,8 +480,9 @@ State PostProcessIce::runPostprocess(State & pproc,
         // pass doesn't see stale background snow.
         new_vsno_cat[k](jnode, 0) = 0.0;
       }
-      vtot_target = keep_volume ? v_bg + ai_an * (a_hice_vec[jnode] - h_bg)
-                                : a_hice_vec[jnode] * ai_an;
+      vtot_target = (keep_volume && !has_hice_vol)
+                        ? v_bg + ai_an * (a_hice_vec[jnode] - h_bg)
+                        : a_hice_vec[jnode] * ai_an;
       vtot_target = std::max(vtot_target, 0.0);
 
       // Low-concentration thickness cap: CICE leaves thick remnants on cells
@@ -842,6 +844,7 @@ void PostProcessIce::applyThermoStage(
   const bool updateSnowThermo = thermoParams.updateSnowThermo.value();
   const bool capSurfaceQice   = thermoParams.capSurfaceIceEnthalpy.value();
   const bool resetPonds       = thermoParams.resetPonds.value();
+  if (!clampTsfc && !updateSnowThermo && !capSurfaceQice && !resetPonds) return;
 
   const std::size_t iceLev = params_.ice_lev.value();
   const std::size_t snoLev = params_.sno_lev.value();
@@ -1089,8 +1092,11 @@ std::size_t PostProcessIce::seedNewIce(
     std::size_t sno_lev) const {
   const auto & thermoParams = params_.thermo.value();
   const std::size_t K = static_cast<std::size_t>(thermoParams.seedSearchK.value());
-  const double maxTsfc = std::min(thermoParams.maxTsfc.value(), -1e-6);
-  const double minTsfc = thermoParams.minTsfc.value();
+  // The seed must be below 0 C for the enthalpy formulas; the [min, max]
+  // Tsfc clamp applies only when `clamp Tsfc` is on.
+  const bool   clampTsfc = thermoParams.clampTsfc.value();
+  const double maxTsfc = clampTsfc ? std::min(thermoParams.maxTsfc.value(), -1e-6) : -1e-6;
+  const double minTsfc = clampTsfc ? thermoParams.minTsfc.value() : icephysics::Constants::Tmin;
   const double Tfrz    = icephysics::Constants::Tfrz;
   // Background remnants (below `min background aice`) are never donors.
   const double minBgAice = params_.lowConcentration.value().minBackgroundAice.value();

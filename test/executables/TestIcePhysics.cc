@@ -393,11 +393,9 @@ void testFreeboard_GrowIce() {
 // adjustThicknessCategories: volume redistribution with an open top category
 // ---------------------------------------------------------------------------
 
-// Ice-covered cell with a thin category-5 sliver (letkf5d member 1, typical
-// cell) and a +0.4% volume target, as produced every cycle by a 3-h thickness
-// mismatch. The sliver (13.8 m, above 2 x 4.57 m) sits at its capped top
-// bound and keeps its thickness; categories 1-4 share the gain by one factor.
-// (The former headroom rule sent about half of the gain into the sliver.)
+// Ice-covered cell with a thin category-5 sliver and a +0.4% volume target.
+// The sliver (13.8 m, above 2 x 4.57 m) sits at its capped top bound and
+// keeps its thickness; categories 1-4 share the gain by one factor.
 void testAdjustThkncats_SliverGain() {
   std::vector<double> hicat{0.0, 0.64, 1.39, 2.47, 4.57, 1000.0};
   std::vector<double> aicen{0.19, 0.27, 0.036, 0.022, 2.5e-4};
@@ -441,8 +439,7 @@ void testAdjustThkncats_ProportionalLoss() {
 
 // Target above what categories 1-4 can hold with category 5 empty: Phase 2
 // moves area into category 5, which is seeded inside [4.57, 2 x 4.57] m
-// rather than at mid-bin of the open [4.57, 1000] m range (the former
-// headroom rule seeded a sliver above 100 m here).
+// rather than at mid-bin of the open [4.57, 1000] m range.
 void testAdjustThkncats_Phase2TopSeed() {
   std::vector<double> hicat{0.0, 0.64, 1.39, 2.47, 4.57, 1000.0};
   std::vector<double> aicen{0.50, 0.30, 0.10, 0.05, 0.0};

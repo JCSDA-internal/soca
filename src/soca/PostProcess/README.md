@@ -65,9 +65,8 @@ For each owned cell:
    - **LAND** (mask=0): always zero per-cat output.
    - **ICE2NOICE** (`ai_an ~ 0`, `ai_bg > 0`): zero per-cat output.
    - **Background remnants** (`0 < ai_bg < low concentration.min background
-     aice`, default 1e-3): treated as ice-free background. CICE leaves thick
-     remnants (tens of m) at these concentrations. Where the analysis has
-     ice they are seeded as NOICE2ICE below, without using the remnant's
+     aice`, default 1e-3): treated as ice-free background. Where the analysis
+     has ice they are seeded as NOICE2ICE below, without using the remnant's
      analysis thickness or snow; otherwise they are removed. They are never
      used as donors.
    - **NOICE2ICE** (`ai_bg ~ 0`, `ai_an > 0`): seed all area in cat 0; set
@@ -81,12 +80,12 @@ For each owned cell:
      - `keep volume`: same seed; target `V_bg + ai_an * (analysis.hice - h_bg)`,
        i.e. the background volume when the DA leaves thickness unchanged.
 
+     When `analysis variables` lists `sea_ice_volume`, both give the
+     analysed volume.
+
      Then, where `min(ai_bg, ai_an) < low concentration.max aice`, the
      target thickness is capped at `low concentration.max thickness`
-     (default 5 m where aice < 0.01). CICE leaves thick remnants (tens of m)
-     on cells with ~1e-3 concentration, and the rules above would otherwise
-     carry them onto the analysis area. The targets are reached by the ITD
-     rebin; with `itd.rebin: false` only `keep thickness` is exact.
+     (default 5 m where aice < 0.01).
 
 3. **ITD rebin** (`itd.rebin: true`, default): solve for `(aicen, vicen)`
    such that `aicen[k] == 0` or `hicat[k] <= vicen[k]/aicen[k] <= hicat[k+1]`
