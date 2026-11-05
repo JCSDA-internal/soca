@@ -8,6 +8,7 @@
 #include "soca/PostProcess/PostProcessIce.h"
 
 #include <algorithm>
+#include <cmath>
 #include <cstdint>
 #include <unordered_set>
 #include <utility>
@@ -1056,6 +1057,14 @@ bool PostProcessIce::donorMeanIce(
   atlas::PointLonLat target(lonlat_(jnode, 0), lonlat_(jnode, 1));
   target.normalise();
   auto list = kdTree_.closestPoints(target, K);
+  // Order by distance rounded to 1 m, then global index. On regular grids
+  // mirror neighbours are equidistant, and the KDTree's own order between
+  // them depends on rounding, i.e. on the platform.
+  std::sort(list.begin(), list.end(), [](const auto & a, const auto & b) {
+    const auto da = std::llround(a.distance());
+    const auto db = std::llround(b.distance());
+    return (da != db) ? (da < db) : (a.payload() < b.payload());
+  });
 
   for (const auto & element : list) {
     const std::int64_t g = static_cast<std::int64_t>(element.payload());
@@ -1098,8 +1107,6 @@ std::size_t PostProcessIce::seedNewIce(
   const double maxTsfc = clampTsfc ? std::min(thermoParams.maxTsfc.value(), -1e-6) : -1e-6;
   const double minTsfc = clampTsfc ? thermoParams.minTsfc.value() : icephysics::Constants::Tmin;
   const double Tfrz    = icephysics::Constants::Tfrz;
-  // Background remnants (below `min background aice`) are never donors.
-  const double minBgAice = params_.lowConcentration.value().minBackgroundAice.value();
 
   auto tsfcCat = ppiCatViews(fset, ncat_, "sea_ice_category", "_surface_temperature");
   auto qiceCatLev = ppiCatLevViews(fset, ncat_, ice_lev,
@@ -1124,33 +1131,11 @@ std::size_t PostProcessIce::seedNewIce(
     }
     if (!anyNew) continue;
 
-    // Find the nearest-neighbor donor with any ice. Walk up to K candidates.
-    atlas::PointLonLat target(lonlat_(jnode, 0), lonlat_(jnode, 1));
-    target.normalise();
-    auto list = kdTree_.closestPoints(target, K);
-    const std::int64_t myG = static_cast<std::int64_t>(gindex(jnode));
+    // Nearest donor with ice (same search as the volume seed); fall back to
+    // Tfrz when none is within K.
     double donorTsfc = Tfrz;
-    bool foundDonor = false;
-    for (const auto & element : list) {
-      const std::int64_t g = static_cast<std::int64_t>(element.payload());
-      if (g == myG) continue;
-      auto it = donorCache.find(g);
-      if (it == donorCache.end()) continue;
-      const CatRecord & rec = it->second;
-      if (rec.mask == 0.0) continue;
-      double aiceTot = 0.0;
-      double tWeighted = 0.0;
-      for (std::size_t k = 0; k < ncat_; ++k) {
-        if (rec.aicen[k] > 0.0) {
-          aiceTot   += rec.aicen[k];
-          tWeighted += rec.aicen[k] * rec.Tsfcn[k];
-        }
-      }
-      if (aiceTot <= 0.0 || aiceTot < minBgAice) continue;
-      donorTsfc = tWeighted / aiceTot;
-      foundDonor = true;
-      break;
-    }
+    double donorHice = 0.0;
+    const bool foundDonor = donorMeanIce(jnode, K, donorCache, donorTsfc, donorHice);
     if (!foundDonor) ++fallbackCount;
 
     const double Tseed = std::min(maxTsfc, std::max(minTsfc, donorTsfc));

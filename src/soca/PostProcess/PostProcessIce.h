@@ -379,10 +379,12 @@ class PostProcessIce {
       const std::vector<atlas::array::ArrayView<double, 2>> & bg_tsfc_cat)
       const;
 
-  /// Area-weighted mean Tsfc and mean ice thickness across the K nearest
-  /// KDTree neighbors that carry any ice. Used by the per-cell pass on
-  /// noice->ice cells to set the rebin's volume target before the
-  /// per-category thermo seeding runs (in seedNewIce).
+  /// Area-weighted mean Tsfc and per-ice-area thickness of the nearest donor
+  /// among the K nearest KDTree neighbours that carries ice (land and
+  /// background remnants are skipped). Equidistant neighbours are ordered by
+  /// global index, so the choice does not depend on the platform. Used for
+  /// the noice->ice volume target in the per-cell pass and for the Tsfc seed
+  /// in seedNewIce.
   ///
   /// Returns true if at least one donor with ice was found. Outputs are valid
   /// only when the return is true; otherwise both are left untouched.
