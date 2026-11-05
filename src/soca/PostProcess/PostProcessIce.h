@@ -105,12 +105,24 @@ class PostProcessIce {
     OOPS_CONCRETE_PARAMETERS(ThermoParameters, oops::Parameters)
 
    public:
+    oops::Parameter<bool> clampTsfc{"clamp Tsfc",
+      "Clamp Tsfcn into [min Tsfc, max Tsfc] on every category with ice, "
+      "including the Tsfc seeded on new-ice categories. On by default.",
+      true, this};
     oops::Parameter<bool> updateSnowThermo{"update snow thermo",
       "Rebuild per-layer snow enthalpy (qsno) from Tsfcn on cats with snow "
-      "(qsno = snowEnthalpy(Tsfcn), clipped into a physical range), and cap "
-      "the surface ice layer enthalpy by iceEnthalpyBL99(Tsfcn, sice). On "
-      "by default; turning it off leaves the background qsno/qice unchanged.",
+      "(qsno = snowEnthalpy(Tsfcn), clipped into a physical range) and zero "
+      "it on cats without snow. On by default; turning it off leaves the "
+      "background qsno unchanged.",
       true, this};
+    oops::Parameter<bool> capSurfaceIceEnthalpy{"cap surface ice enthalpy",
+      "Cap the top ice layer enthalpy (qice001) by iceEnthalpyBL99(Tsfcn, "
+      "sice), i.e. make the top layer no warmer than the surface. Off by "
+      "default: the top-layer midpoint is normally warmer than the surface, "
+      "so in winter this cools the top layer to the surface temperature on "
+      "almost every category, adding cold content (and ice growth) every "
+      "cycle.",
+      false, this};
     oops::Parameter<bool> resetPonds{"reset ponds",
       "Zero apnd and hpnd on per-cat slots where the snow distribution "
       "modified vsnon (the new snow load is inconsistent with the bg ponds). "
@@ -136,6 +148,32 @@ class PostProcessIce {
       "Number of nearest KDTree neighbors to scan for a donor with any ice "
       "before falling back to Tfrz seeding.",
       64, this, {oops::minConstraint(1)}};
+  };
+
+  // ---------------------------------------------------------------------------
+  /// @brief Handling of low-concentration cells. CICE leaves thick remnants
+  /// (tens of m) on cells with ~1e-3 concentration; keeping their thickness
+  /// while the analysis raises the concentration would multiply that volume.
+  /// Background cells below `min background aice` are treated as ice-free
+  /// (re-seeded from a neighbour where the analysis has ice), and ICE2ICE
+  /// cells below `max aice` get their thickness target capped.
+  class LowConcentrationParameters : public oops::Parameters {
+    OOPS_CONCRETE_PARAMETERS(LowConcentrationParameters, oops::Parameters)
+   public:
+    oops::Parameter<double> minBackgroundAice{"min background aice",
+      "Background cells with 0 < aice below this value are treated as "
+      "ice-free: their remnant ice is dropped, and where the analysis has "
+      "ice they are seeded as NOICE2ICE cells (neighbour thickness, capped "
+      "at `max new ice thickness`). They are also never used as donors. Set "
+      "to 0 to disable.",
+      1.0e-3, this, {oops::minConstraint(0.0)}};
+    oops::Parameter<double> maxAice{"max aice",
+      "The cap applies where min(background aice, analysis aice) is below "
+      "this value. Set to 0 to disable.",
+      0.01, this, {oops::minConstraint(0.0)}};
+    oops::Parameter<double> maxThickness{"max thickness",
+      "Cap (m, per ice area) on the ICE2ICE thickness target in those cells.",
+      5.0, this, {oops::minConstraint(0.0)}};
   };
 
   // ---------------------------------------------------------------------------
@@ -185,6 +223,25 @@ class PostProcessIce {
             "ice can be found within seed-search-neighbors. Mirrors the Python "
             "reference scripts' hitot_min.",
             0.1, this, {oops::minConstraint(0.0)}};
+    oops::Parameter<double> hitotMax{"max new ice thickness",
+            "Upper bound (m) on the thickness used to seed noice->ice cells "
+            "(analysis thickness or KDTree donor mean). A donor with very little "
+            "ice can carry an unphysical per-ice-area thickness. 0 disables "
+            "the cap.",
+            5.0, this, {oops::minConstraint(0.0)}};
+    oops::Parameter<std::string> concentrationIncrement{"concentration increment",
+            "How ICE2ICE cells set their ice volume when the analysis changes "
+            "the concentration. `keep thickness` (default): every category is "
+            "rescaled by ai_an/ai_bg, volume target = analysis hice * ai_an. "
+            "`keep volume`: areas are rescaled the same way, volume target = "
+            "background volume + ai_an * (analysis hice - background hice), "
+            "i.e. the background volume when the DA leaves thickness unchanged. "
+            "When `analysis variables` lists `sea_ice_volume`, both give the "
+            "analysed volume.",
+            "keep thickness", this};
+    oops::Parameter<LowConcentrationParameters> lowConcentration{"low concentration",
+            "Background cutoff and thickness cap for low-concentration cells.",
+            {}, this};
     oops::Parameter<oops::Variables> analysisVars{"analysis variables",
             "Names of the ice-related analysis fields actually produced by the "
             "DA. `sea_ice_area_fraction` is required. For ice volume, list "
@@ -322,10 +379,12 @@ class PostProcessIce {
       const std::vector<atlas::array::ArrayView<double, 2>> & bg_tsfc_cat)
       const;
 
-  /// Area-weighted mean Tsfc and mean ice thickness across the K nearest
-  /// KDTree neighbors that carry any ice. Used by the per-cell pass on
-  /// noice->ice cells to set the rebin's volume target before the
-  /// per-category thermo seeding runs (in seedNewIce).
+  /// Area-weighted mean Tsfc and per-ice-area thickness of the nearest donor
+  /// among the K nearest KDTree neighbours that carries ice (land and
+  /// background remnants are skipped). Equidistant neighbours are ordered by
+  /// global index, so the choice does not depend on the platform. Used for
+  /// the noice->ice volume target in the per-cell pass and for the Tsfc seed
+  /// in seedNewIce.
   ///
   /// Returns true if at least one donor with ice was found. Outputs are valid
   /// only when the return is true; otherwise both are left untouched.
