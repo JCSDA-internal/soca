@@ -91,6 +91,11 @@ PostProcessIce::PostProcessIce(const Geometry & geom,
     throw eckit::UserError(
       "PostProcessIce: itd.category bounds must have length ncat+1", Here());
   }
+  const std::string & redist = params_.itd.value().volumeRedistribution.value();
+  if (redist != "headroom" && redist != "proportional") {
+    throw eckit::UserError(
+      "PostProcessIce: itd.volume redistribution must be headroom or proportional", Here());
+  }
 
   // Build a global lat/lon KDTree across all ranks. Payload is the 1-based
   // atlas global_index (gidx). Pattern adapted from oops::GeometryData::setGlobalTree.
@@ -308,7 +313,10 @@ State PostProcessIce::runPostprocess(State & pproc,
   const bool do_rebin = itd.rebin.value();
   const std::vector<double> hicat = itd.hicat.value();
   const double dhi_min = itd.dhiMin.value();
-  // hicat size already validated at construction.
+  const auto redistribution = (itd.volumeRedistribution.value() == "proportional")
+                                  ? icephysics::VolumeRedistribution::Proportional
+                                  : icephysics::VolumeRedistribution::Headroom;
+  // hicat size and the redistribution name already validated at construction.
   // Per-cell scratch buffers for the ITD rebin.
   std::vector<double> rebin_aicen(ncat_, 0.0);
   std::vector<double> rebin_vicen(ncat_, 0.0);
@@ -331,6 +339,7 @@ State PostProcessIce::runPostprocess(State & pproc,
 
   const double hsnow_max        = snowParams.hsnowMax.value();
   const double hitot_min        = params_.hitotMin.value();
+  const double hitot_max        = params_.hitotMax.value();  // 0: no cap
   const double min_aice_output  = params_.minAiceOutput.value();
   const std::size_t seedK = static_cast<std::size_t>(
       params_.thermo.value().seedSearchK.value());
@@ -419,6 +428,7 @@ State PostProcessIce::runPostprocess(State & pproc,
         hice_seed = (foundDonor && hice_donor > hitot_min)
                         ? hice_donor : hitot_min;
       }
+      if (hitot_max > 0.0) hice_seed = std::min(hice_seed, std::max(hitot_max, hitot_min));
       vtot_target = hice_seed * ai_an;
       for (std::size_t k = 0; k < ncat_; ++k) {
         new_aice_cat[k](jnode, 0) = (k == 0) ? ai_an : 0.0;
@@ -452,7 +462,7 @@ State PostProcessIce::runPostprocess(State & pproc,
       const bool ok = icephysics::adjustThicknessCategories(
           rebin_aicen, rebin_vicen, ai_an, vtot_target, hicat, dhi_min,
           /*ainMin=*/1.0e-8, /*aTol=*/1.0e-8, /*vTol=*/1.0e-6,
-          &rebin_aicen_mutated, &rebin_max_delta_aicen);
+          &rebin_aicen_mutated, &rebin_max_delta_aicen, redistribution);
       if (ok) {
         for (size_t icat = 0; icat < ncat_; ++icat) {
           new_aice_cat[icat](jnode, 0) = rebin_aicen[icat];
