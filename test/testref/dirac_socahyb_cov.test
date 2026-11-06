@@ -12,49 +12,49 @@ sea_water_potential_temperature   min=0.0000000000000000   max=1.000000000000000
                 sea_water_depth   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
 Covariance(hybrid) * Increment:
   Valid time: 2018-04-15T00:00:00Z
-          sea_ice_area_fraction   min=-0.0025614026026693   max=0.0037609274689877   mean=0.0000015706816229
-              sea_ice_thickness   min=-0.1974632353683397   max=51.3846244347522259   mean=0.7870725134900434
-             sea_water_salinity   min=-0.2823237623814392   max=0.4338354105138245   mean=0.0008138132098840
-sea_water_potential_temperature   min=-0.1605772927969005   max=1.3548054685057236   mean=0.0087034125614770
-    eastward_sea_water_velocity   min=-0.0019298539722595   max=0.0022904220185950   mean=-0.0000003702809966
+          sea_ice_area_fraction   min=-0.0025608754172403   max=0.0037605949371110   mean=0.0000015739163904
+              sea_ice_thickness   min=-0.1974632353683397   max=51.2241724391769537   mean=0.7857738798414761
+             sea_water_salinity   min=-0.2823237623814392   max=0.4338354105138245   mean=0.0008137861588272
+sea_water_potential_temperature   min=-0.1605774438923492   max=1.3546602115564379   mean=0.0086994034711567
+    eastward_sea_water_velocity   min=-0.0019298539722595   max=0.0022904220185950   mean=-0.0000003709270364
    northward_sea_water_velocity   min=-0.0009570793926929   max=0.0011294293313580   mean=-0.0000001188681305
- sea_surface_height_above_geoid   min=-0.0981516731886513   max=0.0483668693035219   mean=0.0000428678390520
+ sea_surface_height_above_geoid   min=-0.0981490055101711   max=0.0483628977188607   mean=0.0000423469994703
        sea_water_cell_thickness   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
-    ocean_mixed_layer_thickness   min=-79.4136932916673430   max=531.2265534461569132   mean=1.1865565484652718
+    ocean_mixed_layer_thickness   min=-79.4136932916673572   max=531.2265534461570269   mean=1.1865565484652720
                 sea_water_depth   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
 Covariance(hybrid1_SABER) * Increment:
   Valid time: 2018-04-15T00:00:00Z
-          sea_ice_area_fraction   min=-0.0005278924446560   max=0.0000000000000000   mean=-0.0000029543498245
-              sea_ice_thickness   min=0.0000000000000000   max=102.4436741248017313   mean=1.5729502480994326
-             sea_water_salinity   min=-0.0280551830432847   max=0.0446170398393103   mean=0.0000256360702057
-sea_water_potential_temperature   min=0.0000000000000000   max=0.8327855918152671   mean=0.0037359382332811
-    eastward_sea_water_velocity   min=0.0000000000000000   max=0.0019777748924268   mean=0.0000011957029201
+          sea_ice_area_fraction   min=-0.0005279820340172   max=0.0000000000000000   mean=-0.0000029478802895
+              sea_ice_thickness   min=0.0000000000000000   max=102.1227701336511871   mean=1.5703529808023016
+             sea_water_salinity   min=-0.0280481056053432   max=0.0446222492749008   mean=0.0000255819680919
+sea_water_potential_temperature   min=0.0000000000000000   max=0.8325755062729416   mean=0.0037279200526404
+    eastward_sea_water_velocity   min=0.0000000000000000   max=0.0019762278618981   mean=0.0000011944108406
    northward_sea_water_velocity   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
- sea_surface_height_above_geoid   min=0.0000000000000000   max=0.0680002344532221   mean=0.0005998705805843
+ sea_surface_height_above_geoid   min=0.0000000000000000   max=0.0680069727279912   mean=0.0005988289014207
        sea_water_cell_thickness   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
     ocean_mixed_layer_thickness   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
                 sea_water_depth   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
 Covariance(hybrid2_ensemble) * Increment:
   Valid time: 2018-04-15T00:00:00Z
           sea_ice_area_fraction   min=-0.0048113250248839   max=0.0075881502357951   mean=0.0000060957130703
-              sea_ice_thickness   min=-0.3949264707366794   max=0.3330974714216330   mean=0.0011947788806521
+              sea_ice_thickness   min=-0.3949264707366793   max=0.3330974714216330   mean=0.0011947788806521
              sea_water_salinity   min=-0.5646475247628784   max=0.8676708210276489   mean=0.0016019903495624
-sea_water_potential_temperature   min=-0.3218913889557592   max=2.4721319635962065   mean=0.0136708868896730
+sea_water_potential_temperature   min=-0.3218913889557592   max=2.4721319635962060   mean=0.0136708868896730
     eastward_sea_water_velocity   min=-0.0038597079445189   max=0.0045808440371901   mean=-0.0000019362649134
    northward_sea_water_velocity   min=-0.0019141587853859   max=0.0022588586627160   mean=-0.0000002377362609
- sea_surface_height_above_geoid   min=-0.1967369673926479   max=0.0958284039654625   mean=-0.0005141349024802
+ sea_surface_height_above_geoid   min=-0.1967369673926478   max=0.0958284039654625   mean=-0.0005141349024802
        sea_water_cell_thickness   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
-    ocean_mixed_layer_thickness   min=-158.8273865833346861   max=1062.4531068923138264   mean=2.3731130969305436
+    ocean_mixed_layer_thickness   min=-158.8273865833347145   max=1062.4531068923140538   mean=2.3731130969305441
                 sea_water_depth   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
 Localization(hybrid2_ensemble_localization) diagnostics:
 - Localization at zero separation:
-  + Value for variable sea_ice_thickness, subwindow 0, at (longitude, latitude, vertical index) point (-202.50000, -62.50000, 1): 1.0000000000000000e+00
+  + Value for variable sea_ice_thickness, subwindow 0, at (longitude, latitude, vertical index) point (-202.50000, -62.50000, 1): 9.9999999999999933e-01
   + Value for variable sea_water_salinity, subwindow 0, at (longitude, latitude, vertical index) point (-122.46168, 71.13133, 1): 1.0000000000000000e+00
   + Value for variable sea_water_potential_temperature, subwindow 0, at (longitude, latitude, vertical index) point (-277.50000, -47.50000, 1): 1.0000000000000007e+00
-  + Value for variable sea_water_potential_temperature, subwindow 0, at (longitude, latitude, vertical index) point (-197.50000, 17.50000, 5): 9.9858010546872256e-01
-  + Value for variable sea_water_potential_temperature, subwindow 0, at (longitude, latitude, vertical index) point (32.50000, 42.50000, 1): 9.9999999999999989e-01
+  + Value for variable sea_water_potential_temperature, subwindow 0, at (longitude, latitude, vertical index) point (-197.50000, 17.50000, 5): 9.9858010546872245e-01
+  + Value for variable sea_water_potential_temperature, subwindow 0, at (longitude, latitude, vertical index) point (32.50000, 42.50000, 1): 1.0000000000000000e+00
   + Value for variable sea_water_potential_temperature, subwindow 0, at (longitude, latitude, vertical index) point (-27.50000, 57.50000, 1): 1.0000000000000002e+00
-  + Value for variable eastward_sea_water_velocity, subwindow 0, at (longitude, latitude, vertical index) point (-7.50000, -7.50000, 1): 9.9999999999999944e-01
+  + Value for variable eastward_sea_water_velocity, subwindow 0, at (longitude, latitude, vertical index) point (-7.50000, -7.50000, 1): 9.9999999999999989e-01
   + Value for variable sea_surface_height_above_geoid, subwindow 0, at (longitude, latitude, vertical index) point (-77.50000, 7.50000, 1): 0.0000000000000000e+00
 Localization(hybrid2_ensemble) * Increment:
   Valid time: 2018-04-15T00:00:00Z
