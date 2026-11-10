@@ -252,13 +252,14 @@ set( SOCA_TESTS_VALGRIND OFF CACHE BOOL
 #  MPI       - The number of MPI PEs to use. If not specified, ${SOCA_TESTS_MAX_MPI}
 #              will be used
 # TEST_DEPENDS - list of tests this test depends on
+# LABELS    - list of extra ctest labels, passed to ecbuild_add_test
 #-------------------------------------------------------------------------------
 function(soca_add_test)
   # parse the passed arguments
   set(prefix     ARG)
   set(novals     NOTRAPFPE NOVALGRIND)
   set(singlevals NAME EXE SRC SCRIPT CFG MPI)
-  set(multivals  TEST_DEPENDS)
+  set(multivals  TEST_DEPENDS LABELS)
   cmake_parse_arguments(${prefix}
                         "${novals}" "${singlevals}" "${multivals}"
                         ${ARGN})
@@ -320,7 +321,8 @@ function(soca_add_test)
                       MPI     ${MPI}
                       ENVIRONMENT ${TRAPFPE_ENV}
                       WORKING_DIRECTORY ${WORKDIR}
-                      TEST_DEPENDS ${ARG_TEST_DEPENDS})
+                      TEST_DEPENDS ${ARG_TEST_DEPENDS}
+                      LABELS  ${ARG_LABELS})
     set( EXE ./test_soca_${ARG_NAME})
 
   elseif ( ARG_EXE)
@@ -334,7 +336,8 @@ function(soca_add_test)
                       ENVIRONMENT
                               ${TRAPFPE_ENV}
                       DEPENDS ${ARG_EXE}
-                      TEST_DEPENDS ${ARG_TEST_DEPENDS})
+                      TEST_DEPENDS ${ARG_TEST_DEPENDS}
+                      LABELS ${ARG_LABELS})
   elseif ( ARG_SCRIPT )
     # running a test specific script, right now this is only for the mom6solo forecast
     ecbuild_add_test( TARGET  test_soca_${ARG_NAME}
@@ -345,6 +348,7 @@ function(soca_add_test)
                       ENVIRONMENT "BIN_DIR=${CMAKE_BINARY_DIR}/bin"
 		                  "MPIEXE=${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} ${MPI}"
                       TEST_DEPENDS ${ARG_TEST_DEPENDS}
+                      LABELS ${ARG_LABELS}
                       )
   endif()
 
@@ -358,6 +362,7 @@ function(soca_add_test)
                            --gen-suppressions=all
                            ${EXE} ${CONFIG_FILE}
                       TEST_DEPENDS test_soca_${ARG_NAME}
+                      LABELS ${ARG_LABELS}
                     )
   endif()
 endfunction()
@@ -790,10 +795,12 @@ soca_add_test( NAME letkf_split_solver
                TEST_DEPENDS test_soca_gridgen
                             test_soca_letkf_split_observer )
 
+# MKL ?syevd raises a divide-by-zero under OOPS_TRAPFPE on oneAPI
 soca_add_test( NAME getkf
                EXE  soca_letkf.x
               #  NOTRAPFPE
-               TEST_DEPENDS test_soca_gridgen )
+               TEST_DEPENDS test_soca_gridgen
+               LABELS ci_oneapi_disable )
 
 soca_add_test( NAME eakf
                EXE  soca_letkf.x
