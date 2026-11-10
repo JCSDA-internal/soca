@@ -18,7 +18,6 @@
 #include "soca/Increment/Increment.h"
 #include "soca/LinearModel/OceanIceEmulator/LinearModelOceanIceEmulator.h"
 #include "soca/LinearVariableChange/LinearVariableChange.h"
-#include "soca/Model/OceanIceEmulator/ModelOceanIceEmulator.h"
 #include "soca/ModelBias/ModelBias.h"
 #include "soca/ModelBias/ModelBiasCovariance.h"
 #include "soca/ModelBias/ModelBiasIncrement.h"
@@ -46,7 +45,6 @@ struct Traits {
   typedef oops::UnstructuredInterpolator  LocalInterpolator;
   typedef soca::ErrorCovariance           Covariance;  // Not actually used, just empty stubs
 
-  typedef soca::ModelOceanIceEmulator        Model;
   typedef soca::LinearModelOceanIceEmulator  LinearModel;
 
   typedef soca::ModelBias            ModelAuxControl;
@@ -58,6 +56,8 @@ struct Traits {
   typedef soca::ModelData            ModelData;
 
   typedef ufo::ObsLocalization<GeometryIterator>   ObsLocalization;
+
+  static void registerModels();
 };
 
 }  // namespace soca
