@@ -47,9 +47,14 @@ struct Constants {
 //   0. If aiceTarget <= puny: zero everything, return true.
 //   1. Early-out if every bin already satisfies the bounds and the totals
 //      already match the targets within (aTol, vTol).
-//   2. Phase 1 (vicen-only redistribution): hold aicen fixed, iterate dh per
-//      cat to drive Sum(aicen*h) toward viceTarget. Converges when targets
-//      are reachable with the current aicen shape.
+//   2. Phase 1 (vicen-only redistribution): hold aicen fixed and scale the
+//      thickness of every category not yet at a bin edge by one common factor
+//      (ITD shape kept) to drive Sum(aicen*h) toward viceTarget. Converges
+//      when targets are reachable with the current aicen shape.
+//      The open top category's upper bound used by Phases 1-2 is capped at
+//      max(2 x its lower edge, its current thickness), so it cannot ratchet
+//      toward the top bound and a newly populated top category is seeded at
+//      a physical thickness.
 //   3. Phase 2 (aicen mutation, only if Phase 1 cannot reach viceTarget):
 //      reshuffle aicen between cats so the feasibility envelope
 //      [Sum(aicen*hLo), Sum(aicen*hHi)] contains viceTarget, then re-enter
