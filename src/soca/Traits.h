@@ -58,6 +58,8 @@ struct Traits {
   typedef soca::ModelData            ModelData;
 
   typedef ufo::ObsLocalization<GeometryIterator>   ObsLocalization;
+
+  static void registerNorms() {}
 };
 
 }  // namespace soca
