@@ -296,6 +296,22 @@ namespace soca {
   }
 
   // -----------------------------------------------------------------------------
+
+  void State::removeFields(const oops::Variables & vars) {
+    oops::Variables newvars(vars_);
+    newvars -= vars;
+    updateFields(newvars);
+  }
+
+  // -----------------------------------------------------------------------------
+
+  void State::addFields(const oops::Variables & vars) {
+    oops::Variables newvars(vars_);
+    newvars += vars;
+    updateFields(newvars);
+  }
+
+  // -----------------------------------------------------------------------------
   /// Logarithmic and exponential transformations
   // -----------------------------------------------------------------------------
 

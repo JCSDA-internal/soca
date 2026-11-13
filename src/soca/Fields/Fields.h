@@ -18,6 +18,12 @@
 #include "oops/util/DateTime.h"
 #include "oops/util/Serializable.h"
 
+namespace eckit {
+namespace mpi {
+class Comm;
+}  // namespace mpi
+}  // namespace eckit
+
 namespace soca {
 
 // --------------------------------------------------------------------------------------
@@ -45,6 +51,9 @@ class Fields : public util::Serializable,
   double norm() const;
   void updateTime(const util::Duration & dt) {time_ += dt;}
   void accumul(const double &, const Fields &);
+
+  // Sum in place across comm
+  void allReduceInPlace(const eckit::mpi::Comm &);
 
   // serialization
   size_t serialSize() const override;
