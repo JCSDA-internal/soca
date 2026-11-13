@@ -45,4 +45,3 @@ state test:
 
   date: *date
   tolerance: 1.0e-08
-  construct to variables: *soca_vars
