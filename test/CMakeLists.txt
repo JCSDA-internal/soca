@@ -93,6 +93,7 @@ set( soca_test_input
   testinput/varchange_ana2model.yml
   testinput/varchange_balance_TSSSH.yml
   testinput/varchange_balance.yml
+  testinput/verticalcoord.yml
   testinput/soca2cice_new.yml
   testinput/soca2cice_new_freeboard.yml
   testinput/soca2cice_new_seed.yml
@@ -415,6 +416,9 @@ soca_add_test( NAME getvalues
 soca_add_test( NAME oceanSmoother
                SRC  TestOceanSmoother.cc
                TEST_DEPENDS test_soca_gridgen )
+
+soca_add_test( NAME verticalcoord
+               SRC  TestVerticalCoordinate.cc )
 
 # Variable changes
 #---------------------------------------------------------------------------------------------------

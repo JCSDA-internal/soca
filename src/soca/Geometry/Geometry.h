@@ -92,6 +92,8 @@ namespace soca {
       std::shared_ptr<FieldsMetadata> fieldsMetadata_;
       atlas::FieldSet fields_;
       int iteratorDimensions_;
+      std::vector<double> layerDepths_;  // for "m" / "log depth"
+      double logDepthOffset_;
       std::string uid_;
   };
   // -----------------------------------------------------------------------------

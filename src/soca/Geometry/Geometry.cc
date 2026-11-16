@@ -6,7 +6,6 @@
  */
 
 #include <algorithm>
-#include <numeric>
 
 #include "atlas/functionspace.h"
 #include "atlas/mesh/actions/BuildHalo.h"
@@ -20,6 +19,7 @@
 #include "oops/util/FieldSetHelpers.h"
 
 #include "soca/Geometry/Geometry.h"
+#include "soca/Geometry/VerticalCoordinate.h"
 #include "soca/Utils/readNcAndInterp.h"
 
 // -----------------------------------------------------------------------------
@@ -31,7 +31,8 @@ namespace soca {
     : comm_(comm),
       fieldsMetadata_(std::make_shared<FieldsMetadata>(conf.getString("fields metadata"))),
       fmsinput_(comm, conf),
-      iteratorDimensions_(conf.getInt("iterator dimension", 2))
+      iteratorDimensions_(conf.getInt("iterator dimension", 2)),
+      logDepthOffset_(conf.getDouble("log depth offset", 10.0))
   {
     fmsinput_.updateNameList();
 
@@ -130,6 +131,13 @@ namespace soca {
       soca_geo_write_f90(keyGeom_, &conf);
     }
 
+    // layer depths for the "m" and "log depth" vertical coordinates
+    if (conf.has("layer thickness file")) {
+      layerDepths_ = layerDepthsFromFile(conf.getString("layer thickness file"),
+                                         conf.getString("layer thickness variable", "h"),
+                                         fields_["vert_coord"].shape(1), comm_);
+    }
+
     // create a uid for the geometry for later comparison
     uid_ = util::getGridUid(functionSpace_);
   }
@@ -139,7 +147,9 @@ namespace soca {
     : comm_(other.comm_),
       fieldsMetadata_(other.fieldsMetadata_),
       fmsinput_(other.fmsinput_),
-      iteratorDimensions_(other.iteratorDimensions_) {
+      iteratorDimensions_(other.iteratorDimensions_),
+      layerDepths_(other.layerDepths_),
+      logDepthOffset_(other.logDepthOffset_) {
     throw eckit::Exception("Geometry copy constructor is not implemented");
   }
 
@@ -174,14 +184,8 @@ namespace soca {
 
   // -----------------------------------------------------------------------------
   std::vector<double> Geometry::verticalCoord(std::string & vertcoord) const {
-    if (vertcoord != "levels") {
-      throw eckit::NotImplemented("Vertical coordinate not supported. Only 'levels' "
-        "vertical coordinate currently supported.", Here());
-    }
     const size_t nlevs = fields_["vert_coord"].shape(1);
-    std::vector<double> coords(nlevs);
-    std::iota(coords.begin(), coords.end(), 1.0);
-    return coords;
+    return verticalCoordinate(vertcoord, nlevs, layerDepths_, logDepthOffset_);
   }
 
   // -----------------------------------------------------------------------------

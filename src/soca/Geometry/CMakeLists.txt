@@ -6,4 +6,6 @@ soca_target_sources(
   soca_geom.interface.F90
   FmsInput.cc
   FmsInput.h
+  VerticalCoordinate.cc
+  VerticalCoordinate.h
 )
