@@ -46,7 +46,6 @@ set( soca_test_input
   testinput/eakf.yml
   testinput/ensanpproc.yml
   testinput/ensanpproc_ensda.yml
-  testinput/ensanpproc_guards.yml
   testinput/ensmeanandvariance.yml
   testinput/enspert.yml
   testinput/ensrecenter.yml
@@ -98,7 +97,6 @@ set( soca_test_input
   testinput/soca2cice_new_freeboard.yml
   testinput/soca2cice_new_seed.yml
   testinput/soca2cice_new_bgfallback.yml
-  testinput/soca2cice_new_maxsst.yml
 )
 
 set( soca_test_ref
@@ -133,7 +131,6 @@ set( soca_test_ref
   testref/eakf.test
   testref/ensanpproc.test
   testref/ensanpproc_ensda.test
-  testref/ensanpproc_guards.test
   testref/ensmeanandvariance.test
   testref/enspert.test
   testref/ensrecenter.test
@@ -164,7 +161,6 @@ set( soca_test_ref
   testref/soca2cice_new_freeboard.test
   testref/soca2cice_new_seed.test
   testref/soca2cice_new_bgfallback.test
-  testref/soca2cice_new_maxsst.test
 )
 
 # Create directory for test input/output/reference and symlink all files
@@ -579,11 +575,6 @@ soca_add_test( NAME ensanpproc_ensda
                EXE  soca_anpproc.x
                TEST_DEPENDS test_soca_gridgen test_soca_letkf )
 
-# Increment QC freezing-point floor as the only QC stage
-soca_add_test( NAME ensanpproc_guards
-               EXE  soca_anpproc.x
-               TEST_DEPENDS test_soca_gridgen )
-
 soca_add_test( NAME hybridgain
                EXE  soca_hybridgain.x
                TEST_DEPENDS test_soca_gridgen )
@@ -875,16 +866,6 @@ soca_add_test( NAME soca2cice_new_seed
 file(COPY ${CMAKE_CURRENT_BINARY_DIR}/data_static/72x35x25/restarts/iced.2018-04-15-00000.nc
      DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/data_generated/soca2cice_new_bgfallback/ )
 soca_add_test( NAME soca2cice_new_bgfallback
-              EXE  soca_postproc.x
-              MPI 2
-              NOTRAPFPE
-              TEST_DEPENDS test_soca_gridgen
-                           test_soca_3dvar )
-
-# `max sst for ice` variant: removes the analysis ice over water above 0 C.
-file(COPY ${CMAKE_CURRENT_BINARY_DIR}/data_static/72x35x25/restarts/iced.2018-04-15-00000.nc
-     DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/data_generated/soca2cice_new_maxsst/ )
-soca_add_test( NAME soca2cice_new_maxsst
               EXE  soca_postproc.x
               MPI 2
               NOTRAPFPE

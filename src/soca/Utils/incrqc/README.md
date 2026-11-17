@@ -293,10 +293,10 @@ For each ocean column whose background `sea_ice_area_fraction` is below
    $\delta T_k = T_f + \text{margin} - T^{\text{bkg}}_k$.
 
 The log reports how many points were raised and the largest raise (here for one
-member of the `ensanpproc_guards` test):
+member of the `ensanpproc` test):
 
 ```
-QC: freezing point floor (open water only, margin 1.000000 K, background at least 1.000000 K above freezing): raised 62 points, by up to 1.099498 K
+QC: freezing point floor (open water only, margin 1.000000 K, background at least 1.000000 K above freezing): raised 20 points, by up to 0.507858 K
 ```
 
 #### Notes
