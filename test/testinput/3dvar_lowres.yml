@@ -54,7 +54,7 @@ cost function:
   background error:
     covariance model: SABER
     change background resolution: true
-
+    full inverse: true
     saber central block:
       saber block name: diffusion
       read:
@@ -303,9 +303,10 @@ variational:
           type: incr
 
 output:
-  datadir: data_output
-  exp: 3dvar_lowres
-  type: an
+  analysis:
+    datadir: data_output
+    exp: 3dvar_lowres
+    type: an
 
 test:
   reference filename: testref/3dvar_lowres.test

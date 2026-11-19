@@ -54,7 +54,6 @@ void Model2Ana::changeVar(const State & xm,
                         std::endl;
   util::Timer timer("soca::Model2Ana", "changeVar");
 
-  util::DateTime * vtime = &xa.validTime();
   xa = xm;
 
   // Rotate from the logical grid to meridional/zonal
@@ -81,7 +80,6 @@ void Model2Ana::changeVarInverse(const State & xa,
                         std::endl;
   util::Timer timer("soca::Model2Ana", "changeVarInverse");
 
-  util::DateTime * vtime = &xm.validTime();
   xm = xa;
 
   // Rotate from meridional/zonal to the logical grid

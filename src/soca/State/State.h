@@ -55,7 +55,6 @@ namespace soca {
             const util::DateTime &);
       State(const Geometry &, const eckit::Configuration &);
       State(const Geometry &, const State &);
-      State(const oops::Variables &, const State &);
       State(const State &);
       virtual ~State();
       State & operator=(const State &);
