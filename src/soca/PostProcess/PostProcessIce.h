@@ -22,6 +22,7 @@
 #include "oops/base/Variables.h"
 #include "oops/util/DateTime.h"
 #include "oops/util/parameters/NumericConstraints.h"
+#include "oops/util/parameters/OptionalParameter.h"
 #include "oops/util/parameters/Parameter.h"
 #include "oops/util/parameters/Parameters.h"
 #include "oops/util/parameters/RequiredParameter.h"
@@ -242,6 +243,9 @@ class PostProcessIce {
     oops::Parameter<LowConcentrationParameters> lowConcentration{"low concentration",
             "Background cutoff and thickness cap for low-concentration cells.",
             {}, this};
+    oops::OptionalParameter<double> maxSstIce{"max sst for ice",
+            "Remove the analysis ice where the analysis SST (degC) is above this "
+            "value. Unset: off.", this};
     oops::Parameter<oops::Variables> analysisVars{"analysis variables",
             "Names of the ice-related analysis fields actually produced by the "
             "DA. `sea_ice_area_fraction` is required. For ice volume, list "

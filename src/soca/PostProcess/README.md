@@ -48,12 +48,18 @@ exactly the per-cat schema it expects. Standalone callers normally discard
 the aggregate; the `gdasapp` increment handler can use it to recover the
 effective ice analysis if needed.
 
-PostProcessIce does **not** read or write ocean variables: ocean T/S on the
-analysis is unused. Any surface-ocean adjustment on ice removal (e.g.
-warming SST toward freezing when ice2noice) is the DA increment generator's
-job, not the restart writer's.
+PostProcessIce does **not** write ocean variables. It reads one, the analysis
+surface `sea_water_potential_temperature`, and only when `max sst for ice` is
+set. Any surface-ocean adjustment on ice removal (e.g. warming SST toward
+freezing when ice2noice) is the DA increment generator's job, not the restart
+writer's.
 
 ## Per-cell pass
+
+Before the pass, if `max sst for ice` is set, the analysis aice is set to 0 in
+every ocean cell whose analysis top-level `sea_water_potential_temperature`
+(degC) is above it. Those cells then take the ICE2NOICE path. The log reports
+the number of cells, the summed concentration removed and the warmest SST.
 
 For each owned cell:
 
@@ -208,6 +214,11 @@ postprocess ice:
     min background aice: 1.0e-3                # 0 disables the cutoff
     max aice: 0.01                             # 0 disables the cap
     max thickness: 5.0                         # m, per ice area
+
+  # Optional, unset = off. Remove the analysis ice where the analysis
+  # top-level sea_water_potential_temperature (degC) is above this value.
+  # Needs that variable in the analysis state.
+  # max sst for ice: 10.0
 
   # Which ice analysis fields are actually produced by the DA. Required:
   # sea_ice_area_fraction. For ice volume, list one of

@@ -285,6 +285,38 @@ State PostProcessIce::runPostprocess(State & pproc,
         anfields.field("sea_ice_area_fraction"));
     for (size_t jn = 0; jn < field_size; ++jn) a_aice_vec[jn] = v(jn, 0);
   }
+  // no ice over warm water (aice = 0 takes the ICE2NOICE path below)
+  if (params_.maxSstIce.value() != boost::none) {
+    const double maxSst = *params_.maxSstIce.value();
+    if (!anfields.has("sea_water_potential_temperature")) {
+      throw eckit::UserError("PostProcessIce: `max sst for ice` needs "
+                             "sea_water_potential_temperature in the analysis state", Here());
+    }
+    const auto sst = atlas::array::make_view<double, 2>(
+        anfields.field("sea_water_potential_temperature"));
+    const auto ghost = atlas::array::make_view<int, 1>(geom_.functionSpace().ghost());
+    std::size_t nRemoved = 0;
+    double areaRemoved = 0.0;
+    double sstMaxRemoved = -1.0e30;
+    for (size_t jn = 0; jn < field_size; ++jn) {
+      if (a_aice_vec[jn] > 0.0 && sst(jn, 0) > maxSst && mask_(jn, 0) != 0.0) {
+        if (!ghost(jn)) {
+          ++nRemoved;
+          areaRemoved += a_aice_vec[jn];
+          sstMaxRemoved = std::max(sstMaxRemoved, sst(jn, 0));
+        }
+        a_aice_vec[jn] = 0.0;
+      }
+    }
+    const auto & comm = geom_.getComm();
+    comm.allReduceInPlace(nRemoved, eckit::mpi::sum());
+    comm.allReduceInPlace(areaRemoved, eckit::mpi::sum());
+    comm.allReduceInPlace(sstMaxRemoved, eckit::mpi::max());
+    oops::Log::info() << "PostProcessIce: removed ice over water warmer than " << maxSst
+                      << " C at " << nRemoved << " cells (sum of concentrations " << areaRemoved;
+    if (nRemoved > 0) oops::Log::info() << ", warmest " << sstMaxRemoved << " C";
+    oops::Log::info() << ")" << std::endl;
+  }
   if (has_hice_th) {
     const auto v = atlas::array::make_view<double, 2>(
         anfields.field("sea_ice_thickness"));

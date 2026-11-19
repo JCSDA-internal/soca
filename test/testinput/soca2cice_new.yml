@@ -24,8 +24,9 @@ increment:
   ice_filename: ice.3dvar.iter1.incr.2018-04-15T00:00:00Z.nc
 
 # Baseline new-path test: all defaults (rebin on, thermo on, freeboard off,
-# seed new ice on). Variants below add freeboard / drop the analysis hice
-# and hsno (_bgfallback) / add the full Stage C donor-halo seed (_seed).
+# seed new ice on). Variants below add freeboard and `max sst for ice`
+# (_freeboard) / drop the analysis hice and hsno (_bgfallback) / add the full
+# Stage C donor-halo seed (_seed).
 postprocess ice:
   ncat: 5
   ice_lev: 7
