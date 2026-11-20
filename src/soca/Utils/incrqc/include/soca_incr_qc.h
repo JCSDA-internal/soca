@@ -144,6 +144,7 @@ inline void logClampCounts(
  * - "coastal increment filter": taper the T/S increments to zero near coastlines.
  * - "stability check": damp increments that destabilize the water column.
  * - "state bounds": keep the analysis of each listed variable within its bounds.
+ * - "freezing point floor": keep the open-water analysis temperature above freezing.
  *
  * @param xb The background state.
  * @param dx The increment to QC. Will be modified in place.
@@ -161,17 +162,20 @@ inline void qcIncrement(const soca::State& xb,
   const bool doCoastal   = config.has("coastal increment filter");
   const bool doStability = config.has("stability check");
   const bool doBounds    = config.has("state bounds");
+  const bool doFreezing  = config.has("freezing point floor");
 
   oops::Log::info() << "QC: steric height adjustment: " << (doSteric ? "on" : "off") << std::endl;
   oops::Log::info() << "QC: coastal increment filter: " << (doCoastal ? "on" : "off") << std::endl;
   oops::Log::info() << "QC: water column stability check: "
                     << (doStability ? "on" : "off") << std::endl;
   oops::Log::info() << "QC: state bounds: " << (doBounds ? "on" : "off") << std::endl;
+  oops::Log::info() << "QC: freezing point floor: " << (doFreezing ? "on" : "off") << std::endl;
 
-  if (!doSteric && !doCoastal && !doStability && !doBounds) {
+  if (!doSteric && !doCoastal && !doStability && !doBounds && !doFreezing) {
     oops::Log::warning() << "Increment QC: no QC stage is configured, the increment is left "
                          << "untouched. Expected at least one of 'steric variable change', "
-                         << "'coastal increment filter', 'stability check' or 'state bounds'."
+                         << "'coastal increment filter', 'stability check', 'state bounds' or "
+                         << "'freezing point floor'."
                          << std::endl;
     return;
   }
@@ -190,6 +194,10 @@ inline void qcIncrement(const soca::State& xb,
   }
   if (doCoastal) {
     requireVariables(dx.variables(), tempSalt, "increment", "coastal increment filter");
+  }
+  if (doFreezing) {
+    requireVariables(dx.variables(), tempSalt, "increment", "freezing point floor");
+    requireVariables(xb.variables(), tempSalt, "background", "freezing point floor");
   }
   if (doStability) {
     requireVariables(dx.variables(), tempSalt, "increment", "stability check");
@@ -300,6 +308,37 @@ inline void qcIncrement(const soca::State& xb,
     std::map<std::string, std::pair<size_t, size_t>> clampCounts =
         applyBruteForceBoundsCheck(dxFs, xbFs, ghostView, viewBathy, stateBounds);
     logClampCounts(clampCounts, geom.getComm());
+  }
+
+  // Freezing-point floor, after the bounds
+  if (doFreezing) {
+    const eckit::LocalConfiguration fpConfig(config, "freezing point floor");
+    // defaults: GFS MOM6 (DTFREEZE_DS, DTFREEZE_DP, RHO_0, G_EARTH)
+    const double dTfdS = fpConfig.getDouble("salinity coefficient", -0.054);
+    const double dTfdp = fpConfig.getDouble("pressure coefficient", -7.75e-8);
+    const double rho0g = fpConfig.getDouble("reference density", 1035.0)
+                       * fpConfig.getDouble("gravity", 9.8);
+    const double margin = fpConfig.getDouble("open water margin", 0.0);
+    const double iceThreshold = fpConfig.getDouble("ice threshold", 1.0e-4);
+    const double minThickness = fpConfig.getDouble("min layer thickness", 1.0e-3);
+    const double minBkgExcess = fpConfig.getDouble("min background excess", 0.0);
+    if (!xbFs.has("sea_ice_area_fraction")) {
+      oops::Log::warning() << "Increment QC: no sea_ice_area_fraction in the background, the "
+                           << "freezing point floor treats every column as open water"
+                           << std::endl;
+    }
+    std::pair<size_t, double> raised =
+        applyFreezingPointFloor(dxFs, xbFs, ghostView, viewBathy, viewHocn, viewDepth,
+                                dTfdS, dTfdp, rho0g, margin, iceThreshold, minThickness,
+                                minBkgExcess);
+    size_t nRaised = raised.first;
+    double maxRaise = raised.second;
+    geom.getComm().allReduceInPlace(nRaised, eckit::mpi::sum());
+    geom.getComm().allReduceInPlace(maxRaise, eckit::mpi::max());
+    oops::Log::info() << "QC: freezing point floor (open water only, margin " << margin
+                      << " K, background at least " << minBkgExcess
+                      << " K above freezing): raised " << nRaised << " points, by up to "
+                      << maxRaise << " K" << std::endl;
   }
 
   dx.fromFieldSet(dxFs);
