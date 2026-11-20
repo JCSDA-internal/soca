@@ -57,8 +57,8 @@ void Fields::accumul(const double & zz, const Fields & xx) {
 
 // -----------------------------------------------------------------------------
 
-void Fields::allReduceInPlace(const eckit::mpi::Comm & comm) {
-  oops::mpi::allReduceInPlace(comm, fieldSet_);
+void Fields::allReduceInPlace(const eckit::mpi::Comm & commEns) {
+  oops::mpi::allReduceInPlace(commEns, fieldSet_);
 }
 
 // -----------------------------------------------------------------------------
