@@ -84,6 +84,7 @@ namespace soca {
       void sqrt();
       double dot_product_with(const Increment &) const;
       void schur_product_with(const Increment &);
+      void schur_quotient_with(const Increment &);
       void random();
       void dirac(const eckit::Configuration &);
 
