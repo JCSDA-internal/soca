@@ -95,6 +95,14 @@ increment postprocessing:
       min distance: 0.0       # [m] zero increments at the coast
       max distance: 200000.0  # [m] full increments beyond 200 km from coast
 
+    # Runs last. With the 1 K background check it raises 20 + 16 points on the
+    # two members logged by task 0 (267 + 320 with the check off), so both
+    # branches are exercised. Production uses min background excess: 5, which
+    # raises nothing on this small case.
+    freezing point floor:
+      open water margin: 1.0
+      min background excess: 1.0
+
 analysis postprocessing:
   pattern: "%mem%"
   postprocess ice:

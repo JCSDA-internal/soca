@@ -97,6 +97,7 @@ set( soca_test_input
   testinput/soca2cice_new_freeboard.yml
   testinput/soca2cice_new_seed.yml
   testinput/soca2cice_new_bgfallback.yml
+  testinput/soca2cice_new_keepvolume.yml
 )
 
 set( soca_test_ref
@@ -161,6 +162,7 @@ set( soca_test_ref
   testref/soca2cice_new_freeboard.test
   testref/soca2cice_new_seed.test
   testref/soca2cice_new_bgfallback.test
+  testref/soca2cice_new_keepvolume.test
 )
 
 # Create directory for test input/output/reference and symlink all files
@@ -252,13 +254,14 @@ set( SOCA_TESTS_VALGRIND OFF CACHE BOOL
 #  MPI       - The number of MPI PEs to use. If not specified, ${SOCA_TESTS_MAX_MPI}
 #              will be used
 # TEST_DEPENDS - list of tests this test depends on
+# LABELS    - list of extra ctest labels, passed to ecbuild_add_test
 #-------------------------------------------------------------------------------
 function(soca_add_test)
   # parse the passed arguments
   set(prefix     ARG)
   set(novals     NOTRAPFPE NOVALGRIND)
   set(singlevals NAME EXE SRC SCRIPT CFG MPI)
-  set(multivals  TEST_DEPENDS)
+  set(multivals  TEST_DEPENDS LABELS)
   cmake_parse_arguments(${prefix}
                         "${novals}" "${singlevals}" "${multivals}"
                         ${ARGN})
@@ -320,7 +323,8 @@ function(soca_add_test)
                       MPI     ${MPI}
                       ENVIRONMENT ${TRAPFPE_ENV}
                       WORKING_DIRECTORY ${WORKDIR}
-                      TEST_DEPENDS ${ARG_TEST_DEPENDS})
+                      TEST_DEPENDS ${ARG_TEST_DEPENDS}
+                      LABELS  ${ARG_LABELS})
     set( EXE ./test_soca_${ARG_NAME})
 
   elseif ( ARG_EXE)
@@ -334,7 +338,8 @@ function(soca_add_test)
                       ENVIRONMENT
                               ${TRAPFPE_ENV}
                       DEPENDS ${ARG_EXE}
-                      TEST_DEPENDS ${ARG_TEST_DEPENDS})
+                      TEST_DEPENDS ${ARG_TEST_DEPENDS}
+                      LABELS ${ARG_LABELS})
   elseif ( ARG_SCRIPT )
     # running a test specific script, right now this is only for the mom6solo forecast
     ecbuild_add_test( TARGET  test_soca_${ARG_NAME}
@@ -345,6 +350,7 @@ function(soca_add_test)
                       ENVIRONMENT "BIN_DIR=${CMAKE_BINARY_DIR}/bin"
 		                  "MPIEXE=${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} ${MPI}"
                       TEST_DEPENDS ${ARG_TEST_DEPENDS}
+                      LABELS ${ARG_LABELS}
                       )
   endif()
 
@@ -358,6 +364,7 @@ function(soca_add_test)
                            --gen-suppressions=all
                            ${EXE} ${CONFIG_FILE}
                       TEST_DEPENDS test_soca_${ARG_NAME}
+                      LABELS ${ARG_LABELS}
                     )
   endif()
 endfunction()
@@ -790,10 +797,12 @@ soca_add_test( NAME letkf_split_solver
                TEST_DEPENDS test_soca_gridgen
                             test_soca_letkf_split_observer )
 
+# MKL ?syevd raises a divide-by-zero under OOPS_TRAPFPE on oneAPI
 soca_add_test( NAME getkf
                EXE  soca_letkf.x
               #  NOTRAPFPE
-               TEST_DEPENDS test_soca_gridgen )
+               TEST_DEPENDS test_soca_gridgen
+               LABELS ci_oneapi_disable )
 
 soca_add_test( NAME eakf
                EXE  soca_letkf.x
@@ -859,6 +868,16 @@ soca_add_test( NAME soca2cice_new_seed
 file(COPY ${CMAKE_CURRENT_BINARY_DIR}/data_static/72x35x25/restarts/iced.2018-04-15-00000.nc
      DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/data_generated/soca2cice_new_bgfallback/ )
 soca_add_test( NAME soca2cice_new_bgfallback
+              EXE  soca_postproc.x
+              MPI 2
+              NOTRAPFPE
+              TEST_DEPENDS test_soca_gridgen
+                           test_soca_3dvar )
+
+# `concentration increment: keep volume` variant (default is keep thickness).
+file(COPY ${CMAKE_CURRENT_BINARY_DIR}/data_static/72x35x25/restarts/iced.2018-04-15-00000.nc
+     DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/data_generated/soca2cice_new_keepvolume/ )
+soca_add_test( NAME soca2cice_new_keepvolume
               EXE  soca_postproc.x
               MPI 2
               NOTRAPFPE

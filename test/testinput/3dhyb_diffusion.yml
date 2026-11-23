@@ -181,9 +181,10 @@ variational:
           type: incr
 
 output:
-  datadir: data_output/
-  exp: 3dhyb_diffusion
-  type: an
+  analysis:
+    datadir: data_output/
+    exp: 3dhyb_diffusion
+    type: an
 
 test:
   reference filename: testref/3dhyb_diffusion.test

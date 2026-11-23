@@ -13,6 +13,7 @@ The QC process ensures:
 - **Water Column Stability Check**: Ensures that the increment does not introduce new static instabilities in the water column by checking density profiles.
 - **Steric Height Adjustment**: Replaces the SSH increment with a steric height increment, and limits it to prevent unrealistically large changes to sea surface height.
 - **Coastal Increment Filter**: Smoothly tapers T/S increments to zero near coastlines using a cosine taper on the `distance_from_coast` field.
+- **Freezing-Point Floor**: Keeps the open-water analysis temperature above the MOM6 linear freezing point, so the model does not form frazil ice where the background had none.
 - **Iterative Refinement**: Applies stability checks iteratively with optional smoothing to refine corrections.
 
 ## Stages are individually optional
@@ -26,6 +27,7 @@ of them can be used. Nothing is on by default:
 | Steric height adjustment | `steric variable change` |
 | Water column stability check | `stability check` |
 | Coastal increment filter | `coastal increment filter` |
+| Freezing-point floor | `freezing point floor` |
 
 The steric variable change and the steric height limit are a single stage: the
 limit rescales T/S and overwrites the SSH increment with the recomputed steric
@@ -44,6 +46,7 @@ QC: steric height adjustment: off
 QC: coastal increment filter: off
 QC: water column stability check: off
 QC: state bounds: on
+QC: freezing point floor: off
 QC: bounding the analysis of sea_water_potential_temperature to [-2.500000, 36.000000]
 QC: state bounds on sea_water_potential_temperature: clamped 59 points to the minimum and 0 points to the maximum
 ```
@@ -81,6 +84,10 @@ stability check:
 coastal increment filter:
   min distance: 0.0       # [m] zero increments at the coast
   max distance: 200000.0  # [m] full increments beyond 200 km from coast
+
+freezing point floor:
+  open water margin: 1.0      # [K]
+  min background excess: 5.0  # [K]
 ```
 
 Bounds only, with no steric height adjustment, coastal filter or stability
@@ -245,6 +252,74 @@ The weight *w* is applied uniformly to all vertical levels at a given node.
   catches misspelled variable names.
 - Applied to ocean points only, i.e. where the bathymetry derived from
   `sea_water_cell_thickness` is positive.
+
+### 5. Freezing-Point Floor
+
+This stage stops the analysis from cooling open water below freezing. In cycled
+ensemble DA this happens at displaced fronts: the increment cools ice-free water
+past the freezing point, the ocean model makes frazil ice there, and that ice can
+drift onto warm water and stop the sea-ice model.
+
+#### Configuration
+
+```yaml
+freezing point floor:
+  open water margin: 1.0          # [K] floor is Tf + margin; default 0
+  min background excess: 5.0      # [K] default 0 (no background check)
+  ice threshold: 1.0e-4           # background aice at or above this is "ice"; default 1e-4
+  min layer thickness: 1.0e-3     # [m] thinner layers are skipped; default 1e-3
+  # MOM6 linear freezing point coefficients, defaults as in GFS MOM6:
+  salinity coefficient: -0.054    # DTFREEZE_DS [degC/psu]
+  pressure coefficient: -7.75e-8  # DTFREEZE_DP [degC/Pa]
+  reference density: 1035.0       # RHO_0 [kg/m³]
+  gravity: 9.8                    # G_EARTH [m/s²]
+```
+
+#### Method
+
+The freezing point is MOM6's linear form (`TFREEZE_FORM = LINEAR`), with the
+analysis salinity and a hydrostatic pressure from the layer-centre depth $z_k$:
+
+$$T_f = \frac{\partial T_f}{\partial S} \left(S^{\text{bkg}}_k + \delta S_k\right) + \frac{\partial T_f}{\partial p}\, \rho_0 g\, z_k$$
+
+For each ocean column whose background `sea_ice_area_fraction` is below
+`ice threshold`, and each layer thicker than `min layer thickness`:
+
+1. If `min background excess` $> 0$, skip the layer unless the background is at
+   least that far above its own freezing point (computed with the background
+   salinity). This limits the floor to water that the increment, not the
+   background, brought to freezing.
+2. If $T^{\text{bkg}}_k + \delta T_k < T_f + \text{margin}$, set
+   $\delta T_k = T_f + \text{margin} - T^{\text{bkg}}_k$.
+
+The log reports how many points were raised and the largest raise (here for one
+member of the `ensanpproc` test):
+
+```
+QC: freezing point floor (open water only, margin 1.000000 K, background at least 1.000000 K above freezing): raised 20 points, by up to 0.507858 K
+```
+
+#### Notes
+
+- Runs **last**, after the bounds. The earlier stages (coastal filter, stability
+  check, steric limit) only scale increments toward zero. Running the floor
+  first would let them pull a raised point back below the floor wherever the
+  background is itself colder than $T_f$ + margin.
+- Because it runs last, the stability check and the steric SSH increment do not
+  see the raised temperatures. The raise is small and confined to near-freezing
+  open water, where thermal expansion is weak.
+- Ice cover is taken from the **background** only. Columns where the analysis
+  removes the background ice are skipped, and columns where it adds ice are
+  treated as open water.
+- `min background excess` $\le 0$ turns the background check off.
+- If the background has no `sea_ice_area_fraction`, every column is treated as
+  open water and a warning is logged.
+- `sea_water_potential_temperature` and `sea_water_salinity` are required in
+  both the background and the increment.
+- The freezing point at $S = 0$, $p = 0$ (MOM6 `TFREEZE_S0_P0`) is taken as 0,
+  the MOM6 default. A MOM6 run with a non-linear `TFREEZE_FORM` (the default
+  with a TEOS-10 or Roquet equation of state) has a slightly different freezing
+  point.
 
 ---
 

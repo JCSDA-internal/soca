@@ -69,14 +69,6 @@ void LinearModel2GeoVaLs::multiply(const Increment &dxin,
 
 // -----------------------------------------------------------------------------
 
-void LinearModel2GeoVaLs::multiplyInverse(const Increment &dxin,
-                                                Increment &dxout) const {
-  util::Timer timer("soca::LinearModel2GeoVaLs", "multiplyInverse");
-  multiply(dxin, dxout);
-}
-
-// -----------------------------------------------------------------------------
-
 void LinearModel2GeoVaLs::multiplyAD(const Increment &dxin,
                                            Increment &dxout) const {
   util::Timer timer("soca::LinearModel2GeoVaLs", "multiplyAD");
@@ -102,14 +94,6 @@ void LinearModel2GeoVaLs::multiplyAD(const Increment &dxin,
 
     fOut.set_dirty(fIn.dirty());
   }
-}
-
-// -----------------------------------------------------------------------------
-
-void LinearModel2GeoVaLs::multiplyInverseAD(const Increment &dxin,
-                                                  Increment &dxout) const {
-  util::Timer timer("soca::LinearModel2GeoVaLs", "multiplyInverseAD");
-  multiplyAD(dxin, dxout);
 }
 
 // -----------------------------------------------------------------------------

@@ -22,7 +22,6 @@ class Model2GeoVaLs: public VariableChangeBase {
   ~Model2GeoVaLs();
 
   void changeVar(const State &, State &) const override;
-  void changeVarInverse(const State &, State &) const override;
 
  private:
   const Geometry & geom_;

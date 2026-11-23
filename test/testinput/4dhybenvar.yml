@@ -133,10 +133,12 @@ variational:
     ninner: 5
     gradient norm reduction: 1e-10
     test: on
+
 output:
-  datadir: data_output/
-  exp: 4dhybenvar
-  type: an
+  analysis:
+    datadir: data_output/
+    exp: 4dhybenvar
+    type: an
 
 test:
   reference filename: testref/4dhybenvar.test
