@@ -493,6 +493,61 @@ inline std::map<std::string, std::pair<size_t, size_t>> applyBruteForceBoundsChe
   return clampCounts;
 }  // end function
 
+/**
+ * @brief Raise the analysis temperature (xb + dx) to at least Tf + openWaterMargin in open water,
+ * Tf = dTfdS * S_a + dTfdp * rho0g * depth (MOM6 linear freezing point).
+ *
+ * Skips columns with background ice >= iceThreshold, land, ghost nodes and layers thinner than
+ * minThickness. With minBkgExcess > 0, only points whose background is at least that far above
+ * freezing are raised.
+ *
+ * @return {number of points raised, largest raise (K)}, task-local.
+ */
+inline std::pair<size_t, double> applyFreezingPointFloor(
+    atlas::FieldSet& dxFs,
+    const atlas::FieldSet& xbFs,
+    const atlas::array::ArrayView<const int, 1>& ghostView,
+    const atlas::array::ArrayView<const double, 2>& viewBathy,
+    const atlas::array::ArrayView<double, 2>& viewHocn,
+    const atlas::array::ArrayView<double, 2>& viewDepth,
+    const double dTfdS, const double dTfdp, const double rho0g,
+    const double openWaterMargin, const double iceThreshold, const double minThickness,
+    const double minBkgExcess) {
+  auto dT = atlas::array::make_view<double, 2>(dxFs["sea_water_potential_temperature"]);
+  const auto Tb = atlas::array::make_view<const double, 2>(
+      xbFs.field("sea_water_potential_temperature"));
+  const auto Sb = atlas::array::make_view<const double, 2>(xbFs.field("sea_water_salinity"));
+  const auto dS = atlas::array::make_view<const double, 2>(dxFs.field("sea_water_salinity"));
+  const bool hasIce = xbFs.has("sea_ice_area_fraction");
+  // placeholder view when there is no ice field (never read)
+  const auto aice = atlas::array::make_view<const double, 2>(
+      hasIce ? xbFs.field("sea_ice_area_fraction") : xbFs.field("sea_water_salinity"));
+
+  size_t nRaised = 0;
+  double maxRaise = 0.0;
+  for (atlas::idx_t jnode = 0; jnode < dT.shape(0); ++jnode) {
+    if (ghostView(jnode) > 0) continue;
+    if (viewBathy(jnode, 0) <= 0.0) continue;
+    if (hasIce && aice(jnode, 0) >= iceThreshold) continue;
+    for (atlas::idx_t level = 0; level < dT.shape(1); ++level) {
+      if (viewHocn(jnode, level) <= minThickness) continue;
+      const double tfP = dTfdp * rho0g * viewDepth(jnode, level);
+      if (minBkgExcess > 0.0 && Tb(jnode, level) < dTfdS * Sb(jnode, level) + tfP + minBkgExcess) {
+        continue;
+      }
+      const double sA = Sb(jnode, level) + dS(jnode, level);
+      const double floorT = dTfdS * sA + tfP + openWaterMargin;
+      const double tA = Tb(jnode, level) + dT(jnode, level);
+      if (tA < floorT) {
+        dT(jnode, level) = floorT - Tb(jnode, level);
+        ++nRaised;
+        maxRaise = std::max(maxRaise, floorT - tA);
+      }
+    }
+  }
+  return {nRaised, maxRaise};
+}  // end function
+
 
 }  // namespace incrqc
 }  // namespace soca

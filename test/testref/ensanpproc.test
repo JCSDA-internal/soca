@@ -186,7 +186,7 @@ sea_water_potential_temperature   min=-2.6577186495806382   max=1.63682702618663
        sea_water_cell_thickness   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
 Increments after inflation and recentering and postprocessing: 
   Valid time: 2018-04-15T00:00:00Z
-sea_water_potential_temperature   min=-1.6365700000000001   max=2.3139329580402581   mean=-0.0137398208140774
+sea_water_potential_temperature   min=-1.6365700000000001   max=2.3139329850093100   mean=-0.0136470927454236
              sea_water_salinity   min=-0.6569200000000001   max=2.4416597918258378   mean=0.0157592883801013
  sea_surface_height_above_geoid   min=-0.5063587161764073   max=0.1608828794228901   mean=-0.0129040467678272
     eastward_sea_water_velocity   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
@@ -198,7 +198,7 @@ sea_water_potential_temperature   min=-1.6365700000000001   max=2.31393295804025
          sea_ice_snow_thickness   min=-0.0661400000000000   max=1.0358000000000001   mean=0.0175770480827754
        sea_water_cell_thickness   min=0.0009999999999977   max=1345.6400000000003274   mean=128.6280642065405004
   Valid time: 2018-04-15T00:00:00Z
-sea_water_potential_temperature   min=-2.5849500000000001   max=1.7884100000000001   mean=-0.0197106949218872
+sea_water_potential_temperature   min=-2.5849500000000001   max=1.7884100000000001   mean=-0.0195999394986924
              sea_water_salinity   min=-0.8616600000000001   max=2.4416591429951096   mean=0.0088552592146595
  sea_surface_height_above_geoid   min=-0.5060670635891132   max=0.2431960468128827   mean=-0.0023993879015000
     eastward_sea_water_velocity   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
@@ -210,7 +210,7 @@ sea_water_potential_temperature   min=-2.5849500000000001   max=1.78841000000000
          sea_ice_snow_thickness   min=-0.1386000000000000   max=1.0068400000000002   mean=0.0125649360925137
        sea_water_cell_thickness   min=0.0009999999999977   max=1345.6400000000003274   mean=128.6280642065405004
   Valid time: 2018-04-15T00:00:00Z
-sea_water_potential_temperature   min=-1.5993526448583075   max=1.4912257359975376   mean=-0.0124724636842955
+sea_water_potential_temperature   min=-1.5993526448584137   max=1.4912257375392937   mean=-0.0124221773128564
              sea_water_salinity   min=-0.8910500000000001   max=2.4416591490658099   mean=0.0114041273090546
  sea_surface_height_above_geoid   min=-0.5061446206909096   max=0.1950433778816111   mean=-0.0062103524192589
     eastward_sea_water_velocity   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
@@ -222,7 +222,7 @@ sea_water_potential_temperature   min=-1.5993526448583075   max=1.49122573599753
          sea_ice_snow_thickness   min=-0.0043700000000000   max=1.0068400000000002   mean=0.0133649665246500
        sea_water_cell_thickness   min=0.0009999999999977   max=1345.6400000000003274   mean=128.6280642065405004
   Valid time: 2018-04-15T00:00:00Z
-sea_water_potential_temperature   min=-2.6351500000000003   max=1.4730616966777133   mean=-0.0274534694511626
+sea_water_potential_temperature   min=-2.6351500000000003   max=1.4730616969075423   mean=-0.0271082398015632
              sea_water_salinity   min=-0.6333300000000001   max=2.4416599999987465   mean=0.0141528192512629
  sea_surface_height_above_geoid   min=-0.5056447970041382   max=0.2644119272029041   mean=-0.0073409542382793
     eastward_sea_water_velocity   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
