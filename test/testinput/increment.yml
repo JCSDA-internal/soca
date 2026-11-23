@@ -27,6 +27,10 @@ increment test:
   tolerance AD resolution change: 1.0e-12
   date: &date 2018-04-15T00:00:00Z
   skip rms by level test: true
+  # FMS binds to one communicator per process (soca_geom_mod.F90: mpp_init(localcomm)),
+  # and the fixture geometry has already bound it to world, so the allReduceInPlace test
+  # cannot build its task-local member geometry here.
+  skip allreduce test: true
   dirac:
     ixdir: [1]
     iydir: [8]
