@@ -92,6 +92,10 @@ namespace soca {
 
       /// Update the fields in variable changes
       void updateFields(const oops::Variables &);
+      /// Deallocate the fields for vars (other fields are unchanged)
+      void removeFields(const oops::Variables &);
+      /// Allocate zero-initialized fields for vars (existing fields are unchanged)
+      void addFields(const oops::Variables &);
 
    private:
       F90flds keyFlds_;
