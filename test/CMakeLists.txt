@@ -405,6 +405,17 @@ soca_add_test( NAME increment
                SRC  TestIncrement.cc
                TEST_DEPENDS test_soca_gridgen )
 
+# soca does not run the oops EnsembleInterfaces test (test/interface/EnsembleInterfaces.h).
+# That test splits its tasks into ensemble members and builds one Geometry per member on the
+# member's communicator, all in the same working directory. Building a soca Geometry calls
+# FmsInput::updateNameList, where rank 0 of the Geometry's communicator replaces the ./input.nml
+# symlink and then waits at a barrier on that same communicator. With several members there are
+# several rank 0s, and they race to remove and recreate input.nml. The race shows up as an
+# MPI_Abort with errorcode -1 when symlink() fails, or as a segfault or hang inside MOM6
+# initialization. It only happens when input.nml is missing or stale, as it is in a fresh build
+# directory, so the test passed on reruns locally but failed in CI. Making the symlink update
+# safe for concurrent members would let soca run the test.
+
 soca_add_test( NAME modelaux
                SRC  TestModelAuxControl.cc
                CFG  model.yml
