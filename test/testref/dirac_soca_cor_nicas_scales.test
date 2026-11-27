@@ -8,9 +8,9 @@ sea_water_potential_temperature   min=0.0000000000000000   max=1.000000000000000
               sea_ice_thickness   min=0.0000000000000000   max=1.0000000000000000   mean=0.0006086427267194
 Covariance(SABER) * Increment:
   Valid time: 2018-04-15T00:00:00Z
-             sea_water_salinity   min=0.0000000000000000   max=0.9999999999999998   mean=0.0300603806163751
-sea_water_potential_temperature   min=0.0000000000000000   max=1.0006323337504124   mean=0.3270386817150498
+             sea_water_salinity   min=0.0000000000000000   max=1.0000000000000002   mean=0.0495988691840845
+sea_water_potential_temperature   min=0.0047021600658940   max=1.0057477328988043   mean=0.3729703567662850
  sea_surface_height_above_geoid   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
        sea_water_cell_thickness   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
           sea_ice_area_fraction   min=0.0000000000000000   max=0.0000000000000000   mean=0.0000000000000000
-              sea_ice_thickness   min=0.0000000000000000   max=0.9999999999999996   mean=0.3051297084042984
+              sea_ice_thickness   min=0.0000000000000000   max=1.0000000000000000   mean=0.3021418874518003
